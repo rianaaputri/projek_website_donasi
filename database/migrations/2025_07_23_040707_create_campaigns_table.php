@@ -19,7 +19,7 @@ return new class extends Migration {
             
             $table->string('image')->nullable(); 
 
-            $table->enum('status', ['active', 'completed', 'inactive'])->default('active');
+            $table->enum('status', ['active', 'completed', 'sinactive'])->default('active');
             
             $table->timestamp('created_at')->nullable(); 
             $table->timestamp('updated_at')->nullable(); 
