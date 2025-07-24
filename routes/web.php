@@ -8,6 +8,10 @@ use App\Http\Controllers\AuthController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\HomeController;
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
 Route::get('/campaign', [CampaignController::class, 'index'])->name('campaign.index');
 Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
@@ -15,10 +19,6 @@ Route::post('/campaign', [CampaignController::class, 'store'])->name('campaign.s
 Route::get('/campaign/{id}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
 Route::put('/campaign/{id}', [CampaignController::class, 'update'])->name('campaign.update');
 Route::delete('/campaign/{id}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
-
-Route::get('/', function () {
-    return view('welcome');
-});
 
 Route::get('/dashboard', function () {
     return view('dashboard');

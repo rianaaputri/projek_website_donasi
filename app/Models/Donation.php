@@ -14,62 +14,27 @@ class Donation extends Model
         'donor_name',
         'donor_email',
         'amount',
-        'comment',
-        'status',
-        'payment_id'
+        'payment_status',
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime'
+        'updated_at' => 'datetime',
     ];
 
-    /**
-     * Get the campaign that owns the donation
-     */
     public function campaign()
     {
         return $this->belongsTo(Campaign::class);
     }
 
-    /**
-     * Scope a query to only include successful donations
-     */
-    public function scopeSuccessful($query)
+    public function scopePaid($query)
     {
-        return $query->where('status', 'success');
+        return $query->where('payment_status', 'paid');
     }
 
-    /**
-     * Scope a query to only include pending donations
-     */
-    public function scopePending($query)
-    {
-        return $query->where('status', 'pending');
-    }
-
-    /**
-     * Scope a query to only include failed donations
-     */
-    public function scopeFailed($query)
-    {
-        return $query->where('status', 'failed');
-    }
-
-    /**
-     * Scope a query to filter by date range
-     */
-    public function scopeDateRange($query, $startDate, $endDate)
-    {
-        return $query->whereBetween('created_at', [$startDate, $endDate]);
-    }
-
-    /**
-     * Get the formatted amount with currency
-     */
     public function getFormattedAmountAttribute()
     {
-        return 'Rp.' . number_format($this->amount, 0, ',', ',');
+        return 'Rp ' . number_format($this->amount, 0, ',', '.');
     }
 }
