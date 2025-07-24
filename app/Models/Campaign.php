@@ -18,7 +18,4 @@ class Campaign extends Model
     ];
 
     public $timestamps = true; // karena lo pakai created_at & updated_at
-=======
-    //
->>>>>>> 38a54090eb37cbaa148febeeeecce5272412c068
-}
+

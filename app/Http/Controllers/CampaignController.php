@@ -92,7 +92,7 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-=======
+
 use Illuminate\Http\Request;
 use App\Models\Campaign; 
 
@@ -105,6 +105,6 @@ class CampaignController extends Controller
     {
         $campaigns = Campaign::latest()->get(); // Ambil semua data campaign terbaru
         return view('campaigns.index', compact('campaigns')); // Kirim ke view
->>>>>>> 38a54090eb37cbaa148febeeeecce5272412c068
+
     }
 }
