@@ -20,7 +20,6 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-<<<<<<< HEAD
 Route::get('/dashboard', function () {
     return view('dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -32,10 +31,10 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-=======
+
 // > user 
 // Ganti prefix dari 'user' jadi 'auth'
-Route::prefix('auth')->name('user.')->group(function () {
+    Route::prefix('auth')->name('user.')->group(function () {
     Route::get('/user-register', [UserController::class, 'showRegister'])->name('register');
     Route::post('/user-register', [UserController::class, 'register']);
     
@@ -95,4 +94,3 @@ Route::prefix('admin')->name('admin.')->group(function () {
         })->name('dashboard');
     });
 });
->>>>>>> 09801512c8f5c4cf8dc6339a91442f9dc155a145
