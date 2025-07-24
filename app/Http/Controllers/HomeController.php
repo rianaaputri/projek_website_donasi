@@ -3,35 +3,33 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
-use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-   public function index()
-{
-    $campaigns = Campaign::active()
-        ->with(['donations' => function ($query) {
-            $query->successful(); // ← pakai 'successful', BUKAN 'success'
-        }])
-        ->orderBy('created_at', 'desc')
-        ->get();
+    public function index()
+    {
+        $campaigns = Campaign::active()
+            ->with(['donations' => function ($q) {
+                $q->paid();
+            }])
+            ->latest()
+            ->get();
 
-    return view('home', compact('campaigns'));
-}
+        return view('home', compact('campaigns'));
+    }
 
-public function showCampaign($id)
-{
-    $campaign = Campaign::with(['donations' => function ($query) {
-        $query->successful()->orderBy('created_at', 'desc');
-    }])
-    ->findOrFail($id);
+    public function showCampaign($id)
+    {
+        $campaign = Campaign::with(['donations' => function ($q) {
+            $q->paid()->latest();
+        }])->findOrFail($id);
 
-    $recentDonors = $campaign->donations()
-        ->successful()
-        ->orderBy('created_at', 'desc')
-        ->limit(10)
-        ->get();
+        $recentDonors = $campaign->donations()
+            ->paid()
+            ->latest()
+            ->limit(10)
+            ->get();
 
-    return view('campaign.detail', compact('campaign', 'recentDonors'));
-}
+        return view('campaign.detail', compact('campaign', 'recentDonors'));
+    }
 }

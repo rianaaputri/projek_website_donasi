@@ -11,11 +11,13 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\HomeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show')
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
-// Landing page
 Route::get('/', function () {
-    return view('welcome');
+    return view('home');
 });
 
 Route::middleware('auth')->group(function () {
@@ -33,7 +35,7 @@ Route::middleware('auth')->group(function () {
 require __DIR__.'/auth.php';
 // > user 
 // Ganti prefix dari 'user' jadi 'auth'
-Route::prefix('auth')->name('user.')->group(function () {
+    Route::prefix('auth')->name('user.')->group(function () {
     Route::get('/user-register', [UserController::class, 'showRegister'])->name('register');
     Route::post('/user-register', [UserController::class, 'register']);
     
@@ -112,6 +114,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             })->name('dashboard');
         });
     });
+});
 });
 
 // Campaign Routes (Public/Protected sesuai kebutuhan)
