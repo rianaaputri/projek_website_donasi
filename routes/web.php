@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
-use App\Http\Controllers\ProfileController;
+    use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
@@ -31,7 +31,6 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-=======
 // > user 
 // Ganti prefix dari 'user' jadi 'auth'
 Route::prefix('auth')->name('user.')->group(function () {
@@ -46,7 +45,6 @@ Route::prefix('auth')->name('user.')->group(function () {
     Route::get('/email/verify', [UserController::class, 'verificationNotice'])
         ->middleware('auth')
         ->name('verification.notice');
->>>>>>> 872c4c77d4677649a5f2fe9abbf65ccd6985546e
     
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
@@ -57,7 +55,6 @@ Route::prefix('auth')->name('user.')->group(function () {
         $request->user()->sendEmailVerificationNotification();
         return back()->with('message', 'Link verifikasi sudah dikirim! 📧');
     })->middleware('throttle:6,1')->name('verification.send');
-});
 
 // user
 Route::prefix('auth')->name('user.')->group(function () {
@@ -144,7 +141,4 @@ Route::get('/dashboard', function () {
     }
     return redirect()->route('user.dashboard');
 })->middleware('auth')->name('dashboard');
-=======
 });
->>>>>>> 09801512c8f5c4cf8dc6339a91442f9dc155a145
->>>>>>> 872c4c77d4677649a5f2fe9abbf65ccd6985546e
