@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class CampaignController extends Controller
 {
-    // 🔁 Ambil enum dari kolom database
     private function getEnumValues($table, $column)
     {
         $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = ?", [$column])[0]->Type;
@@ -21,21 +20,18 @@ class CampaignController extends Controller
             ->toArray();
     }
 
-    // 🔍 Menampilkan semua campaign
     public function index()
     {
         $campaigns = Campaign::all();
         return view('campaign.index', compact('campaigns'));
     }
 
-    // 📝 Form untuk create campaign
     public function create()
     {
         $categories = $this->getEnumValues('campaigns', 'category');
         return view('campaign.create', compact('categories'));
     }
 
-    // 💾 Simpan campaign baru
     public function store(Request $request)
     {
         $categories = $this->getEnumValues('campaigns', 'category');
@@ -55,7 +51,6 @@ class CampaignController extends Controller
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil ditambah!');
     }
 
-    // ✏️ Form edit campaign
     public function edit($id)
     {
         $campaign = Campaign::findOrFail($id);
@@ -64,7 +59,6 @@ class CampaignController extends Controller
         return view('campaign.edit', compact('campaign', 'categories'));
     }
 
-    // 🔄 Update campaign
     public function update(Request $request, $id)
     {
         $categories = $this->getEnumValues('campaigns', 'category');
@@ -85,7 +79,6 @@ class CampaignController extends Controller
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil diupdate!');
     }
 
-    // 🗑️ Hapus campaign
     public function destroy($id)
     {
         $campaign = Campaign::findOrFail($id);
