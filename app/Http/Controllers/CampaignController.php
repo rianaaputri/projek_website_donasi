@@ -85,6 +85,5 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-
-}
+    }
 }
