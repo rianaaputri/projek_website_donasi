@@ -6,25 +6,25 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
-{
-    Schema::create('campaigns', function (Blueprint $table) {
-        $table->id();
-        $table->string('judul');
-        $table->text('deskripsi');
-        $table->string('gambar'); // path ke gambar
-        $table->decimal('target_donasi', 12, 2);
-        $table->timestamps();
-    });
-}
+    public function up()
+    {
+        Schema::create('campaigns', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('description');
+            $table->string('image')->nullable();
+            $table->string('category');
+            $table->decimal('target_amount', 15, 2);
+            $table->decimal('current_amount', 15, 2)->default(0);
+            $table->integer('donors_count')->default(0);
+            $table->date('end_date');
+            $table->boolean('is_active')->default(true);
+            $table->boolean('is_urgent')->default(false);
+            $table->timestamps();
+        });
+    }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+    public function down()
     {
         Schema::dropIfExists('campaigns');
     }

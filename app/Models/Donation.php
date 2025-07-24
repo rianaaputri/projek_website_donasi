@@ -60,13 +60,15 @@ class Donation extends Model
     /**
      * Scope a query to filter by date range
      */
-    public function scopeDateRange($query, $startDate, $endDate){
+    public function scopeDateRange($query, $startDate, $endDate)
+    {
         return $query->whereBetween('created_at', [$startDate, $endDate]);
     }
+
     /**
-     * get the formatted amount with currency
+     * Get the formatted amount with currency
      */
-    public function getFormattedAmountAttribute() 
+    public function getFormattedAmountAttribute()
     {
         return 'Rp.' . number_format($this->amount, 0, ',', ',');
     }
