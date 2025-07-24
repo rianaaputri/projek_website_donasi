@@ -14,6 +14,8 @@ class User extends Authenticatable implements MustVerifyEmail
      *
      * @var array<int, string>
      */
+
+       use HasFactory, Notifiable;
     protected $fillable = [
         'name',
         'email',
