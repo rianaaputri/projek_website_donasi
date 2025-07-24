@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Http\Request;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AdminController;
@@ -19,6 +20,33 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', [UserController::class, 'verificationNotice'])->name('verification.notice');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';
+=======
+// > user 
+// Ganti prefix dari 'user' jadi 'auth'
+Route::prefix('auth')->name('user.')->group(function () {
+    Route::get('/user-register', [UserController::class, 'showRegister'])->name('register');
+    Route::post('/user-register', [UserController::class, 'register']);
+    
+    Route::get('/user-login', [UserController::class, 'showLogin'])->name('login');
+    Route::post('/user-login', [UserController::class, 'login']);
+    
+    Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+    
+    Route::get('/email/verify', [UserController::class, 'verificationNotice'])
+        ->middleware('auth')
+        ->name('verification.notice');
+>>>>>>> 872c4c77d4677649a5f2fe9abbf65ccd6985546e
     
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         $request->fulfill();
@@ -116,3 +144,7 @@ Route::get('/dashboard', function () {
     }
     return redirect()->route('user.dashboard');
 })->middleware('auth')->name('dashboard');
+=======
+});
+>>>>>>> 09801512c8f5c4cf8dc6339a91442f9dc155a145
+>>>>>>> 872c4c77d4677649a5f2fe9abbf65ccd6985546e
