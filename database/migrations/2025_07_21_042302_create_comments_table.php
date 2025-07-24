@@ -17,6 +17,7 @@ return new class extends Migration
             $table->boolean('is_anonymous')->default(false);
             $table->boolean('is_approved')->default(true);
             $table->timestamps();
+            $table
         });
     }
 
