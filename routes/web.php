@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+
 use App\Http\Controllers\{
     HomeController,
     CampaignController,
@@ -13,6 +14,13 @@ use App\Http\Controllers\{
 Route::middleware(['auth', 'verify.or.admin'])->group(function () {
     Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
 });
+
+use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DonationController; 
+
+Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show')
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
@@ -26,6 +34,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [UserController::class, 'register']);
 });
 
+
+Route::get('/donate/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::post('/donate', [DonationController::class, 'store'])->name('donation.store');
+
+
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
@@ -36,6 +49,29 @@ Route::middleware('auth')->group(function () {
         return view('auth.verify-email');
     })->name('verification.notice');
 
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';
+Route::prefix('auth')->name('user.')->group(function () {
+
+// > user 
+    Route::prefix('auth')->name('user.')->group(function () {
+    Route::get('/user-register', [UserController::class, 'showRegister'])->name('register');
+    Route::post('/user-register', [UserController::class, 'register']);
+
+    Route::get('/user-login', [UserController::class, 'showLogin'])->name('login');
+    Route::post('/user-login', [UserController::class, 'login']);
+
+    Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+    Route::get('/email/verify', [UserController::class, 'verificationNotice'])
+        ->middleware('auth')
+        ->name('verification.notice');
+
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
         if ($request->user()->role === 'admin') {
             return redirect()->route('admin.dashboard')->with('success', 'Selamat datang admin! 🎉');
@@ -43,8 +79,56 @@ Route::middleware('auth')->group(function () {
         
         $request->fulfill();
         return redirect()->route('user.dashboard')->with('success', 'Email berhasil diverifikasi! 🎉');
+
     })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
+    })->middleware(['auth', 'signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('message', 'Link verifikasi sudah dikirim! 📧');
+    })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+    Route::middleware(['auth', 'verified'])->group(function () {
+        Route::get('/dashboard', function () {
+            return view('user.dashboard');
+        })->name('dashboard');
+    });
+});
+
+
+Route::prefix('admin')->name('admin.')->group(function () {
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/email/verify', function () {
+        return view('auth.admin-verify-email');
+    })->middleware('auth:admin')->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        return redirect()->route('admin.dashboard')->with('success', 'Email admin berhasil diverifikasi! 🎉');
+    })->middleware(['auth:admin', 'signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user('admin')->sendEmailVerificationNotification();
+        return back()->with('message', 'Link verifikasi admin sudah dikirim! 📧');
+    })->middleware(['auth:admin', 'throttle:6,1'])->name('verification.send');
+
+    Route::middleware(['auth:admin', 'verified'])->group(function () {
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
+    });
+});
+        return redirect()->route('user.dashboard')->with('success', 'Email berhasil diverifikasi! Selamat datang! 🎉');
+    })->middleware('signed')->name('verification.verify');
+    
     Route::post('/email/verification-notification', function (Request $request) {
         if ($request->user()->role === 'admin') {
             return redirect()->route('admin.dashboard');
