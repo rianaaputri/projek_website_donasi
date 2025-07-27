@@ -9,13 +9,13 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
+    use HasFactory, Notifiable;
+
     /**
      * The attributes that are mass assignable.
      *
      * @var array<int, string>
      */
-
-       use HasFactory, Notifiable;
     protected $fillable = [
         'name',
         'email',
@@ -42,4 +42,14 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    /**
+     * Get the default guard name for the model.
+     *
+     * @return string
+     */
+    protected function defaultGuard()
+    {
+        return 'web';
+    }
 }
