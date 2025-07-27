@@ -6,66 +6,93 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Auth\Events\Registered;
 
 class AuthController extends Controller
 {
-    public function showRegister() {
-        return view('auth.user-register');
+    // Show Admin Register Page
+    public function showRegister()
+    {
+        return view('auth.admin-register'); // Ganti ke admin-register
     }
 
-    public function register(Request $request) {
+    // Handle Admin Register
+    public function register(Request $request)
+    {
         $request->validate([
-            'name' => 'required',
+            'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admins,email',
             'password' => 'required|min:6|confirmed',
+        ], [
+            'name.required' => 'Nama wajib diisi!',
+            'email.required' => 'Email wajib diisi!',
+            'email.unique' => 'Email sudah terdaftar!',
+            'password.required' => 'Password wajib diisi!',
+            'password.min' => 'Password minimal 6 karakter!',
+            'password.confirmed' => 'Konfirmasi password tidak cocok!',
         ]);
 
+        // Buat admin baru
         $admin = Admin::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'password' => Hash::make($request->password),
         ]);
 
-        $admin->sendEmailVerificationNotification();
+        // Login admin otomatis
+        Auth::guard('admin')->login($admin);
 
-        return redirect('/admin/login')->with('success', 'Registrasi berhasil! Cek email untuk verifikasi.');
+        // Trigger event untuk email verification
+        event(new Registered($admin));
+
+        // Redirect ke verification notice
+        return redirect()->route('verification.notice')
+            ->with('success', 'Registrasi admin berhasil! Silakan verifikasi email Anda.');
     }
 
-    public function showLogin() {
-        return view('auth.login');
-    }
-
-    public function userRegister()
+    // Show Admin Login Page
+    public function showLogin()
     {
-        // Method ini harus ada!
-        return view('auth.user-register'); // atau return apa aja
+        return view('auth.admin-login'); // Ganti ke admin-login
     }
 
-    public function login(Request $request) {
+    // Handle Admin Login
+    public function login(Request $request)
+    {
         $request->validate([
-            'email' => 'required',
+            'email' => 'required|email',
             'password' => 'required'
         ]);
 
-        if (Auth::guard('admin')->attempt([
-            'email' => $request->email,
-            'password' => $request->password
-        ])) {
+        $credentials = $request->only('email', 'password');
+
+        if (Auth::guard('admin')->attempt($credentials, $request->filled('remember'))) {
             $admin = Auth::guard('admin')->user();
 
+            // Cek email verification
             if (!$admin->hasVerifiedEmail()) {
-                Auth::guard('admin')->logout();
-                return back()->withErrors(['email' => 'Verifikasi email dulu dong.']);
+                // JANGAN logout, redirect ke verification
+                return redirect()->route('verification.notice')
+                    ->with('error', 'Verifikasi email dulu dong! 📧');
             }
 
-            return redirect('/admin/dashboard');
+            $request->session()->regenerate();
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        return back()->withErrors(['email' => 'Login gagal! Email atau password salah.']);
+        return back()->withErrors([
+            'email' => 'Login gagal! Email atau password salah.'
+        ])->withInput();
     }
 
-    public function logout() {
+    // Handle Admin Logout
+    public function logout(Request $request)
+    {
         Auth::guard('admin')->logout();
-        return redirect('/admin/login');
+        
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect()->route('admin.login')->with('success', 'Berhasil logout!');
     }
 }

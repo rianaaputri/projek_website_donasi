@@ -169,7 +169,7 @@
                         <i class="fas fa-sign-in-alt me-2"></i> Masuk
                     </a>
                 @else
-                    <a href="{{ route('admin.campaigns.index') }}" class="btn btn-light btn-lg">
+                    <a href="{{ route('campaign.create') }}" class="btn btn-light btn-lg">
                         <i class="fas fa-plus me-2"></i> Buat Campaign
                     </a>
                 @endguest

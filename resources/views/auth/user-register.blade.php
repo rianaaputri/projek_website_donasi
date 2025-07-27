@@ -390,7 +390,7 @@
     @endif
 
     {{-- FIXED: Form action sekarang menggunakan user.register --}}
-    <form method="POST" action="{{ route('user.register') }}" id="registerForm" novalidate>
+    <form method="POST" action="{{ route('register') }}" id="registerForm" novalidate>
       @csrf
 
       {{-- Name Field --}}
@@ -463,7 +463,7 @@
       </button>
 
       <div class="login-link">
-        <p>Sudah punya akun? <a href="{{ route('user.login') }}">Login di sini</a></p>
+        <p>Sudah punya akun? <a href="{{ route('login') }}">Login di sini</a></p>
       </div>
     </form>
   </div>
