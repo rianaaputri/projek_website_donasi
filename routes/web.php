@@ -26,6 +26,8 @@ Route::middleware('guest')->group(function () {
 });
 
 // Donation Routes
+Route::get('/donate/success/{id}', [DonationController::class, 'success'])->name('donation.success');
+
 Route::get('/donate/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::post('/donate', [DonationController::class, 'store'])->name('donation.store');
 
@@ -40,6 +42,10 @@ Route::middleware(['auth'])->group(function () {
 
     // --- MODIFIKASI UNTUK PENGGUNA BIASA ---
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+      
+        $request->fulfill();
+        return redirect()->route('dashboard')->with('success', 'Email berhasil diverifikasi!');
+
         $request->fulfill(); // Tandai email sebagai terverifikasi
 
         // Opsional: Logout pengguna agar mereka harus login lagi
@@ -48,6 +54,7 @@ Route::middleware(['auth'])->group(function () {
 
         // Arahkan ke halaman login dengan pesan sukses
         return redirect()->route('login')->with('success', 'Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.');
+
     })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
     Route::post('/email/verification-notification', function (Request $request) {
@@ -59,6 +66,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Dashboard Redirect
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        return match ($user->role) {
+            'admin' => redirect()->route('admin.dashboard'),
+            'user' => redirect()->route('user.dashboard'),
+            default => redirect('/'),
+        };
+    })->name('dashboard');
+});
 
     // Dashboard Redirect (tetap sama, ini untuk saat login/akses /dashboard secara umum)
     Route::get('/dashboard', function () {
@@ -96,6 +114,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
     Route::middleware(['auth:admin'])->group(function () {
         Route::get('/email/verify', fn () => view('auth.admin-verify-email'))->name('verification.notice');
+
+        Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+            $request->fulfill();
+            return redirect()->route('admin.dashboard')->with('success', 'Email admin berhasil diverifikasi!');
+
         // --- MODIFIKASI UNTUK ADMIN ---
         Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
             $request->fulfill(); // Tandai email admin sebagai terverifikasi
@@ -106,6 +129,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
             // Arahkan ke halaman login admin dengan pesan sukses
             return redirect()->route('admin.login')->with('success', 'Email Admin berhasil diverifikasi! Silakan login untuk melanjutkan.');
+
         })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
         Route::post('/email/verification-notification', function (Request $request) {
