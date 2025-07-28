@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
+    MidtransController,
     CampaignController,
     UserController,
     ProfileController,
@@ -26,8 +27,9 @@ Route::middleware('guest')->group(function () {
 });
 
 // Donation Routes
-Route::get('/donate/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::post('/donate', [DonationController::class, 'store'])->name('donation.store');
+// Donation Routes (Public)
+Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::post('/donation', [DonationController::class, 'store'])->name('donation.store');
 
 // User Authenticated Routes
 Route::middleware(['auth'])->group(function () {
@@ -128,3 +130,16 @@ Route::get('/debug-auth', function () {
         'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
     ]);
 });
+
+//midtrans callback route
+// Proses Pembayaran Donasi
+Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
+Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
+Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
+Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+
+
+// Midtrans Callback (dari dashboard Midtrans)
+Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
+
+    
