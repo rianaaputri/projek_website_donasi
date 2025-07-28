@@ -54,18 +54,19 @@
                             <hr>
                             @endif
                             
-                            <div class="row text-start">
-                                <div class="col-sm-4 fw-bold">Status:</div>
-                                <div class="col-sm-8">
-                                    @if($donation->status === 'success')
-                                        <span class="badge bg-success">Berhasil</span>
-                                    @elseif($donation->status === 'pending')
-                                        <span class="badge bg-warning">Menunggu Pembayaran</span>
-                                    @else
-                                        <span class="badge bg-danger">Gagal</span>
-                                    @endif
-                                </div>
-                            </div>
+                          <div class="row text-start" id="status-text">
+    <div class="col-sm-4 fw-bold">Status:</div>
+    <div class="col-sm-8">
+        @if($donation->payment_status === 'success')
+            <span class="badge bg-success">Berhasil</span>
+        @elseif($donation->payment_status === 'pending')
+            <span class="badge bg-warning">Menunggu Pembayaran</span>
+        @else
+            <span class="badge bg-danger">Gagal</span>
+        @endif
+    </div>
+</div>
+
                             <hr>
                             
                             <div class="row text-start">
@@ -75,13 +76,14 @@
                         </div>
                     </div>
                     
-                    @if($donation->status === 'pending')
-                        <div class="alert alert-warning">
-                            <i class="fas fa-clock me-2"></i>
-                            <strong>Menunggu Pembayaran</strong><br>
-                            Silakan selesaikan pembayaran melalui metode yang telah dipilih.
-                        </div>
-                    @endif
+                   @if($donation->payment_status === 'pending')
+    <div class="alert alert-warning" id="status-alert">
+        <i class="fas fa-clock me-2"></i>
+        <strong>Menunggu Pembayaran</strong><br>
+        Silakan selesaikan pembayaran melalui metode yang telah dipilih.
+    </div>
+@endif
+
                     
                     <!-- Next Steps -->
                     <div class="mb-4">
@@ -155,12 +157,42 @@
     </div>
 </div>
 @endsection
-
 @push('scripts')
 <script>
-Auto redirect to campaign page after 10 seconds (optional)
-setTimeout(function() {
-window.location.href = "{{ route('campaign.show', $donation->campaign->id) }}";
-}, 10000);
+document.addEventListener('DOMContentLoaded', function() {
+    const statusText = document.getElementById('status-text');
+    const statusAlert = document.getElementById('status-alert');
+
+    function updateStatus() {
+        fetch('/donation/status/{{ $donation->id }}')
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'success') {
+                   statusText.innerHTML = `
+    <div class="col-sm-4 fw-bold">Status:</div>
+    <div class="col-sm-8">
+        <span class="badge bg-success">Berhasil</span>
+    </div>
+`;
+                    if (statusAlert) {
+                        statusAlert.style.display = 'none';
+                    }
+
+                    // Optional: Reload page or show notification
+                } else if (data.status === 'failed') {
+                    statusText.innerHTML = '<span class="badge bg-danger">Gagal</span>';
+                    if (statusAlert) {
+                        statusAlert.style.display = 'none';
+                    }
+                }
+                // Update campaign progress (optional)
+                document.querySelector('.progress-bar').style.width = data.progress + '%';
+                document.querySelectorAll('h6.text-success')[0].innerText = data.collected;
+                document.querySelectorAll('h6.text-warning')[0].innerText = data.donors;
+            });
+    }
+
+    setInterval(updateStatus, 5000); // setiap 5 detik
+});
 </script>
 @endpush

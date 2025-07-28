@@ -15,6 +15,7 @@ class Donation extends Model
         'donor_email',
         'amount',
         'payment_status',
+        'midtrans_order_id',
     ];
 
     protected $casts = [
