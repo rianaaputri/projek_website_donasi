@@ -9,23 +9,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class AdminMiddleware
 {
-    /**
-     * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
+        // Pastikan admin login dengan guard 'admin'
+        if (!Auth::guard('admin')->check()) {
+            // Redirect ke halaman login admin jika belum login sebagai admin
+            return redirect()->route('admin.login')->with('error', 'Silakan login sebagai admin untuk mengakses halaman ini.');
         }
 
-        $user = Auth::user();
-        
-        if ($user->role !== 'admin') {
-            abort(403, 'Unauthorized. Admin access required.');
-        }
-
+        // Jika admin sudah login, lanjutkan request
         return $next($request);
     }
 }

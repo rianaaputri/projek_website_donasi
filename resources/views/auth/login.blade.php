@@ -345,7 +345,7 @@
       </div>
     @endif
 
-    <form method="POST" action={{ route('login') }} onsubmit="return validateForm()" id="loginForm">
+    <form method="POST" action="{{ route('login') }}" onsubmit="return validateForm()" id="loginForm">
       @csrf
 
       <!-- Email Field -->
