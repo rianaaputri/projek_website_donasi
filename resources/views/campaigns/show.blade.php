@@ -1,234 +1,216 @@
 @extends('layouts.app')
 
-@section('title', $campaign->judul . ' - DonasiKu')
+@section('title', $campaign->title . ' - Donasi Online')
 
 @section('content')
 <div class="container py-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+            <li class="breadcrumb-item active">{{ $campaign->title }}</li>
+        </ol>
+    </nav>
+
     <div class="row">
-        <!-- Campaign Details -->
+        <!-- Campaign Main Content -->
         <div class="col-lg-8">
-            <div class="card">
-                <img src="{{ asset('uploads/campaigns/' . ($campaign->gambar ?: 'default.jpg')) }}" 
-                     class="card-img-top" alt="{{ $campaign->judul }}" style="height: 400px; object-fit: cover;">
+            <div class="card shadow-sm">
+                @if($campaign->image)
+                    <img src="{{ asset('storage/' . $campaign->image) }}" 
+                            class="card-img-top" 
+                            alt="{{ $campaign->title }}"
+                            style="height: 400px; object-fit: cover;">
+                @else
+                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
+                            style="height: 400px;">
+                        <i class="fas fa-image text-muted" style="font-size: 5rem;"></i>
+                    </div>
+                @endif
+                
                 <div class="card-body">
-                    <h1 class="card-title">{{ $campaign->judul }}</h1>
-                    <p class="text-muted"><i class="fas fa-tag"></i> {{ $campaign->kategori }}</p>
+                    <div class="mb-3">
+                        <span class="badge bg-primary fs-6">{{ $campaign->category }}</span>
+                        @if($campaign->status === 'completed')
+                            <span class="badge bg-success fs-6 ms-2">
+                                <i class="fas fa-check me-1"></i>Selesai
+                            </span>
+                        @elseif($campaign->status === 'active')
+                            <span class="badge bg-warning text-dark fs-6 ms-2">
+                                <i class="fas fa-clock me-1"></i>Aktif
+                            </span>
+                        @endif
+                    </div>
                     
-                    <!-- Progress -->
-                    @php
-                        $percentage = $campaign->target > 0 ? ($campaign->terkumpul / $campaign->target) * 100 : 0;
-                    @endphp
+                    <h1 class="card-title h2 mb-4">{{ $campaign->title }}</h1>
                     
+                    <!-- Campaign Description -->
                     <div class="mb-4">
-                        <div class="progress mb-2" style="height: 12px;">
-                            <div class="progress-bar" style="width: {{ min($percentage, 100) }}%"></div>
-                        </div>
-                        <div class="row">
-                            <div class="col">
-                                <h4 class="text-primary">Rp {{ number_format($campaign->terkumpul, 0, ',', '.') }}</h4>
-                                <small class="text-muted">terkumpul dari Rp {{ number_format($campaign->target, 0, ',', '.') }}</small>
-                            </div>
-                            <div class="col text-end">
-                                <h4 class="text-success">{{ number_format($percentage, 1) }}%</h4>
-                                <small class="text-muted">tercapai</small>
-                            </div>
+                        <h4>Deskripsi Campaign</h4>
+                        <div class="text-muted" style="line-height: 1.8;">
+                            {!! nl2br(e($campaign->description)) !!}
                         </div>
                     </div>
-                    
-                    <hr>
-                    
-                    <h3>Deskripsi Kampanye</h3>
-                    <div class="campaign-description">
-                        {!! nl2br(e($campaign->deskripsi)) !!}
-                    </div>
-                    
-                    <!-- Comments Section -->
-                    <hr>
-                    <h3>Dukungan & Doa <small class="text-muted">({{ $donations->count() }})</small></h3>
-                    
-                    @if($donations->count() > 0)
-                        <div class="comments-section">
-                            @foreach($donations as $donation)
-                                @if($donation->komentar)
-                                <div class="card mb-3">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between">
-                                            <h6 class="card-title mb-1">
-                                                <i class="fas fa-user-circle text-primary"></i> 
-                                                {{ $donation->nama }}
-                                            </h6>
-                                            <small class="text-muted">
-                                                {{ $donation->created_at->diffForHumans() }}
-                                            </small>
-                                        </div>
-                                        <p class="card-text">{{ $donation->komentar }}</p>
-                                        <small class="text-success">
-                                            <i class="fas fa-heart"></i> 
-                                            Donasi Rp {{ number_format($donation->nominal, 0, ',', '.') }}
-                                        </small>
-                                    </div>
-                                </div>
-                                @endif
-                            @endforeach
+                </div>
+            </div>
+            
+            <!-- Recent Donors Section -->
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users me-2"></i>
+                        Donatur Terbaru ({{ $recentDonors->count() }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if($recentDonors->isEmpty())
+                        <div class="text-center py-4">
+                            <i class="fas fa-heart text-muted" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3">Belum ada donatur. Jadilah yang pertama!</p>
                         </div>
                     @else
-                        <p class="text-muted">Belum ada dukungan. Jadilah yang pertama!</p>
+                        <div class="row">
+                            @foreach($recentDonors as $donation)
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center p-3 bg-light rounded">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                                style="width: 50px; height: 50px;">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ $donation->donor_name }}</h6>
+                                            <div class="text-success fw-bold">{{ $donation->formatted_amount }}</div>
+                                            <small class="text-muted">{{ $donation->created_at->diffForHumans() }}</small>
+                                            {{-- @if($donation->comment) --}} {{-- Komentar akan ditampilkan di bagian terpisah --}}
+                                                {{-- <p class="mb-0 mt-2 text-muted small">
+                                                    "{{ Str::limit($donation->comment, 50) }}"
+                                                </p> --}}
+                                            {{-- @endif --}}
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
                     @endif
                 </div>
             </div>
         </div>
-        
-        <!-- Donation Form -->
+
+        <!-- Sidebar -->
         <div class="col-lg-4">
-            <div class="card sticky-top">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-body">
-                    <h4 class="card-title text-center mb-4">
-                        <i class="fas fa-heart text-danger"></i> Berikan Donasi
-                    </h4>
+                    <!-- Progress Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h5 class="mb-0">Progress Donasi</h5>
+                            <span class="badge bg-primary">{{ number_format($campaign->progress_percentage, 1) }}%</span>
+                        </div>
+                        
+                        <div class="progress mb-3" style="height: 12px;">
+                            <div class="progress-bar bg-success" 
+                                    role="progressbar" 
+                                    style="width: {{ $campaign->progress_percentage }}%">
+                            </div>
+                        </div>
+                        
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-success mb-1">{{ $campaign->formatted_collected }}</h4>
+                                <small class="text-muted">Terkumpul</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-primary mb-1">{{ $campaign->formatted_target }}</h4>
+                                <small class="text-muted">Target</small>
+                            </div>
+                        </div>
+                    </div>
                     
-                    <form id="donationForm">
-                        @csrf
-                        <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
-                        
-                        <!-- Nama -->
-                        <div class="mb-3">
-                            <label class="form-label">Nama Lengkap *</label>
-                            <input type="text" class="form-control" name="nama" required>
-                        </div>
-                        
-                        <!-- Email -->
-                        <div class="mb-3">
-                            <label class="form-label">Email *</label>
-                            <input type="email" class="form-control" name="email" required>
-                        </div>
-                        
-                        <!-- Nominal -->
-                        <div class="mb-3">
-                            <label class="form-label">Nominal Donasi *</label>
-                            <div class="input-group">
-                                <span class="input-group-text">Rp</span>
-                                <input type="number" class="form-control" name="nominal" 
-                                       min="10000" placeholder="50000" required>
+                    {{-- NEW SECTION: Komentar Donatur --}}
+                    @if($campaignComments->isNotEmpty())
+                        <div class="card shadow-sm mt-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">
+                                    <i class="fas fa-comment-dots me-2"></i>Komentar Donatur
+                                </h5>
+                            </div>
+                            <div class="card-body">
+                                @foreach($campaignComments as $comment)
+                                    <div class="d-flex align-items-start mb-3">
+                                        <div class="flex-shrink-0 me-3">
+                                            <i class="fas fa-user-circle fa-2x text-muted"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0">
+                                                {{ $comment->is_anonymous ? 'Anonim' : $comment->donor_name }}
+                                                <small class="text-muted ms-2">{{ $comment->created_at->diffForHumans() }}</small>
+                                            </h6>
+                                            <p class="mb-0 small text-dark">{{ $comment->comment }}</p>
+                                        </div>
+                                    </div>
+                                    @if(!$loop->last)
+                                        <hr class="my-2">
+                                    @endif
+                                @endforeach
                             </div>
                         </div>
-                        
-                        <!-- Quick Amount -->
-                        <div class="mb-3">
-                            <label class="form-label">Nominal Cepat</label>
-                            <div class="row g-2">
-                                <div class="col-6">
-                                    <button type="button" class="btn btn-outline-primary w-100 quick-amount" 
-                                            data-amount="50000">50K</button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn btn-outline-primary w-100 quick-amount" 
-                                            data-amount="100000">100K</button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn btn-outline-primary w-100 quick-amount" 
-                                            data-amount="200000">200K</button>
-                                </div>
-                                <div class="col-6">
-                                    <button type="button" class="btn btn-outline-primary w-100 quick-amount" 
-                                            data-amount="500000">500K</button>
-                                </div>
+                    @endif
+
+                    <!-- Donation Stats -->
+                    <div class="row text-center mt-4 mb-4">
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded">
+                                <h5 class="mb-1">{{ $campaign->donations->count() }}</h5>
+                                <small class="text-muted">Donatur</small>
                             </div>
                         </div>
-                        
-                        <!-- Komentar -->
-                        <div class="mb-3">
-                            <label class="form-label">Pesan & Doa</label>
-                            <textarea class="form-control" name="komentar" rows="3" 
-                                      placeholder="Tulis pesan dukungan Anda..."></textarea>
-                        </div>
-                        
-                        <!-- Anonim -->
-                        <div class="mb-3">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox" name="anonim" id="anonim">
-                                <label class="form-check-label" for="anonim">
-                                    Donasi sebagai Anonim
-                                </label>
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded">
+                                <h5 class="mb-1">{{ (int) $campaign->created_at->diffInDays(now())}}</h5>
+                                <small class="text-muted">Hari berjalan</small>
                             </div>
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary btn-lg w-100" id="btnDonasi">
-                            <i class="fas fa-heart"></i> Donasi Sekarang
-                        </button>
-                    </form>
+                    </div>
+                    
+                    <!-- Donation Button -->
+                    @if($campaign->status === 'active' && $campaign->is_active)
+                        <div class="d-grid">
+                            <a href="{{ route('donation.create', $campaign->id) }}" 
+                                class="btn btn-success btn-lg">
+                                <i class="fas fa-heart me-2"></i>Donasi Sekarang
+                            </a>
+                        </div>
+                    @else
+                        <div class="d-grid">
+                            <button class="btn btn-secondary btn-lg" disabled>
+                                <i class="fas fa-times me-2"></i>Campaign Tidak Aktif
+                            </button>
+                        </div>
+                    @endif
+                    
+                    <!-- Share Buttons -->
+                    <div class="mt-4">
+                        <h6 class="mb-3">Bagikan Campaign:</h6>
+                        <div class="d-flex gap-2">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->url()) }}" 
+                                target="_blank" 
+                                class="btn btn-outline-primary btn-sm flex-fill">
+                                <i class="fab fa-facebook-f"></i> Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->url()) }}&text={{ urlencode($campaign->title) }}" 
+                                target="_blank" 
+                                class="btn btn-outline-info btn-sm flex-fill">
+                                <i class="fab fa-twitter"></i> Twitter
+                            </a>
+                            <a href="https://wa.me/?text={{ urlencode($campaign->title . ' - ' . request()->url()) }}" 
+                                target="_blank" 
+                                class="btn btn-outline-success btn-sm flex-fill">
+                                <i class="fab fa-whatsapp"></i> WhatsApp
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
-@endsection
-
-@section('scripts')
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Quick amount buttons
-    document.querySelectorAll('.quick-amount').forEach(button => {
-        button.addEventListener('click', function() {
-            document.querySelector('input[name="nominal"]').value = this.getAttribute('data-amount');
-        });
-    });
-    
-    // Donation form submission
-    document.getElementById('donationForm').addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const form = this;
-        const formData = new FormData(form);
-        const submitBtn = document.getElementById('btnDonasi');
-        
-        // Disable submit button
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses...';
-        
-        // Send to backend
-        fetch('{{ route("donations.store") }}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Open Midtrans Snap
-                snap.pay(data.snap_token, {
-                    onSuccess: function(result) {
-                        alert('Terima kasih! Donasi Anda berhasil.');
-                        window.location.reload();
-                    },
-                    onPending: function(result) {
-                        alert('Transaksi pending. Silahkan selesaikan pembayaran.');
-                        window.location.reload();
-                    },
-                    onError: function(result) {
-                        alert('Terjadi kesalahan. Silahkan coba lagi.');
-                        console.error(result);
-                    },
-                    onClose: function() {
-                        // Re-enable submit button
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = '<i class="fas fa-heart"></i> Donasi Sekarang';
-                    }
-                });
-            } else {
-                alert('Error: ' + data.message);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-heart"></i> Donasi Sekarang';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan sistem. Silahkan coba lagi.');
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-heart"></i> Donasi Sekarang';
-        });
-    });
-});
-</script>
 @endsection

@@ -70,7 +70,7 @@ class CampaignController extends Controller
             'target_amount'   => 'required|numeric',
             'image'           => 'nullable|string',
             'status'          => 'required|in:active,completed,inactive',
-            'is_active'       => 'nullable|boolean',
+            'is_active'       => 'nullable|timestamp',
         ]);
 
         $campaign = Campaign::findOrFail($id);
@@ -85,5 +85,17 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
+    }
+
+    public function show($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        $donations = $campaign->donations()
+            ->where('payment_status', 'paid')
+            ->whereNotNull('message')
+            ->latest()
+            ->get();
+
+        return view('campaign.show', compact('campaign', 'donations'));
     }
 }

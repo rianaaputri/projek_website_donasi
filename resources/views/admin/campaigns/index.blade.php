@@ -122,3 +122,4 @@ function confirmDelete(campaignId) {
 }
 </script>
 @endsection
+  
