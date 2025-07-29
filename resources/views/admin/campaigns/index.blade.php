@@ -19,9 +19,7 @@
                         <th>Campaign</th>
                         <th>Category</th>
                         <th>Target</th>
-                        <th>Collected</th>
                         <th>Progress</th>
-                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -31,44 +29,38 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 @if($campaign->image)
-                                    <img src="{{ asset('storage/campaigns/' . $campaign->image) }}" class="rounded me-3" width="60" height="60" style="object-fit: cover;">
+                                    <img src="{{ Storage::url($campaign->image) }}" class="rounded me-3" width="60" height="60" style="object-fit: cover;">
                                 @else
-                                    <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" style="width:60px;height:60px;">
-                                        <i class="fas fa-image text-white"></i>
-                                    </div>
+                                    <div class="bg-secondary rounded me-3" style="width:60px;height:60px;"></div>
                                 @endif
                                 <div>
                                     <h6 class="mb-1">{{ $campaign->title }}</h6>
-                                    <small class="text-muted">{{ Str::limit($campaign->description, 50) }}</small>
+                                    <small>{{ Str::limit($campaign->description, 50) }}</small>
                                 </div>
                             </div>
                         </td>
-                        <td><span class="badge bg-info">{{ $campaign->category }}</span></td>
-                        <td>Rp {{ number_format($campaign->target_amount, 0, ',', '.') }}</td>
-                        <td>Rp {{ number_format($campaign->collected_amount, 0, ',', '.') }}</td>
+                        <td>{{ $campaign->category }}</td>
+                        <td>Rp {{ number_format($campaign->target_amount) }}</td>
                         <td>
                             @php
-                                $progress = $campaign->target_amount > 0 ? ($campaign->collected_amount / $campaign->target_amount) * 100 : 0;
+                                $collected = $campaign->donations->sum('amount');
+                                $percentage = $campaign->target_amount > 0 ? ($collected/$campaign->target_amount)*100 : 0;
                             @endphp
-                            <div class="progress mb-1" style="height: 6px;">
-                                <div class="progress-bar" style="width: {{ min($progress, 100) }}%"></div>
+                            <div class="progress" style="height: 5px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ $percentage }}%"></div>
                             </div>
-                            <small>{{ number_format($progress, 1) }}%</small>
+                            <small>{{ number_format($percentage, 1) }}%</small>
                         </td>
                         <td>
-                            <span class="badge bg-{{ $campaign->status == 'active' ? 'success' : ($campaign->status == 'completed' ? 'primary' : 'secondary') }}">
-                                {{ ucfirst($campaign->status) }}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-info" target="_blank">
+                            <div class="btn-group">
+                                <a href="{{ route('admin.campaigns.show', $campaign) }}" class="btn btn-sm btn-info">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.campaigns.edit', $campaign->id) }}" class="btn btn-outline-primary">
+                                <a href="{{ route('admin.campaigns.edit', $campaign) }}" class="btn btn-sm btn-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
-                                <button class="btn btn-outline-danger" onclick="confirmDelete({{ $campaign->id }})">
+                                <button type="button" class="btn btn-sm btn-danger" 
+                                        onclick="confirmDelete('{{ $campaign->id }}')">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -76,10 +68,7 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="7" class="text-center text-muted py-5">
-                            <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                            No campaigns found. <a href="{{ route('admin.campaigns.create') }}">Create your first campaign</a>
-                        </td>
+                        <td colspan="5" class="text-center py-4">No campaigns found</td>
                     </tr>
                     @endforelse
                 </tbody>
@@ -111,6 +100,17 @@
             </div>
         </div>
     </div>
+</div>
+@endsection
+
+@section('scripts')
+<script>
+function confirmDelete(campaignId) {
+    document.getElementById('deleteForm').action = '/admin/campaigns/' + campaignId;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+@endsection
 </div>
 @endsection
 
