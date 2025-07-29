@@ -10,15 +10,18 @@ class Campaign extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'title',
-        'description',
-        'category',
-        'target_amount',
-        'collected_amount',
-        'status',
-        'is_active',
-    ];
+ protected $fillable = [
+    'title',
+    'description',
+    'category',
+    'target_amount',
+    'image',
+    'collected_amount',
+    'status',
+    'is_active',
+];
+
+
 
     protected $casts = [
         'target_amount' => 'decimal:2',
