@@ -2,84 +2,92 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
 
 class CampaignController extends Controller
 {
-    private function getEnumValues($table, $column)
-    {
-        $type = DB::select("SHOW COLUMNS FROM {$table} WHERE Field = ?", [$column])[0]->Type;
-
-        preg_match('/enum\((.*)\)/', $type, $matches);
-
-        return collect(explode(',', $matches[1]))
-            ->map(fn($value) => trim($value, "'"))
-            ->toArray();
-    }
-
     public function index()
     {
-        $campaigns = Campaign::all();
-        return view('campaign.index', compact('campaigns'));
+        $campaigns = Campaign::latest()->paginate(10);
+        return view('admin.campaigns.index', compact('campaigns'));
     }
 
-   
-
-    public function store(Request $request)
+    public function create()
     {
-        $categories = $this->getEnumValues('campaigns', 'category');
+        return view('admin.campaigns.create');
+    }
 
-        $validated = $request->validate([
-            'title'           => 'required',
-            'description'     => 'required',
-            'category'        => ['required', Rule::in($categories)],
-            'target_amount'   => 'required|numeric',
-            'image'           => 'nullable|string',
-            'status'          => 'required|in:active,completed,inactive',
-            'is_active'       => 'nullable|boolean',
+  public function store(Request $request)
+{
+    $validatedData = $request->validate([
+        'title' => 'required|max:255',
+        'description' => 'required',
+        'target_amount' => 'required|numeric',
+        'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        'category' => 'required'
+    ]);
+
+    if ($request->file('image')) {
+        $image = $request->file('image')->store('campaign-images', 'public');
+        $validatedData['image'] = $image;
+    }
+
+    // Tambahan default
+    $validatedData['collected_amount'] = 0;
+    $validatedData['status'] = 'active';
+    $validatedData['is_active'] = true;
+
+    Campaign::create($validatedData);
+
+    return redirect()->route('admin.campaigns.index')
+        ->with('success', 'Campaign created successfully');
+}
+
+
+
+    public function edit(Campaign $campaign)
+    {
+        return view('campaign.edit', compact('campaign'));
+    }
+
+    public function update(Request $request, Campaign $campaign)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'target_amount' => 'required|numeric',
+            'end_date' => 'required|date',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'category' => 'required'
         ]);
 
-        Campaign::create($validated);
+        if ($request->file('image')) {
+            if ($campaign->image) {
+                Storage::disk('public')->delete($campaign->image);
+            }
+            $image = $request->file('image')->store('campaign-images', 'public');
+            $validatedData['image'] = $image;
+        }
 
-        return redirect()->route('campaign.index')->with('success', 'Campaign berhasil ditambah!');
+        $validatedData['slug'] = Str::slug($validatedData['title']);
+        $campaign->update($validatedData);
+
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign updated successfully');
     }
 
-    public function edit($id)
+    public function destroy(Campaign $campaign)
     {
-        $campaign = Campaign::findOrFail($id);
-        $categories = $this->getEnumValues('campaigns', 'category');
-
-        return view('campaign.edit', compact('campaign', 'categories'));
-    }
-
-    public function update(Request $request, $id)
-    {
-        $categories = $this->getEnumValues('campaigns', 'category');
-
-        $validated = $request->validate([
-            'title'           => 'required',
-            'description'     => 'required',
-            'category'        => ['required', Rule::in($categories)],
-            'target_amount'   => 'required|numeric',
-            'image'           => 'nullable|string',
-            'status'          => 'required|in:active,completed,inactive',
-            'is_active'       => 'nullable|timestamp',
-        ]);
-
-        $campaign = Campaign::findOrFail($id);
-        $campaign->update($validated);
-
-        return redirect()->route('campaign.index')->with('success', 'Campaign berhasil diupdate!');
-    }
-
-    public function destroy($id)
-    {
-        $campaign = Campaign::findOrFail($id);
+        if ($campaign->image) {
+            Storage::disk('public')->delete($campaign->image);
+        }
         $campaign->delete();
 
-        return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-    }}
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign deleted successfully');
+    }
+}
