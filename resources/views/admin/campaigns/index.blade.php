@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-bullhorn me-2"></i>Manage Campaigns</h2>
-    <a href="{{ route('admin.campaigns.create') }}" class="btn btn-primary">
+    <a href="{{ route('campaign.create') }}" class="btn btn-primary">
         <i class="fas fa-plus me-2"></i>Add New Campaign
     </a>
 </div>
@@ -65,7 +65,7 @@
                                 <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-info" target="_blank">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.campaigns.edit', $campaign->id) }}" class="btn btn-outline-primary">
+                                <a href="{{ route('campaign.edit', $campaign->id) }}" class="btn btn-outline-primary">
                                     <i class="fas fa-edit"></i>
                                 </a>
                                 <button class="btn btn-outline-danger" onclick="confirmDelete({{ $campaign->id }})">
@@ -78,7 +78,7 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-5">
                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                            No campaigns found. <a href="{{ route('admin.campaigns.create') }}">Create your first campaign</a>
+                            No campaigns found. <a href="{{ route('campaign.create') }}">Create your first campaign</a>
                         </td>
                     </tr>
                     @endforelse
@@ -122,7 +122,3 @@ function confirmDelete(campaignId) {
 }
 </script>
 @endsection
-<<<<<<< HEAD
-=======
-
->>>>>>> 8307f317550bfdccd084872a371fe92fce6c2161

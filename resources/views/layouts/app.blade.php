@@ -318,7 +318,7 @@
                                 <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('campaign.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Admin Panel</a></li>
+                                <li><a class="dropdown-item" href="{{ route('admin.campaigns.index') }}"><i class="fas fa-tachometer-alt me-2"></i>Admin Panel</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="{{ route('logout') }}" 

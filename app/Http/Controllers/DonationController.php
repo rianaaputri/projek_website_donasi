@@ -18,6 +18,25 @@ class DonationController extends Controller
         $this->midtrans = $midtrans;
     }
 
+
+
+public function index()
+{
+    $donations = Donation::latest()->paginate(10); // atau ->get() kalau tidak pakai pagination
+
+    $campaigns = Campaign::all(); // kalau bagian filter butuh data campaign
+
+    $stats = [
+        'total_donations' => Donation::sum('amount'),
+        'success_donations' => 0,
+        'pending_donations' => 0,
+        'today_donations' => Donation::whereDate('created_at', today())->sum('amount'),
+    ];
+
+    return view('admin.donation.index', compact('donations', 'campaigns', 'stats'));
+}
+
+
     /**
      * Show the form for creating a new donation for a specific campaign.
      * Method ini dipanggil oleh route 'donation.create'.
@@ -34,7 +53,7 @@ class DonationController extends Controller
         }
 
         // Memuat view 'donation.form' yang Anda miliki di Canvas
-        return view('donation.create', compact('campaign'));
+        return view('admin.donation.create', compact('campaign'));
     }
 
     public function store(Request $request)
