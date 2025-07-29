@@ -15,7 +15,14 @@ use App\Http\Controllers\{
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/campaign', [CampaignController::class, 'index'])->name('campaign.index');
+Route::get('/campaigns', [CampaignController::class, 'index'])->name('admin.campaigns.index');
+Route::post('/campaigns', [CampaignController::class, 'store'])->name('admin.campaigns.store');
+Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaign.create');
+Route::get('/campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
+Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
+Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+;
+
 // Menggunakan HomeController::showCampaign sesuai definisi Anda
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
@@ -28,7 +35,8 @@ Route::middleware('guest')->group(function () {
 });
 
 // Donation Routes (Public) - Ini adalah rute untuk menampilkan form donasi
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::get('/donation', [DonationController::class, 'index'])->name('donation.index');
+Route::get('/donation/create/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::post('/donation', [DonationController::class, 'store'])->name('donation.store');
 
 // User Authenticated Routes
@@ -88,12 +96,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
     });
 
-    // Campaign (Create/Edit/Delete)
-    Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
-    Route::post('/campaign', [CampaignController::class, 'store'])->name('campaign.store');
-    Route::get('/campaign/{id}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
-    Route::put('/campaign/{id}', [CampaignController::class, 'update'])->name('campaign.update');
-    Route::delete('/campaign/{id}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+
 });
 
 // Admin Routes
