@@ -11,9 +11,9 @@ class AdminSeeder extends Seeder
     public function run()
     {
         DB::table('admins')->insert([
-            'name' => 'Silva Admin',
-            'email' => 'admin@silva.com',
-            'password' => Hash::make('password123'), // bcrypt otomatis
+            'name' => 'fatma',
+            'email' => 'fatma@gmail.com',
+            'password' => Hash::make('123456'), 
             'email_verified_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),
