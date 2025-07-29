@@ -138,6 +138,8 @@ Route::get('/donation-success/{id}', [DonationController::class, 'success'])->na
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 
+// Cek status donasi via AJAX polling
+Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');

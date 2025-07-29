@@ -24,6 +24,12 @@ class DonationController extends Controller
         return view('donation.form', compact('campaign'));
     }
 
+   public function create($campaignId)
+{
+    $campaign = Campaign::findOrFail($campaignId); 
+    return view('donation.create', compact('campaign')); 
+}
+
     public function store(Request $request)
     {
         $request->validate([
@@ -105,4 +111,5 @@ class DonationController extends Controller
         'donors' => $donation->campaign->donations()->count()
     ]);
 }
+
 }

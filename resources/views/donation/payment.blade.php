@@ -32,4 +32,20 @@
         });
     });
 </script>
+<script>
+    function checkStatus() {
+        fetch("{{ route('donation.checkStatus', $donation->id) }}")
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = "{{ route('donation.success', $donation->id) }}";
+                } else {
+                    setTimeout(checkStatus, 3000); // cek lagi setelah 3 detik
+                }
+            });
+    }
+
+    checkStatus(); // mulai pengecekan setelah Snap dijalankan
+</script>
+
 @endpush

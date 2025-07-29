@@ -22,7 +22,7 @@ return new class extends Migration
             $table->string('transaction_id')->unique()->nullable();
             $table->string('midtrans_order_id')->unique()->nullable();
             $table->json('midtrans_response')->nullable();
-            $table->timestamp('paid_at')->nullable();
+            $table->timestamp('paid_at')->nullable();                                               
             $table->timestamps();
         });
     }
