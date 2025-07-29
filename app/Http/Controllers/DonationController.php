@@ -131,4 +131,5 @@ class DonationController extends Controller
             'donors' => $donation->campaign->donations()->count()
         ]);
     }
+
 }
