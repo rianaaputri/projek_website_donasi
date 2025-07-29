@@ -139,7 +139,8 @@
                     </div>
                     <div class="row text-center">
                         <div class="col-4">
-                            <h6 class="text-success">{{ $donation->campaign->formatted_collected }}</h6>
+                          <h6 class="text-success">{{ $donation->campaign->formatted_collected }}</h6>
+
                             <small class="text-muted">Terkumpul</small>
                         </div>
                         <div class="col-4">

@@ -145,6 +145,8 @@ Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->na
 Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
+
 
 
 // Midtrans Callback (dari dashboard Midtrans)

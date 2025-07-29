@@ -2,9 +2,10 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Database\Eloquent\Casts\Attribute;
 class Campaign extends Model
 {
     use HasFactory;
@@ -31,23 +32,34 @@ class Campaign extends Model
     }
 
     // Progress %
-    public function getProgressPercentageAttribute()
-    {
-        if ($this->target_amount == 0) {
-            return 0;
-        }
-        return min(100, ($this->collected_amount / $this->target_amount) * 100);
+   public function getProgressPercentageAttribute()
+{
+    if ($this->target_amount == 0) {
+        return 0;
     }
+
+    $total = $this->donations()
+        ->where('payment_status', 'success')
+        ->sum('amount');
+
+    return min(100, ($total / $this->target_amount) * 100);
+}
+
 
     public function getFormattedTargetAttribute()
     {
         return 'Rp ' . number_format($this->target_amount, 0, ',', '.');
     }
 
-    public function getFormattedCollectedAttribute()
-    {
-        return 'Rp ' . number_format($this->collected_amount, 0, ',', '.');
-    }
+   public function getFormattedCollectedAttribute()
+{
+    $total = $this->donations()
+        ->where('payment_status', 'success')
+        ->sum('amount');
+
+    return 'Rp ' . number_format($total, 0, ',', '.');
+}
+
 
     public function scopeActive($query)
     {
@@ -63,14 +75,15 @@ class Campaign extends Model
             $this->update(['status' => 'completed']);
         }
     }
-    public function create($campaignId)
+public function getSuccessfulDonorCountAttribute()
 {
-    $campaign = Campaign::findOrFail($campaignId);
-    return view('donations.create', compact('campaign'));
+    return $this->donations()->where('payment_status', 'success')->count();
 }
+
+   
 public function daysPassed()
 {
-    return now()->diffInDays($this->created_at);
+    return now()->diffInDays($this->created_at ?? now());
 }
 
 public function totalDays()
@@ -84,5 +97,24 @@ public function daysProgressPercentage()
     if ($totalDays == 0) return 0;
     return round(($this->daysPassed() / $totalDays) * 100);
 }
+public function getDaysPassedAttribute()
+{
+    return now()->diffInDays($this->created_at);
+}
 
+public function getDaysLeftAttribute()
+{
+    if (!$this->end_date) {
+        return null;
+    }
+
+    $today = Carbon::today();
+    $end = Carbon::parse($this->end_date);
+
+    if ($today->gt($end)) {
+        return 0;
+    }
+
+    return $today->diffInDays($end);
+}
 }
