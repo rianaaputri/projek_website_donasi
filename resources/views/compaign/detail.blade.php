@@ -21,15 +21,14 @@
                          alt="{{ $campaign->title }}"
                          style="height: 400px; object-fit: cover;">
                 @else
-                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" 
-                         style="height: 400px;">
+                    <div class="card-img-top d-flex align-items-center justify-content-center bg-light" style="height: 400px;">
                         <i class="fas fa-image text-muted" style="font-size: 5rem;"></i>
                     </div>
                 @endif
                 
                 <div class="card-body">
                     <div class="mb-3">
-                        <span class="badge bg-primary fs-6">{{ $campaign->category }}</span>
+                        <span class="badge bg-primary fs-6">{{ $campaign->category ?? 'Umum' }}</span>
                         @if($campaign->status === 'completed')
                             <span class="badge bg-success fs-6 ms-2">
                                 <i class="fas fa-check me-1"></i>Selesai
@@ -43,7 +42,6 @@
                     
                     <h1 class="card-title h2 mb-4">{{ $campaign->title }}</h1>
                     
-                    <!-- Campaign Description -->
                     <div class="mb-4">
                         <h4>Deskripsi Campaign</h4>
                         <div class="text-muted" style="line-height: 1.8;">
@@ -53,12 +51,11 @@
                 </div>
             </div>
             
-            <!-- Recent Donors Section -->
+            <!-- Recent Donors -->
             <div class="card shadow-sm mt-4">
                 <div class="card-header">
                     <h5 class="mb-0">
-                        <i class="fas fa-users me-2"></i>
-                        Donatur Terbaru ({{ $recentDonors->count() }})
+                        <i class="fas fa-users me-2"></i> Donatur Terbaru ({{ $recentDonors->count() }})
                     </h5>
                 </div>
                 <div class="card-body">
@@ -77,7 +74,7 @@
                                             <i class="fas fa-user"></i>
                                         </div>
                                         <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ $donation->donor_name }}</h6>
+                                            <h6 class="mb-1">{{ $donation->donor_name ?? 'Anonim' }}</h6>
                                             <div class="text-success fw-bold">{{ $donation->formatted_amount }}</div>
                                             <small class="text-muted">{{ $donation->created_at->diffForHumans() }}</small>
                                             @if($donation->comment)
@@ -99,20 +96,22 @@
         <div class="col-lg-4">
             <div class="card shadow-sm sticky-top" style="top: 20px;">
                 <div class="card-body">
-                    <!-- Progress Section -->
                     <div class="mb-4">
+                        @php
+                            $progress = $campaign->target > 0 
+                                ? ($campaign->collected / $campaign->target) * 100 
+                                : 0;
+                        @endphp
                         <div class="d-flex justify-content-between align-items-center mb-2">
                             <h5 class="mb-0">Progress Donasi</h5>
-                            <span class="badge bg-primary">{{ number_format($campaign->progress_percentage, 1) }}%</span>
+                            <span class="badge bg-primary">{{ number_format($progress, 1) }}%</span>
                         </div>
-                        
                         <div class="progress mb-3" style="height: 12px;">
                             <div class="progress-bar bg-success" 
                                  role="progressbar" 
-                                 style="width: {{ $campaign->progress_percentage }}%">
+                                 style="width: {{ min($progress, 100) }}%">
                             </div>
                         </div>
-                        
                         <div class="row text-center">
                             <div class="col-6">
                                 <h4 class="text-success mb-1">{{ $campaign->formatted_collected }}</h4>
@@ -124,28 +123,18 @@
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Donation Stats -->
-                    <div class="row text-center mb-4">
-                        <div class="col-6">
-                            <div class="bg-light p-3 rounded">
-                                <h5 class="mb-1">{{ $campaign->donations->count() }}</h5>
-                                <small class="text-muted">Donatur</small>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="bg-light p-3 rounded">
-                                <h5 class="mb-1">{{ $campaign->created_at->diffInDays(now()) }}</h5>
-                                <small class="text-muted">Hari berjalan</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Donation Button -->
+                    <div class="progress-info">
+    <p><strong>{{ $daysPassed }}</strong> hari berjalan dari <strong>{{ $totalDays }}</strong> hari</p>
+    <p>Progress Waktu: {{ $daysPercentage }}%</p>
+</div>
+
+</div>
+
+
+                    <!-- Button Donasi -->
                     @if($campaign->status === 'active' && $campaign->is_active)
                         <div class="d-grid">
-                            <a href="{{ route('donation.create', $campaign->id) }}" 
-                               class="btn btn-success btn-lg">
+                            <a href="{{ route('donation.create', $campaign->id) }}" class="btn btn-success btn-lg">
                                 <i class="fas fa-heart me-2"></i>Donasi Sekarang
                             </a>
                         </div>
@@ -156,7 +145,7 @@
                             </button>
                         </div>
                     @endif
-                    
+
                     <!-- Share Buttons -->
                     <div class="mt-4">
                         <h6 class="mb-3">Bagikan Campaign:</h6>
@@ -178,6 +167,7 @@
                             </a>
                         </div>
                     </div>
+
                 </div>
             </div>
         </div>

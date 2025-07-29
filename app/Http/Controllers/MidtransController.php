@@ -4,111 +4,53 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Donation;
-use App\Models\Campaign;
-use App\Services\MidtransService;
 use Illuminate\Support\Facades\Log;
+use Midtrans\Notification;
 
 class MidtransController extends Controller
 {
-    protected $midtransService;
-    
-    public function __construct(MidtransService $midtransService)
-    {
-        $this->midtransService = $midtransService;
-    }
-    
     public function callback(Request $request)
     {
-        try {
-            $notification = $this->midtransService->handleNotification();
-            
-            $orderId = $notification->order_id;
-            $transactionStatus = $notification->transaction_status;
-            $paymentType = $notification->payment_type;
-            $fraudStatus = isset($notification->fraud_status) ? $notification->fraud_status : null;
-            
-            Log::info('Midtrans Callback', [
-                'order_id' => $orderId,
-                'payment_status' => $transactionStatus,
-                'payment_type' => $paymentType
-            ]);
-            
-            $donation = Donation::where('order_id', $orderId)->first();
-            
-            if (!$donation) {
-                Log::warning('Donation not found for order_id: ' . $orderId);
-                return response('Donation not found', 404);
-            }
-            
-            if ($transactionStatus == 'capture') {
-                if ($paymentType == 'credit_card') {
-                    if ($fraudStatus == 'challenge') {
-                        $donation->update([
-                            'payment_status' => 'pending',
-                            'payment_type' => $paymentType
-                        ]);
-                    } else {
-                        $donation->update([
-                            'payment_status' => 'success',
-                            'payment_type' => $paymentType
-                        ]);
-                        $this->updateCampaignTotal($donation);
-                    }
-                }
-            } elseif ($transactionStatus == 'settlement') {
-                $donation->update([
-                    'payment_status' => 'success',
-                    'payment_type' => $paymentType
-                ]);
-                $this->updateCampaignTotal($donation);
-                
-            } elseif ($transactionStatus == 'pending') {
-                $donation->update([
-                    'payment_status' => 'pending',
-                    'payment_type' => $paymentType
-                ]);
-                
-            } elseif ($transactionStatus == 'deny') {
-                $donation->update([
-                    'payment_status' => 'failed',
-                    'payment_type' => $paymentType
-                ]);
-                
-            } elseif ($transactionStatus == 'expire') {
-                $donation->update([
-                    'payment_status' => 'failed',
-                    'payment_type' => $paymentType
-                ]);
-                
-            } elseif ($transactionStatus == 'cancel') {
-                $donation->update([
-                    'payment_status' => 'cancelled',
-                    'payment_type' => $paymentType
-                ]);
-            }
-            
-            return response('OK', 200);
-            
-        } catch (\Exception $e) {
-            Log::error('Midtrans Callback Error: ' . $e->getMessage());
-            return response('Error', 500);
+        // Inisialisasi notifikasi dari Midtrans
+        $notif = new Notification();
+
+        // Ambil data penting
+        $transaction = $notif->transaction_status;
+        $type = $notif->payment_type;
+        $fraud = $notif->fraud_status;
+        $order_id = $notif->order_id;
+
+        // Cari donasi berdasarkan midtrans_order_id
+        $donation = Donation::where('midtrans_order_id', $order_id)->first();
+
+        if (!$donation) {
+            Log::error('Donation not found for order ID: ' . $order_id);
+            return response()->json(['message' => 'Donation not found'], 404);
         }
-    }
-    
-    private function updateCampaignTotal($donation)
-    {
-        $campaign = Campaign::find($donation->campaign_id);
-        if ($campaign) {
-            $totalTerkumpul = Donation::where('campaign_id', $donation->campaign_id)
-                                    ->where('payment_status', 'success')
-                                    ->sum('nominal');
-            
-            $campaign->update(['terkumpul' => $totalTerkumpul]);
-            
-            // Check if campaign target is reached
-            if ($totalTerkumpul >= $campaign->target) {
-                $campaign->update(['payment_status' => 'completed']);
+
+        // Log data status yang masuk
+        Log::info('Midtrans Callback for Order ID: ' . $order_id);
+        Log::info('Transaction Status: ' . $transaction);
+        Log::info('Payment Type: ' . $type);
+        Log::info('Fraud Status: ' . $fraud);
+
+        // Update status pembayaran
+        if ($transaction == 'capture') {
+            if ($type == 'credit_card') {
+                $donation->payment_status = ($fraud == 'challenge') ? 'pending' : 'success';
             }
+        } elseif ($transaction == 'settlement') {
+            $donation->payment_status = 'success';
+        } elseif ($transaction == 'pending') {
+            $donation->payment_status = 'pending';
+        } elseif (in_array($transaction, ['deny', 'expire', 'cancel'])) {
+            $donation->payment_status = 'failed';
         }
+
+        $donation->save();
+
+        Log::info('Payment status updated: ' . $donation->payment_status);
+
+        return response()->json(['message' => 'Payment status updated'], 200);
     }
 }

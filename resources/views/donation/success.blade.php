@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    setInterval(updateStatus, 5000); // setiap 5 detik
+    setInterval(updateStatus, 2000); // setiap 5 detik
 });
 </script>
 @endpush

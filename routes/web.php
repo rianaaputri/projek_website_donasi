@@ -139,6 +139,14 @@ Route::get('/debug-auth', function () {
     ]);
 });
 
+//midtrans callback route
+// Proses Pembayaran Donasi
+Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
+Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
+Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
+Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+
+
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 
