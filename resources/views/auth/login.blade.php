@@ -345,7 +345,7 @@
       </div>
     @endif
 
-    <form method="POST" action="/admin/login" onsubmit="return validateForm()" id="loginForm">
+    <form method="POST" action="{{ route('login') }}" onsubmit="return validateForm()" id="loginForm">
       @csrf
 
       <!-- Email Field -->
@@ -393,7 +393,7 @@
 
       <!-- Register Link -->
       <div class="register-link">
-        <p>Belum memiliki akun? <a href="/auth/user-register" onclick="return validateRegistration()">Daftar sekarang</a></p>
+        <p>Belum memiliki akun? <a href="/register" onclick="return validateRegistration()">Daftar sekarang</a></p>
       </div>
     </form>
   </div>

@@ -29,7 +29,7 @@ class MidtransController extends Controller
             
             Log::info('Midtrans Callback', [
                 'order_id' => $orderId,
-                'status' => $transactionStatus,
+                'payment_status' => $transactionStatus,
                 'payment_type' => $paymentType
             ]);
             
@@ -44,12 +44,12 @@ class MidtransController extends Controller
                 if ($paymentType == 'credit_card') {
                     if ($fraudStatus == 'challenge') {
                         $donation->update([
-                            'status' => 'pending',
+                            'payment_status' => 'pending',
                             'payment_type' => $paymentType
                         ]);
                     } else {
                         $donation->update([
-                            'status' => 'success',
+                            'payment_status' => 'success',
                             'payment_type' => $paymentType
                         ]);
                         $this->updateCampaignTotal($donation);
@@ -57,32 +57,32 @@ class MidtransController extends Controller
                 }
             } elseif ($transactionStatus == 'settlement') {
                 $donation->update([
-                    'status' => 'success',
+                    'payment_status' => 'success',
                     'payment_type' => $paymentType
                 ]);
                 $this->updateCampaignTotal($donation);
                 
             } elseif ($transactionStatus == 'pending') {
                 $donation->update([
-                    'status' => 'pending',
+                    'payment_status' => 'pending',
                     'payment_type' => $paymentType
                 ]);
                 
             } elseif ($transactionStatus == 'deny') {
                 $donation->update([
-                    'status' => 'failed',
+                    'payment_status' => 'failed',
                     'payment_type' => $paymentType
                 ]);
                 
             } elseif ($transactionStatus == 'expire') {
                 $donation->update([
-                    'status' => 'failed',
+                    'payment_status' => 'failed',
                     'payment_type' => $paymentType
                 ]);
                 
             } elseif ($transactionStatus == 'cancel') {
                 $donation->update([
-                    'status' => 'cancelled',
+                    'payment_status' => 'cancelled',
                     'payment_type' => $paymentType
                 ]);
             }
@@ -100,14 +100,14 @@ class MidtransController extends Controller
         $campaign = Campaign::find($donation->campaign_id);
         if ($campaign) {
             $totalTerkumpul = Donation::where('campaign_id', $donation->campaign_id)
-                                    ->where('status', 'success')
+                                    ->where('payment_status', 'success')
                                     ->sum('nominal');
             
             $campaign->update(['terkumpul' => $totalTerkumpul]);
             
             // Check if campaign target is reached
             if ($totalTerkumpul >= $campaign->target) {
-                $campaign->update(['status' => 'completed']);
+                $campaign->update(['payment_status' => 'completed']);
             }
         }
     }

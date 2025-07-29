@@ -9,10 +9,12 @@ use Illuminate\Notifications\Messages\MailMessage;
 class AppServiceProvider extends ServiceProvider
 {
 
-    public function register(): void
-    {
-        //
-    }
+    public function register()
+{
+    $this->app->singleton(\App\Services\MidtransService::class, function ($app) {
+        return new \App\Services\MidtransService();
+    });
+}
 
     /**
      * Bootstrap any application services.
@@ -26,4 +28,5 @@ class AppServiceProvider extends ServiceProvider
             ->action('Verifikasi Sekarang', $url);
         });
     }
+    
 }

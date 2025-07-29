@@ -1,0 +1,41 @@
+<?php
+namespace App\Services;
+
+use Midtrans\Snap;
+use Midtrans\Config;
+
+class MidtransService
+{
+    public function __construct()
+    {
+        Config::$serverKey = config('midtrans.server_key');
+        Config::$isProduction = config('midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+    }
+
+      public function getSnapToken(array $params)
+    {
+        return Snap::getSnapToken($params);
+    }
+
+    public function createSnapToken($donation)
+    {
+        $params = [
+            'transaction_details' => [
+                'order_id' => $donation->midtrans_order_id,
+                'gross_amount' => (int) $donation->amount,
+            ],
+            'customer_details' => [
+                'first_name' => $donation->donor_name,
+                'email' => $donation->donor_email,
+                'phone' => $donation->donor_phone,
+            ],
+            'callbacks' => [
+                'finish' => route('donation.success', $donation->id),
+            ],
+        ];
+
+    }
+}
+

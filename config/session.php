@@ -214,4 +214,18 @@ return [
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
+    'lifetime' => env('SESSION_LIFETIME', 120), // dalam menit
+    'expire_on_close' => false,
+    'encrypt' => false,
+    'files' => storage_path('framework/sessions'),
+    'connection' => env('SESSION_CONNECTION', null),
+    'table' => 'sessions',
+    'store' => env('SESSION_STORE', null),
+    'lottery' => [2, 100],
+    'cookie' => env('SESSION_COOKIE', 'laravel_session'),
+    'path' => '/',
+    'domain' => env('SESSION_DOMAIN', null),
+    'secure' => env('SESSION_SECURE_COOKIE', false),
+    'http_only' => true,
+    'same_site' => 'lax',
 ];
