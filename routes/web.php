@@ -23,7 +23,6 @@ Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name
 Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
 ;
 
-// Menggunakan HomeController::showCampaign sesuai definisi Anda
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
 // Guest Routes (Login/Register)
@@ -31,7 +30,7 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [UserController::class, 'showLogin'])->name('login');
     Route::post('/login', [UserController::class, 'login']);
     Route::get('/register', [UserController::class, 'showRegister'])->name('register');
-    Route::post('/register', [UserController::class, 'register']);
+    Route::post('/register', [UserController::class, 'register']); 
 });
 
 // Donation Routes (Public) - Ini adalah rute untuk menampilkan form donasi
