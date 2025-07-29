@@ -122,3 +122,11 @@ function confirmDelete(campaignId) {
 }
 </script>
 @endsection
+@section('scripts')
+<script>
+function confirmDelete(campaignId) {
+    document.getElementById('deleteForm').action = '/admin/campaigns/' + campaignId;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+@endsection
