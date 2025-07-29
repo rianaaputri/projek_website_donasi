@@ -175,7 +175,7 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <div class="sidebar-header">
-            <h3><i class="fas fa-heart me-2"></i>DonationApp</h3>
+            <h3><i class="fas fa-heart me-2"></i>Kindify.id</h3>
             <p>Admin Panel</p>
             <!-- Display admin name -->
             @auth('admin')
