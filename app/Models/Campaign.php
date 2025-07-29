@@ -63,4 +63,26 @@ class Campaign extends Model
             $this->update(['status' => 'completed']);
         }
     }
+    public function create($campaignId)
+{
+    $campaign = Campaign::findOrFail($campaignId);
+    return view('donations.create', compact('campaign'));
+}
+public function daysPassed()
+{
+    return now()->diffInDays($this->created_at);
+}
+
+public function totalDays()
+{
+    return $this->created_at->diffInDays($this->end_date);
+}
+
+public function daysProgressPercentage()
+{
+    $totalDays = $this->totalDays();
+    if ($totalDays == 0) return 0;
+    return round(($this->daysPassed() / $totalDays) * 100);
+}
+
 }

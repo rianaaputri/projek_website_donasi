@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class CampaignController extends Controller
 {
@@ -26,11 +27,7 @@ class CampaignController extends Controller
         return view('campaign.index', compact('campaigns'));
     }
 
-    public function create()
-    {
-        $categories = $this->getEnumValues('campaigns', 'category');
-        return view('campaign.create', compact('categories'));
-    }
+   
 
     public function store(Request $request)
     {
@@ -85,17 +82,4 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-    }
-
-    public function show($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-        $donations = $campaign->donations()
-            ->where('payment_status', 'paid')
-            ->whereNotNull('message')
-            ->latest()
-            ->get();
-
-        return view('campaign.show', compact('campaign', 'donations'));
-    }
-}
+    }}

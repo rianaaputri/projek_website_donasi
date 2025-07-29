@@ -145,6 +145,15 @@
                         </div>
                         
                         <!-- Submit Button -->
+                         <div class="mb-4">
+    <label for="payment_method" class="form-label">Metode Pembayaran <span class="text-danger">*</span></label>
+    <select name="payment_method" id="payment_method" class="form-select" required>
+        <option value="">-- Pilih Metode --</option>
+        <option value="midtrans">Online (Midtrans)</option>
+        <option value="cash">Tunai (Langsung)</option>
+    </select>
+</div>
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
                             <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-secondary me-md-2">
                                 <i class="fas fa-arrow-left me-1"></i>Kembali
