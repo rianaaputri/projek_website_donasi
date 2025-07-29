@@ -17,7 +17,7 @@ class UserController extends Controller
         return view('auth.user-register');
     }
 
-    // Handle Register - INI YANG DIPERBAIKI!
+    // Handle Register
     public function register(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -40,13 +40,12 @@ class UserController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        // Buat user baru (email_verified_at akan null otomatis)
+        // Buat user baru
         $user = User::create([
             'name'     => $request->name,
             'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'role'     => 'user',
-            // JANGAN set email_verified_at, biarkan null
+            'role'     => 'user', // Hanya user biasa
         ]);
 
         // Login user otomatis setelah registrasi
@@ -55,7 +54,7 @@ class UserController extends Controller
         // Trigger event untuk kirim email verifikasi
         event(new Registered($user));
 
-        // PERBAIKAN UTAMA: Redirect ke verification.notice, BUKAN ke login!
+        // Redirect ke verification notice
         return redirect()->route('verification.notice')
             ->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi. 📧');
     }
@@ -66,7 +65,7 @@ class UserController extends Controller
         return view('auth.login');
     }
 
-    // Handle Login - DIPERBAIKI!
+    // Handle Login - FIXED: Hanya untuk user biasa
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -78,40 +77,34 @@ class UserController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
-        // Gunakan Auth::attempt() Laravel standard
         $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            $user = Auth::user();
+        // FIXED: Gunakan guard web secara explicit
+        if (Auth::guard('web')->attempt($credentials, $request->filled('remember'))) {
+            $user = Auth::guard('web')->user();
 
             // Cek email verification
             if (!$user->hasVerifiedEmail()) {
-                // JANGAN logout, biar bisa akses halaman verification
                 return redirect()->route('verification.notice')
                     ->with('error', 'Email kamu belum diverifikasi! Cek inbox dulu ya 📮');
             }
 
-            // Login berhasil, redirect berdasarkan role
+            // FIXED: User biasa selalu redirect ke home
             $request->session()->regenerate();
-            
-            if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.dashboard'));
-            } else {
-                return redirect()->intended(route('home'));
-            }
+            return redirect()->intended('/');
         }
 
         return back()->with('error', 'Email atau password salah!')->withInput();
     }
 
-    // Handle Logout - DIPERBAIKI!
+    // Handle Logout
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         
-        return redirect()->route('login')->with('success', 'Berhasil logout! 👋');
+        return redirect('/')->with('success', 'Berhasil logout dari sistem');
     }
 }

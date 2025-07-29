@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
+use Illuminate\Http\Request; // Pastikan ini di-import
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
-    MidtransController,
+    MidtransController, // Pastikan ini di-import jika digunakan
     CampaignController,
     UserController,
     ProfileController,
@@ -16,6 +16,7 @@ use App\Http\Controllers\{
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign', [CampaignController::class, 'index'])->name('campaign.index');
+// Menggunakan HomeController::showCampaign sesuai definisi Anda
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
 // Guest Routes (Login/Register)
@@ -26,8 +27,7 @@ Route::middleware('guest')->group(function () {
     Route::post('/register', [UserController::class, 'register']);
 });
 
-// Donation Routes
-// Donation Routes (Public)
+// Donation Routes (Public) - Ini adalah rute untuk menampilkan form donasi
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::post('/donation', [DonationController::class, 'store'])->name('donation.store');
 
@@ -45,7 +45,6 @@ Route::middleware(['auth'])->group(function () {
         $request->fulfill(); // Tandai email sebagai terverifikasi
 
         // Opsional: Logout pengguna agar mereka harus login lagi
-        // Ini memastikan bahwa pengguna tidak secara otomatis masuk setelah verifikasi.
         auth()->guard('web')->logout();
 
         // Arahkan ke halaman login dengan pesan sukses
@@ -71,6 +70,16 @@ Route::middleware(['auth'])->group(function () {
             default => redirect('/'),
         };
     })->name('dashboard');
+
+    // Rute untuk halaman pembayaran donasi
+    // DILINDUNGI OLEH MIDDLEWARE 'auth'
+    Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])
+        ->name('donation.payment'); // Middleware 'auth' sudah diterapkan di group ini
+    
+    // Rute untuk halaman sukses pembayaran
+    Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
+    // Rute untuk check status Midtrans (biasanya dipanggil oleh webhook atau AJAX)
+    Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 });
 
 // Authenticated & Verified User Routes
@@ -103,7 +112,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
             $request->fulfill(); // Tandai email admin sebagai terverifikasi
 
             // Opsional: Logout admin agar mereka harus login lagi
-            // Pastikan guard yang digunakan sesuai ('admin' dalam kasus ini)
             auth()->guard('admin')->logout();
 
             // Arahkan ke halaman login admin dengan pesan sukses
@@ -138,10 +146,7 @@ Route::get('/donation-success/{id}', [DonationController::class, 'success'])->na
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 
-// Cek status donasi via AJAX polling
-Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 
-    

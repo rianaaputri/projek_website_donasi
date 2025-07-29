@@ -135,7 +135,7 @@
                         </div>
                         <div class="col-6">
                             <div class="bg-light p-3 rounded">
-                                <h5 class="mb-1">{{ $campaign->created_at->diffInDays(now()) }}</h5>
+                                <h5 class="mb-1">{{  (int) $campaign->created_at->diffInDays(now())}}</h5>
                                 <small class="text-muted">Hari berjalan</small>
                             </div>
                         </div>

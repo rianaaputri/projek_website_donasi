@@ -67,7 +67,7 @@ class CampaignController extends Controller
             'target_amount'   => 'required|numeric',
             'image'           => 'nullable|string',
             'status'          => 'required|in:active,completed,inactive',
-            'is_active'       => 'nullable|boolean',
+            'is_active'       => 'nullable|timestamp',
         ]);
 
         $campaign = Campaign::findOrFail($id);
@@ -82,29 +82,4 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-    }
-    public function show($id)
-{
-    $campaign = Campaign::findOrFail($id);
-
-    $start = Carbon::parse($campaign->start_date)->startOfDay();
-    $end = Carbon::parse($campaign->end_date)->endOfDay();
-    $today = Carbon::today();
-
-    $totalDays = $start->diffInDays($end) + 1;
-
-    if ($today->lt($start)) {
-        $daysPassed = 0;
-    } elseif ($today->gt($end)) {
-        $daysPassed = $totalDays;
-    } else {
-        $daysPassed = $start->diffInDays($today) + 1;
-    }
-
-    $daysPercentage = $totalDays > 0 ? round(($daysPassed / $totalDays) * 100, 1) : 0;
-
-    // Kirim ke view
-    return view('campaign.show', compact('campaign', 'totalDays', 'daysPassed', 'daysPercentage'));
-}
-
-}
+    }}

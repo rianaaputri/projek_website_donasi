@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Donation;
-use App\Models\Campaign;
+use App\Models\Campaign; // Pastikan ini di-import
 use App\Services\MidtransService;
-use Midtrans\Transaction;
+use Midtrans\Transaction; // Pastikan ini di-import jika digunakan
 
 class DonationController extends Controller
 {
@@ -18,17 +18,24 @@ class DonationController extends Controller
         $this->midtrans = $midtrans;
     }
 
-    public function showDonationForm($campaignId)
+    /**
+     * Show the form for creating a new donation for a specific campaign.
+     * Method ini dipanggil oleh route 'donation.create'.
+     *
+     * @param  \App\Models\Campaign  $campaign
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Campaign $campaign) // <-- Pastikan method ini ada dan namanya 'create'
     {
-        $campaign = Campaign::findOrFail($campaignId);
-        return view('donation.form', compact('campaign'));
-    }
+        // Pastikan campaign aktif sebelum menampilkan form donasi
+        if (!$campaign->is_active || $campaign->status !== 'active') {
+            return redirect()->route('campaign.show', $campaign->id)
+                             ->with('error', 'Campaign ini tidak aktif untuk donasi.');
+        }
 
-   public function create($campaignId)
-{
-    $campaign = Campaign::findOrFail($campaignId); 
-    return view('donation.create', compact('campaign')); 
-}
+        // Memuat view 'donation.form' yang Anda miliki di Canvas
+        return view('donation.create', compact('campaign'));
+    }
 
     public function store(Request $request)
     {
@@ -39,7 +46,7 @@ class DonationController extends Controller
             'donor_phone' => 'nullable|string|max:20',
             'amount' => 'required|numeric|min:10000',
             'message' => 'nullable|string|max:1000',
-            'is_anonymous' => 'nullable|boolean',
+            'is_anonymous' => 'nullable|boolean', // Validasi untuk checkbox
         ]);
 
         $donation = Donation::create([
@@ -49,7 +56,7 @@ class DonationController extends Controller
             'donor_phone' => $request->donor_phone,
             'amount' => $request->amount,
             'message' => $request->message,
-            'is_anonymous' => $request->is_anonymous ?? false,
+            'is_anonymous' => $request->has('is_anonymous') ? true : false, // Penanganan nilai checkbox
             'payment_status' => 'pending',
             'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
         ]);
@@ -69,7 +76,16 @@ class DonationController extends Controller
             'customer_details' => [
                 'first_name' => $donation->donor_name,
                 'email' => $donation->donor_email,
+                'phone' => $donation->donor_phone, // Tambahkan phone jika ada
             ],
+            'item_details' => [ // Penting untuk Midtrans
+                [
+                    'id' => $donation->campaign_id,
+                    'price' => $donation->amount,
+                    'quantity' => 1,
+                    'name' => 'Donasi untuk ' . $donation->campaign->title,
+                ]
+            ]
         ];
 
         $snapToken = $this->midtrans->getSnapToken($params);
@@ -82,34 +98,37 @@ class DonationController extends Controller
         $donation = Donation::findOrFail($id);
         return view('donation.success', compact('donation'));
     }
-
+      
     public function checkStatus($id)
-{
-    $donation = Donation::findOrFail($id);
+    {
+        $donation = Donation::findOrFail($id);
 
-    try {
-        $status = \Midtrans\Transaction::status($donation->midtrans_order_id);
+        try {
+            // Pastikan Midtrans\Transaction sudah di-import di atas
+            $status = Transaction::status($donation->midtrans_order_id);
 
-        if (in_array($status->transaction_status, ['settlement', 'capture'])) {
-            $donation->payment_status = 'success';
-        } elseif (in_array($status->transaction_status, ['expire', 'cancel', 'deny'])) {
-            $donation->payment_status = 'failed';
-        } else {
-            $donation->payment_status = 'pending';
+            if (in_array($status->transaction_status, ['settlement', 'capture'])) {
+                $donation->payment_status = 'success';
+            } elseif (in_array($status->transaction_status, ['expire', 'cancel', 'deny'])) {
+                $donation->payment_status = 'failed';
+            } else {
+                $donation->payment_status = 'pending';
+            }
+
+            $donation->save();
+
+            // PENTING: Update collected_amount di campaign setelah status donasi berubah
+            $donation->campaign->updateCollectedAmount(); 
+
+        } catch (\Exception $e) {
+            \Log::error('Midtrans status check failed: ' . $e->getMessage());
         }
 
-        $donation->save();
-
-    } catch (\Exception $e) {
-        \Log::error('Midtrans status check failed: ' . $e->getMessage());
+        return response()->json([
+            'status' => $donation->payment_status,
+            'progress' => $donation->campaign->progress_percentage,
+            'collected' => $donation->campaign->formatted_collected,
+            'donors' => $donation->campaign->donations()->count()
+        ]);
     }
-
-    return response()->json([
-        'status' => $donation->payment_status,
-        'progress' => $donation->campaign->progress_percentage,
-        'collected' => $donation->campaign->formatted_collected,
-        'donors' => $donation->campaign->donations()->count()
-    ]);
-}
-
 }

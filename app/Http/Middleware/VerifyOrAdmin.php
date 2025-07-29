@@ -9,25 +9,19 @@ use Symfony\Component\HttpFoundation\Response;
 
 class VerifyOrAdmin
 {
-    /**
-     * Handle an incoming request.
-     * 
-     * Admin bisa langsung masuk, user harus verified dulu
-     */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = Auth::user();
-        
-        // Kalo admin, langsung lanjut tanpa cek verifikasi
-        if ($user && $user->role === 'admin') {
+        // Jika user adalah admin (login dengan guard 'admin'), biarkan dia lewat tanpa verifikasi email user
+        if (Auth::guard('admin')->check()) {
             return $next($request);
         }
-        
-        // Kalo user biasa, harus verified dulu
-        if ($user && !$user->hasVerifiedEmail()) {
+
+        // Jika user adalah user biasa (login dengan guard 'web') dan belum verifikasi email
+        if (Auth::guard('web')->check() && !Auth::guard('web')->user()->hasVerifiedEmail()) {
             return redirect()->route('verification.notice');
         }
-        
+
+        // Lanjutkan jika user biasa sudah verifikasi atau admin
         return $next($request);
     }
 }
