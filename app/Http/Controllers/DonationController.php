@@ -45,7 +45,7 @@ class DonationController extends Controller
             'donor_email' => 'required|email',
             'donor_phone' => 'nullable|string|max:20',
             'amount' => 'required|numeric|min:10000',
-            'message' => 'nullable|string|max:1000',
+            'comment' => 'nullable|string|max:1000',
             'is_anonymous' => 'nullable|boolean', // Validasi untuk checkbox
         ]);
 
@@ -55,7 +55,7 @@ class DonationController extends Controller
             'donor_email' => $request->donor_email,
             'donor_phone' => $request->donor_phone,
             'amount' => $request->amount,
-            'message' => $request->message,
+            'comment' => $request->comment,
             'is_anonymous' => $request->has('is_anonymous') ? true : false, // Penanganan nilai checkbox
             'payment_status' => 'pending',
             'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),

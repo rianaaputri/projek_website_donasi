@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use App\Models\Donation;
 
 class CampaignController extends Controller
 {
@@ -82,4 +83,72 @@ class CampaignController extends Controller
         $campaign->delete();
 
         return redirect()->route('campaign.index')->with('success', 'Campaign berhasil dihapus!');
-    }}
+    }
+
+
+public function success($donationId)
+{
+    $donation = Donation::with('campaign.donations')->findOrFail($donationId);
+    $campaign = $donation->campaign;
+
+    // Filter hanya donasi sukses
+    $successfulDonations = $campaign->donations->where('payment_status', 'success');
+
+    $totalCollected = $successfulDonations->sum('amount');
+    $formattedCollected = 'Rp ' . number_format($totalCollected, 0, ',', '.');
+    $formattedTarget = 'Rp ' . number_format($campaign->target_amount, 0, ',', '.');
+
+    $progressPercentage = $campaign->target_amount > 0
+        ? min(100, ($totalCollected / $campaign->target_amount) * 100)
+        : 0;
+
+    $donorCount = $successfulDonations->count();
+
+    return view('donation.success', compact(
+        'donation',
+        'campaign',
+        'formattedCollected',
+        'formattedTarget',
+        'progressPercentage',
+        'donorCount'
+    ));
+}
+
+public function show($id)
+{
+    $campaign = Campaign::with(['donations' => function ($query) {
+        $query->where('payment_status', 'success');
+    }])->findOrFail($id);
+
+    $successfulDonations = $campaign->donations->count();
+
+    $formattedCollected = 'Rp ' . number_format($campaign->donations->sum('amount'), 0, ',', '.');
+    $formattedTarget = 'Rp ' . number_format($campaign->target_amount, 0, ',', '.');
+
+    $progressPercentage = $campaign->target_amount > 0
+        ? min(100, ($campaign->donations->sum('amount') / $campaign->target_amount) * 100)
+        : 0;
+
+    // Ambil donasi dengan komentar (tidak null)
+    $campaignComments = $campaign->donations
+        ->whereNotNull('comment')
+        ->sortByDesc('created_at');
+
+    // Donatur terbaru (max 10)
+    $recentDonors = $campaign->donations->sortByDesc('created_at')->take(10);
+
+    return view('campaigns.show', compact(
+        'campaign',
+        'formattedCollected',
+        'formattedTarget',
+        'progressPercentage',
+        'successfulDonations',
+        'recentDonors',
+        'campaignComments'
+    ));
+}
+
+
+
+
+}
