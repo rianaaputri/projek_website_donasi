@@ -15,13 +15,12 @@ use App\Http\Controllers\{
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/campaigns', [CampaignController::class, 'index'])->name('admin.campaigns.index');
+Route::get('/campaign', [CampaignController::class, 'index'])->name('admin.campaigns.index');
 Route::post('/campaigns', [CampaignController::class, 'store'])->name('admin.campaigns.store');
-Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaign.create');
-Route::get('/campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
-Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
-Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
-;
+Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
+Route::get('/campaign/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
+Route::put('/campaign/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
+Route::delete('/campaign/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
 
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
@@ -73,8 +72,7 @@ Route::middleware(['auth'])->group(function () {
         $user = auth()->user();
         return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
-            'user' => redirect()->route('user.dashboard'),
-            default => redirect('/'),
+            'user' => redirect()->route('/'),
         };
     })->name('dashboard');
 
@@ -154,5 +152,4 @@ Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStat
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 
-Route::resource('campaigns', CampaignController::class);
-
+Route::resource('campaigns', CampaignController::class); 
