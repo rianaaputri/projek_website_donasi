@@ -107,19 +107,21 @@
                         </div>
                         
                         <div class="progress mb-3" style="height: 12px;">
-                            <div class="progress-bar bg-success" 
-                                    role="progressbar" 
-                                    style="width: {{ $campaign->progress_percentage }}%">
-                            </div>
+                            <span class="badge bg-primary">{{ number_format($progressPercentage, 1) }}%</span>
+
+<div class="progress-bar bg-success" 
+    role="progressbar" 
+    style="width: {{ $progressPercentage }}%">
+</div>
                         </div>
                         
                         <div class="row text-center">
                             <div class="col-6">
-                                <h4 class="text-success mb-1">{{ $campaign->formatted_collected }}</h4>
+                                <h4 class="text-success mb-1">{{ $formattedCollected }}</h4>
                                 <small class="text-muted">Terkumpul</small>
                             </div>
                             <div class="col-6">
-                                <h4 class="text-primary mb-1">{{ $campaign->formatted_target }}</h4>
+                                <h4 class="text-primary mb-1">{{ $formattedTarget }}</h4>
                                 <small class="text-muted">Target</small>
                             </div>
                         </div>
@@ -157,20 +159,20 @@
 
                     <!-- Donation Stats -->
                     <div class="row text-center mt-4 mb-4">
-    <div class="col-6">
-        <div class="bg-light p-3 rounded">
-          <h6 class="text-warning">{{ $donation->campaign->donations->count() }}</h6>
-            <small class="text-muted">Donatur</small>
-        </div>
-    </div>
-    <div class="col-6">
-        <div class="bg-light p-3 rounded">
-           <h5 class="mb-1">{{ $campaign->days_passed }}</h5>
-            <small class="text-muted">Hari berjalan</small>
-        </div>
-    </div>
-</div>
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded">
+                              <h6 class="text-warning">{{ $donorCount }}</h6>
 
+                                <small class="text-muted">Donatur</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="bg-light p-3 rounded">
+                               <h5 class="mb-1">{{ $campaign->days_passed }}</h5>
+                                <small class="text-muted">Hari berjalan</small>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Donation Button -->
                     @if($campaign->status === 'active' && $campaign->is_active)

@@ -130,7 +130,7 @@
                                       rows="4" 
                                       placeholder="Tulis pesan atau doa untuk campaign ini...">{{ old('comment') }}</textarea>
                             @error('comment')
-                                <div class="invalid-feedback">{{ $message }}</div>
+                                <div class="invalid-feedback">{{ $massage }}</div>
                             @enderror
                         </div>
                         

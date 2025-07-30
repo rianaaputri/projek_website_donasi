@@ -5,8 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
+
 
 class CampaignController extends Controller
 {
@@ -97,7 +96,5 @@ class CampaignController extends Controller
         }
         $campaign->delete();
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign deleted successfully');
-    }
+
 }
