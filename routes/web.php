@@ -15,8 +15,14 @@ use App\Http\Controllers\{
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/campaign', [CampaignController::class, 'index'])->name('campaign.index');
-// Menggunakan HomeController::showCampaign sesuai definisi Anda
+Route::get('/campaigns', [CampaignController::class, 'index'])->name('admin.campaigns.index');
+Route::post('/campaigns', [CampaignController::class, 'store'])->name('admin.campaigns.store');
+Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaign.create');
+Route::get('/campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
+Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
+Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+;
+
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
 // Guest Routes (Login/Register)
@@ -24,11 +30,12 @@ Route::middleware('guest')->group(function () {
     Route::get('/login', [UserController::class, 'showLogin'])->name('login');
     Route::post('/login', [UserController::class, 'login']);
     Route::get('/register', [UserController::class, 'showRegister'])->name('register');
-    Route::post('/register', [UserController::class, 'register']);
+    Route::post('/register', [UserController::class, 'register']); 
 });
 
 // Donation Routes (Public) - Ini adalah rute untuk menampilkan form donasi
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::get('/donation', [DonationController::class, 'index'])->name('donation.index');
+Route::get('/donation/create/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::post('/donation', [DonationController::class, 'store'])->name('donation.store');
 
 // User Authenticated Routes
@@ -88,12 +95,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
     });
 
-    // Campaign (Create/Edit/Delete)
-    Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
-    Route::post('/campaign', [CampaignController::class, 'store'])->name('campaign.store');
-    Route::get('/campaign/{id}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
-    Route::put('/campaign/{id}', [CampaignController::class, 'update'])->name('campaign.update');
-    Route::delete('/campaign/{id}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+
 });
 
 // Admin Routes
@@ -151,4 +153,6 @@ Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStat
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
+
+Route::resource('campaigns', CampaignController::class);
 

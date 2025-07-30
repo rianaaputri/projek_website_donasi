@@ -54,7 +54,7 @@
                         <a class="nav-link {{ request()->routeIs('admin.campaigns*') ? 'active' : '' }}" href="{{ route('admin.campaigns.index') }}">
                             <i class="fas fa-bullhorn me-2"></i> Campaigns
                         </a>
-                        <a class="nav-link {{ request()->routeIs('admin.donations*') ? 'active' : '' }}" href="{{ route('admin.donations.index') }}">
+                        <a class="nav-link {{ request()->routeIs('admin.donations*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
                             <i class="fas fa-money-bill me-2"></i> Donations
                         </a>
                         <a class="nav-link" href="{{ route('home') }}" target="_blank">
