@@ -190,26 +190,7 @@
                     @endif
                     
                     <!-- Share Buttons -->
-                    <div class="mt-4">
-                        <h6 class="mb-3">Bagikan Campaign:</h6>
-                        <div class="d-flex gap-2">
-                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->url()) }}" 
-                                target="_blank" 
-                                class="btn btn-outline-primary btn-sm flex-fill">
-                                <i class="fab fa-facebook-f"></i> Facebook
-                            </a>
-                            <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->url()) }}&text={{ urlencode($campaign->title) }}" 
-                                target="_blank" 
-                                class="btn btn-outline-info btn-sm flex-fill">
-                                <i class="fab fa-twitter"></i> Twitter
-                            </a>
-                            <a href="https://wa.me/?text={{ urlencode($campaign->title . ' - ' . request()->url()) }}" 
-                                target="_blank" 
-                                class="btn btn-outline-success btn-sm flex-fill">
-                                <i class="fab fa-whatsapp"></i> WhatsApp
-                            </a>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         </div>
