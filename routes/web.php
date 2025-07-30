@@ -154,3 +154,5 @@ Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStat
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 
+Route::resource('campaigns', CampaignController::class);
+
