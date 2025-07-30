@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 use Illuminate\Http\Request; // Pastikan ini di-import
 use Illuminate\Support\Facades\Route;
@@ -16,7 +16,7 @@ use App\Http\Controllers\{
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign', [CampaignController::class, 'index'])->name('admin.campaigns.index');
-Route::post('/campaigns', [CampaignController::class, 'store'])->name('admin.campaigns.store');
+Route::post('/campaign', [CampaignController::class, 'store'])->name('admin.campaigns.store');
 Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
 Route::get('/campaign/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
 Route::put('/campaign/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
