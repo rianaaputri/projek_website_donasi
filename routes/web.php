@@ -53,11 +53,14 @@ Route::middleware('guest')->group(function () {
 // --- Authenticated User Routes ---
 Route::middleware(['auth'])->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout'); // Menggunakan LoginController
+
+    // LOGIKA REDIRECT SETELAH LOGIN UNTUK SEMUA ROLE (ADMIN/USER)
     Route::get('/dashboard', function () {
         $user = auth()->user();
         return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
-            'user' => redirect()->route('user.dashboard'),
+            // UNTUK ROLE 'user', LANGSUNG ARAHKAN KE HOME PAGE
+            'user' => redirect()->route('home'), // <-- PERUBAHAN DI SINI
             default => redirect()->route('home'), // Fallback for other roles
         };
     })->name('dashboard');
@@ -84,7 +87,8 @@ Route::middleware(['auth'])->group(function () {
         if ($request->user()->role === 'admin') {
             return redirect()->route('admin.dashboard')->with('success', 'Email Admin berhasil diverifikasi! Anda sekarang dapat mengakses dashboard admin.');
         }
-        return redirect()->route('user.dashboard')->with('success', 'Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.');
+        // UNTUK ROLE 'user', ARAHKAN KE HOME PAGE SETELAH VERIFIKASI
+        return redirect()->route('home')->with('success', 'Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.'); // <-- PERUBAHAN DI SINI
     })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
     Route::post('/email/verification-notification', function (Request $request) {
@@ -95,9 +99,15 @@ Route::middleware(['auth'])->group(function () {
 
 
 // --- Authenticated & Verified User Routes (Frontend Dashboard) ---
+// Rute ini sekarang TIDAK AKAN DIGUNAKAN UNTUK ROLE 'user' karena mereka langsung ke 'home'
+// Anda bisa hapus atau biarkan jika suatu saat butuh user dashboard spesifik
+// Jika user Anda akan diarahkan ke views/home.blade.php, maka rute ini tidak diperlukan untuk `role` user.
 Route::middleware(['auth', 'verified'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
-    // Tambahkan rute khusus user lain di sini jika ada
+    // Jika Anda TIDAK punya user.dashboard, Anda bisa hapus baris ini
+    // Atau jika home.blade.php adalah dashboard untuk user, maka rute ini bisa diarahkan ke sana
+    // Route::get('/dashboard', fn () => view('home'))->name('dashboard'); // Contoh: jika home adalah dashboard
+    // Atau bisa dihapus saja jika tidak ada rute khusus user.dashboard
+    // Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard'); // Aslinya
 });
 
 // --- Admin Routes ---
