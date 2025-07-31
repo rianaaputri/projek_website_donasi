@@ -1,155 +1,161 @@
- <?php
+<?php
 
-use Illuminate\Http\Request; // Pastikan ini di-import
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
-    MidtransController, // Pastikan ini di-import jika digunakan
+    MidtransController, // Pastikan ini ada dan berisi logika Midtrans Anda
     CampaignController,
     UserController,
     ProfileController,
     DonationController,
-    AuthController
+    Auth\LoginController, // Menggunakan controller autentikasi standar Laravel
+    Auth\RegisterController, // Menggunakan controller autentikasi standar Laravel
+    Auth\VerificationController // Menggunakan controller verifikasi standar Laravel
 };
 
-// Public Routes
-Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/campaign', [CampaignController::class, 'index'])->name('admin.campaigns.index');
-Route::post('/campaign', [CampaignController::class, 'store'])->name('admin.campaigns.store');
-Route::get('/campaign/create', [CampaignController::class, 'create'])->name('campaign.create');
-Route::get('/campaign/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaign.edit');
-Route::put('/campaign/{campaign}', [CampaignController::class, 'update'])->name('campaign.update');
-Route::delete('/campaign/{campaign}', [CampaignController::class, 'destroy'])->name('campaign.destroy');
+/*
+|--------------------------------------------------------------------------
+| Web Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register web routes for your application. These
+| routes are loaded by the RouteServiceProvider within a group which
+| contains the "web" middleware group. Now create something great!
+|
+*/
 
+// --- Public Routes ---
+Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
-// Guest Routes (Login/Register)
+// Donation Routes (Publicly accessible for initial form, but payment needs auth)
+Route::get('/donations', [DonationController::class, 'index'])->name('donation.index');
+Route::get('/donations/create/{campaign}', [DonationController::class, 'create'])->name('donation.create');
+Route::post('/donations/store', [DonationController::class, 'store'])->name('donation.store');
+
+// Midtrans Callback - Harus bisa diakses publik oleh Midtrans
+Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
+
+// --- Guest Routes (Login/Register) ---
+// Menggunakan rute autentikasi bawaan Laravel
 Route::middleware('guest')->group(function () {
-    Route::get('/login', [UserController::class, 'showLogin'])->name('login');
-    Route::post('/login', [UserController::class, 'login']);
-    Route::get('/register', [UserController::class, 'showRegister'])->name('register');
-    Route::post('/register', [UserController::class, 'register']); 
+    // Authentication Routes (Laravel UI/Breeze default)
+    // Jika Anda menggunakan Breeze/Jetstream, rute ini sudah ada
+    // Jika tidak, Anda perlu membuat controller dan view secara manual
+    Route::get('login', [LoginController::class, 'showLoginForm'])->name('login');
+    Route::post('login', [LoginController::class, 'login']);
+    Route::get('register', [RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('register', [RegisterController::class, 'register']);
 });
 
-// Donation Routes (Public) - Ini adalah rute untuk menampilkan form donasi
-Route::get('/donation', [DonationController::class, 'index'])->name('donation.index');
-Route::get('/donation/create/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::post('/donation', [DonationController::class, 'store'])->name('donation.store');
-
-// User Authenticated Routes
+// --- Authenticated User Routes ---
 Route::middleware(['auth'])->group(function () {
-    Route::post('/logout', [UserController::class, 'logout'])->name('logout');
-
-    // Email Verification Notice
-    Route::get('/email/verify', function () {
-        return view('auth.verify-email');
-    })->name('verification.notice');
-
-    // --- MODIFIKASI UNTUK PENGGUNA BIASA ---
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        $request->fulfill(); // Tandai email sebagai terverifikasi
-
-        // Opsional: Logout pengguna agar mereka harus login lagi
-        auth()->guard('web')->logout();
-
-        // Arahkan ke halaman login dengan pesan sukses
-        return redirect()->route('login')->with('success', 'Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.');
-    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
-
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('message', 'Link verifikasi sudah dikirim!');
-    })->middleware(['throttle:6,1'])->name('verification.send');
-
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Dashboard Redirect (tetap sama, ini untuk saat login/akses /dashboard secara umum)
+    Route::post('/logout', [LoginController::class, 'logout'])->name('logout'); // Menggunakan LoginController
     Route::get('/dashboard', function () {
         $user = auth()->user();
         return match ($user->role) {
             'admin' => redirect()->route('admin.dashboard'),
-            'user' => redirect()->route('/'),
+            'user' => redirect()->route('user.dashboard'),
+            default => redirect()->route('home'), // Fallback for other roles
         };
     })->name('dashboard');
 
-    // Rute untuk halaman pembayaran donasi
-    // DILINDUNGI OLEH MIDDLEWARE 'auth'
-    Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])
-        ->name('donation.payment'); // Middleware 'auth' sudah diterapkan di group ini
-    
-    // Rute untuk halaman sukses pembayaran
-    Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
-    // Rute untuk check status Midtrans (biasanya dipanggil oleh webhook atau AJAX)
-    Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
+    // Profile Management
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Donation Payment & Status (requires authentication)
+    Route::get('/donations/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
+    Route::get('/donations/success/{id}', [DonationController::class, 'success'])->name('donation.success');
+    Route::get('/donations/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 });
 
-// Authenticated & Verified User Routes
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::prefix('user')->name('user.')->group(function () {
-        Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
+// --- Email Verification Routes (for regular Users) ---
+// Note: Laravel's default VerifyEmail middleware handles `auth`
+Route::middleware(['auth'])->group(function () {
+    Route::get('/email/verify', [VerificationController::class, 'show'])->name('verification.notice');
+
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $request->fulfill();
+        // Redirect user based on their role after verification
+        if ($request->user()->role === 'admin') {
+            return redirect()->route('admin.dashboard')->with('success', 'Email Admin berhasil diverifikasi! Anda sekarang dapat mengakses dashboard admin.');
+        }
+        return redirect()->route('user.dashboard')->with('success', 'Email Anda berhasil diverifikasi! Silakan login untuk melanjutkan.');
+    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('message', 'Link verifikasi baru telah dikirimkan ke email Anda!');
+    })->middleware(['throttle:6,1'])->name('verification.send');
+});
+
+
+// --- Authenticated & Verified User Routes (Frontend Dashboard) ---
+Route::middleware(['auth', 'verified'])->prefix('user')->name('user.')->group(function () {
+    Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
+    // Tambahkan rute khusus user lain di sini jika ada
+});
+
+// --- Admin Routes ---
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin Login/Register (Guard: 'admin')
+    Route::middleware('guest:admin')->group(function () {
+        Route::get('/login', [LoginController::class, 'showAdminLoginForm'])->name('login'); // Admin specific login form
+        Route::post('/login', [LoginController::class, 'adminLogin']);
+        // Route::get('/register', [RegisterController::class, 'showAdminRegistrationForm'])->name('register'); // Jika admin bisa daftar sendiri
+        // Route::post('/register', [RegisterController::class, 'adminRegister']);
     });
 
+    Route::middleware('auth:admin')->group(function () {
+        Route::post('/logout', [LoginController::class, 'adminLogout'])->name('logout'); // Admin specific logout
 
-});
+        // Admin Email Verification (Guard: 'admin')
+        Route::get('/email/verify', [VerificationController::class, 'showAdmin'])->name('verification.notice');
 
-// Admin Routes
-Route::prefix('admin')->name('admin.')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-    Route::middleware(['auth:admin'])->group(function () {
-        Route::get('/email/verify', fn () => view('auth.admin-verify-email'))->name('verification.notice');
-        // --- MODIFIKASI UNTUK ADMIN ---
         Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-            $request->fulfill(); // Tandai email admin sebagai terverifikasi
-
-            // Opsional: Logout admin agar mereka harus login lagi
-            auth()->guard('admin')->logout();
-
-            // Arahkan ke halaman login admin dengan pesan sukses
+            $request->fulfill();
+            auth()->guard('admin')->logout(); // Optional: force re-login after verification
             return redirect()->route('admin.login')->with('success', 'Email Admin berhasil diverifikasi! Silakan login untuk melanjutkan.');
         })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
         Route::post('/email/verification-notification', function (Request $request) {
             $request->user('admin')->sendEmailVerificationNotification();
-            return back()->with('message', 'Link verifikasi admin sudah dikirim!');
+            return back()->with('message', 'Link verifikasi admin baru telah dikirim!');
         })->middleware(['throttle:6,1'])->name('verification.send');
 
-        Route::middleware(['verified'])->group(function () {
+        // Admin Dashboard and Management Routes (requires admin auth & verified)
+        Route::middleware(['verified:admin'])->group(function () {
             Route::get('/dashboard', fn () => view('admin.dashboard'))->name('dashboard');
+            // Campaign Management (Full CRUD)
+            Route::resource('campaigns', CampaignController::class)->except(['index']); // index already defined below
+            Route::get('/campaigns', [CampaignController::class, 'adminIndex'])->name('campaigns.index'); // Admin's view of campaigns
+            Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
+            Route::get('/campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
+            Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
+            Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+
+            // Donation Management (Admin View)
+            Route::get('/donations', [DonationController::class, 'adminIndex'])->name('donations.index');
+            // Anda mungkin ingin menambahkan rute untuk melihat detail donasi admin atau mengubah status
+            Route::get('/donations/{donation}', [DonationController::class, 'showAdmin'])->name('donations.show');
         });
     });
 });
 
-// Debugging Route (Optional)
+// Debugging Route (Optional) - Pindahkan ke akhir setelah semua rute didefinisikan
 Route::get('/debug-auth', function () {
     dd([
         'authenticated' => auth()->check(),
         'current_user' => auth()->user(),
-        'user_role' => auth()->user()->role ?? 'not logged in',
+        'user_role' => auth()->check() ? (auth()->user()->role ?? 'undefined') : 'not logged in',
         'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
+        'guard_web_check' => auth()->guard('web')->check(),
+        'guard_admin_check' => auth()->guard('admin')->check(),
+        'guard_web_user' => auth()->guard('web')->user(),
+        'guard_admin_user' => auth()->guard('admin')->user(),
     ]);
 });
-
-//midtrans callback route
-// Proses Pembayaran Donasi
-Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
-Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
-Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
-
-
-
-// Midtrans Callback (dari dashboard Midtrans)
-Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
-
-Route::resource('campaigns', CampaignController::class); 

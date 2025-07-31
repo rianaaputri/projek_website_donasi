@@ -19,36 +19,30 @@ return [
     |--------------------------------------------------------------------------
     */
 
-    'guards' => [
+'guards' => [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
-
-        // Guard untuk admin - PASTIKAN INI ADA!
-        'admin' => [
+        'admin' => [ // Tambahkan guard admin ini
             'driver' => 'session',
-            'provider' => 'admins',
+            'provider' => 'users', // Atau 'admins' jika Anda memiliki model Admin terpisah
+        ],
+        'sanctum' => [
+            'driver' => 'sanctum',
+            'provider' => 'users',
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | User Providers
-    |--------------------------------------------------------------------------
-    */
 
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
-
-        // Provider untuk admin - PASTIKAN INI ADA!
-        'admins' => [
-            'driver' => 'eloquent',
-            'model' => App\Models\Admin::class,
-        ],
+        // 'admins' => [ // Jika Anda punya model Admin terpisah, aktifkan ini
+        //     'driver' => 'eloquent',
+        //     'model' => App\Models\Admin::class,
+        // ],
     ],
 
     /*

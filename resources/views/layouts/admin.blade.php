@@ -40,7 +40,6 @@
 <body>
     <div class="container-fluid">
         <div class="row">
-            <!-- Sidebar -->
             <div class="col-md-2 p-0">
                 <div class="sidebar p-3">
                     <div class="text-center text-white mb-4">
@@ -54,7 +53,7 @@
                         <a class="nav-link {{ request()->routeIs('admin.campaigns*') ? 'active' : '' }}" href="{{ route('admin.campaigns.index') }}">
                             <i class="fas fa-bullhorn me-2"></i> Campaigns
                         </a>
-                        <a class="nav-link {{ request()->routeIs('admin.donations*') ? 'active' : '' }}" href="{{ route('donation.index') }}">
+                        <a class="nav-link {{ request()->routeIs('admin.donations*') ? 'active' : '' }}" href="{{ route('admin.donations.index') }}">
                             <i class="fas fa-money-bill me-2"></i> Donations
                         </a>
                         <a class="nav-link" href="{{ route('home') }}" target="_blank">
@@ -64,14 +63,13 @@
                         <a class="nav-link" href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
                             <i class="fas fa-sign-out-alt me-2"></i> Logout
                         </a>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <form id="logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
                     </nav>
                 </div>
             </div>
 
-            <!-- Main Content -->
             <div class="col-md-10 p-0">
                 <div class="main-content p-4">
                     @if(session('success'))
@@ -87,6 +85,14 @@
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     @endif
+
+                    @if(session('message')) {{-- For verification messages --}}
+                        <div class="alert alert-info alert-dismissible fade show" role="alert">
+                            <i class="fas fa-info-circle me-2"></i>{{ session('message') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    @endif
+
 
                     @yield('content')
                 </div>
