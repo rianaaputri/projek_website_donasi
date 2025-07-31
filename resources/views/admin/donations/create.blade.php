@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Donasi untuk ' . $campaign['title'])
+@section('title', 'Donasi untuk ' . $campaign->title)
 
 @section('content')
 <div class="container">
@@ -10,15 +10,17 @@
             <div class="card mb-4">
                 <div class="card-body text-center">
                     <h3 class="text-primary mb-2">💝 Form Donasi</h3>
-                    <p class="text-muted">{{ $campaign['title'] }}</p>
+                    <p class="text-muted">{{ $campaign->title}}</p>
                 </div>
             </div>
 
             <!-- Form Donasi -->
             <div class="card">
                 <div class="card-body">
-                    <form action="{{ route('campaign.donation.process', $campaign['id']) }}" method="POST" id="donationForm">
-                        @csrf
+                 <form action="{{ route('donation.store') }}" method="POST" id="donationForm">
+    @csrf
+    <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
+
                         
                         <!-- Pilih Nominal -->
                         <div class="mb-4">
@@ -93,7 +95,7 @@
 
             <!-- Kembali -->
             <div class="text-center mt-3">
-                <a href="{{ route('campaign.detail', $campaign['id']) }}" class="text-muted">
+                <a href="{{ route('campaign.detail', $campaign->id) }}" class="text-muted">
                     ← Kembali ke detail campaign
                 </a>
             </div>

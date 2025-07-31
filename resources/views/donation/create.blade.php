@@ -100,8 +100,8 @@
                                        id="amount" 
                                        name="amount" 
                                        value="{{ old('amount') }}" 
-                                       min="10000" 
-                                       placeholder="Minimal Rp 10.000" 
+                                       min="1000" 
+                                       placeholder="Minimal Rp 1000" 
                                        required>
                                 @error('amount')
                                     <div class="invalid-feedback">{{ $message }}</div>

@@ -53,7 +53,7 @@ public function index()
         }
 
         // Memuat view 'donation.form' yang Anda miliki di Canvas
-        return view('admin.donation.create', compact('campaign'));
+        return view('donation.create', compact('campaign'));
     }
 
     public function store(Request $request)
