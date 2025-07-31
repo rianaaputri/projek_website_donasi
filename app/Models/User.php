@@ -6,10 +6,11 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens; // Pastikan baris ini ada
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable; // Pastikan HasApiTokens ada di sini
 
     /**
      * The attributes that are mass assignable.
@@ -43,13 +44,18 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
     ];
 
-    /**
-     * Get the default guard name for the model.
-     *
-     * @return string
-     */
-    protected function defaultGuard()
+    // Cek apakah user adalah admin
+    public function isAdmin()
     {
+        return $this->role === 'admin';
+    }
+
+    // Untuk mengelola autentikasi multi-guard
+    public function guard()
+    {
+        if ($this->isAdmin()) {
+            return 'admin';
+        }
         return 'web';
     }
 }

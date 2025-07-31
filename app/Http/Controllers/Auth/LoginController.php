@@ -3,23 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Providers\RouteServiceProvider;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
     use AuthenticatesUsers;
 
     /**
@@ -27,7 +16,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = RouteServiceProvider::HOME;
+    protected $redirectTo = '/dashboard'; // Akan ditimpa oleh logic di routes/web.php
 
     /**
      * Create a new controller instance.
@@ -36,31 +25,74 @@ class LoginController extends Controller
      */
     public function __construct()
     {
+        // Pastikan Panggilan middleware() Ada di SINI, di DALAM konstruktor
         $this->middleware('guest')->except('logout');
-        $this->middleware('auth')->only('logout');
+        $this->middleware('guest:admin')->except('adminLogout');
     }
 
-    /**
-     * Get the post-login redirect path.
-     * Override the default redirectPath to handle 'redirect_to' parameter
-     * and Laravel's intended URL.
-     *
-     * @return string
-     */
-    protected function redirectPath()
+    // --- User Login ---
+    public function showLoginForm()
     {
-        // Prioritaskan URL yang dimaksudkan yang disimpan oleh middleware 'auth'
-        // Ini akan digunakan ketika pengguna mencoba mengakses rute yang dilindungi auth dan dialihkan ke login.
-        if (session()->has('url.intended')) {
-            return session()->get('url.intended');
+        return view('auth.login');
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::guard('web')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/')->with('success', 'Anda telah berhasil logout.');
+    }
+
+    // --- Admin Login ---
+    public function showAdminLoginForm()
+    {
+        return view('admin.auth.login'); // Pastikan Anda memiliki view ini
+    }
+
+    public function adminLogin(Request $request)
+    {
+        $this->validateLogin($request);
+
+        if ($this->hasTooManyLoginAttempts($request)) {
+            $this->fireLockoutEvent($request);
+            return $this->sendLockoutResponse($request);
         }
 
-        // Kemudian, periksa apakah ada parameter 'redirect_to' di request (dari Blade)
-        if (request()->has('redirect_to')) {
-            return request()->get('redirect_to');
+        // Coba login sebagai admin
+        if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password, 'role' => 'admin'], $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            $this->clearLoginAttempts($request);
+
+            if (!Auth::guard('admin')->user()->hasVerifiedEmail()) {
+                return redirect()->route('admin.verification.notice');
+            }
+
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        // Jika tidak ada keduanya, gunakan default Laravel (biasanya /home)
-        return property_exists($this, 'redirectTo') ? $this->redirectTo : '/home';
+        $this->incrementLoginAttempts($request);
+
+        return $this->sendFailedLoginResponse($request);
+    }
+
+    public function adminLogout(Request $request)
+    {
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('admin.login')->with('success', 'Anda telah berhasil logout dari admin panel.');
+    }
+
+    // Helper method needed for AuthenticatesUsers trait, Laravel UI often adds this
+    protected function credentials(Request $request)
+    {
+        return $request->only($this->username(), 'password');
+    }
+
+    // Helper method needed for AuthenticatesUsers trait
+    public function username()
+    {
+        return 'email'; // Or 'username' if you use username for login
     }
 }

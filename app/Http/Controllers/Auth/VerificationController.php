@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\VerifiesEmails;
+use Illuminate\Http\Request;
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\Events\Verified;
 
 class VerificationController extends Controller
 {
@@ -14,7 +17,7 @@ class VerificationController extends Controller
     |
     | This controller is responsible for handling email verification for any
     | user that recently registered with the application. Emails may also
-    | be re-sent if the user didn't receive the original email message.
+    | be re-sent if the user didn't receive the original email.
     |
     */
 
@@ -25,7 +28,7 @@ class VerificationController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/home';
+    protected $redirectTo = '/dashboard'; // Akan ditimpa oleh logic di routes/web.php
 
     /**
      * Create a new controller instance.
@@ -37,5 +40,32 @@ class VerificationController extends Controller
         $this->middleware('auth');
         $this->middleware('signed')->only('verify');
         $this->middleware('throttle:6,1')->only('verify', 'resend');
+    }
+
+    /**
+     * Show the email verification notice for regular users.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Request $request)
+    {
+        return $request->user()->hasVerifiedEmail()
+                    ? redirect($this->redirectPath())
+                    : view('auth.verify-email'); // View untuk user biasa
+    }
+
+    /**
+     * Show the email verification notice for admin users.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function showAdmin(Request $request)
+    {
+        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->hasVerifiedEmail()) {
+            return redirect(route('admin.dashboard'));
+        }
+        return view('auth.admin-verify-email'); // View khusus untuk admin
     }
 }
