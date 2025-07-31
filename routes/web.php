@@ -15,17 +15,6 @@ use App\Http\Controllers\{
     Auth\VerificationController // Menggunakan controller verifikasi standar Laravel
 };
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
-
 // --- Public Routes ---
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
@@ -73,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
     // Donation Payment & Status (requires authentication)
     Route::get('/donations/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
     Route::get('/donations/success/{id}', [DonationController::class, 'success'])->name('donation.success');
+    // Rute ini sudah benar namanya, cocok dengan yang dipanggil di payment.blade.php
     Route::get('/donations/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 });
 
@@ -141,12 +131,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::middleware(['verified:admin'])->group(function () {
             Route::get('/dashboard', fn () => view('admin.dashboard'))->name('dashboard');
             // Campaign Management (Full CRUD)
-            Route::resource('campaigns', CampaignController::class)->except(['index']); // index already defined below
+            // Route::resource('campaigns', CampaignController::class)->except(['index']); // index already defined below
             Route::get('/campaigns', [CampaignController::class, 'adminIndex'])->name('campaigns.index'); // Admin's view of campaigns
             Route::get('/campaigns/create', [CampaignController::class, 'create'])->name('campaigns.create');
             Route::get('/campaigns/{campaign}/edit', [CampaignController::class, 'edit'])->name('campaigns.edit');
             Route::put('/campaigns/{campaign}', [CampaignController::class, 'update'])->name('campaigns.update');
             Route::delete('/campaigns/{campaign}', [CampaignController::class, 'destroy'])->name('campaigns.destroy');
+            Route::post('/campaigns', [CampaignController::class, 'store'])->name('campaigns.store'); // Tambahkan ini jika belum ada
+            Route::get('/campaigns/{campaign}', [CampaignController::class, 'show'])->name('campaigns.show'); // Tambahkan ini jika belum ada
 
             // Donation Management (Admin View)
             Route::get('/donations', [DonationController::class, 'adminIndex'])->name('donations.index');

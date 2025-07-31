@@ -68,17 +68,18 @@ public function index()
             'is_anonymous' => 'nullable|boolean', // Validasi untuk checkbox
         ]);
 
-        $donation = Donation::create([
-            'campaign_id' => $request->campaign_id,
-            'donor_name' => $request->donor_name,
-            'donor_email' => $request->donor_email,
-            'donor_phone' => $request->donor_phone,
-            'amount' => $request->amount,
-            'comment' => $request->comment,
-            'is_anonymous' => $request->has('is_anonymous') ? true : false, // Penanganan nilai checkbox
-            'payment_status' => 'pending',
-            'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
-        ]);
+       $donation = Donation::create([
+    'campaign_id' => $request->campaign_id,
+    'donor_name' => $request->donor_name,
+    'donor_email' => $request->donor_email,
+    'donor_phone' => $request->donor_phone,
+    'amount' => $request->amount,
+    'message' => $request->comment, // ✅ GUNAKAN KOLOM YANG ADA
+    'is_anonymous' => $request->has('is_anonymous') ? true : false,
+    'payment_status' => 'pending',
+    'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
+]);
+
 
         return redirect()->route('donation.payment', $donation->id);
     }
