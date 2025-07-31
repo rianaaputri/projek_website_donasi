@@ -4,7 +4,6 @@
 
 @section('content')
 
-<!-- Hero Section -->
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
@@ -27,7 +26,6 @@
     </div>
 </section>
 
-<!-- Statistics Section -->
 <section class="stats-section">
     <div class="container">
         <div class="row">
@@ -62,7 +60,6 @@
     </div>
 </section>
 
-<!-- Campaigns Section -->
 <section id="campaigns" class="py-5">
     <div class="container">
         <div class="row mb-5">
@@ -98,23 +95,23 @@
                                 <span class="badge bg-primary mb-2">{{ $campaign->category }}</span>
                                 <h5 class="card-title">{{ $campaign->title }}</h5>
                                 <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
-                                
+
                                 <div class="progress progress-custom">
                                     <div class="progress-bar" role="progressbar" style="width: {{ $campaign->progress_percentage }}%"></div>
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
                                     <small class="text-muted">
                                         <i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur
                                     </small>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <div class="fw-bold text-success fs-5">{{ $campaign->formatted_collected }}</div>
                                     <small class="text-muted">dari target {{ $campaign->formatted_target }}</small>
                                 </div>
-                                
+
                                 <div class="d-flex justify-content-between align-items-center">
                                     <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
                                         <i class="fas fa-eye me-1"></i> Lihat Detail
@@ -139,8 +136,7 @@
                     </div>
                 @endforeach
             </div>
-            
-            <!-- Load More Button -->
+
             @if($campaigns->count() >= 6)
                 <div class="row">
                     <div class="col text-center">
@@ -154,7 +150,6 @@
     </div>
 </section>
 
-<!-- Call to Action Section -->
 <section class="py-5" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);">
     <div class="container">
         <div class="row text-center text-white">
@@ -169,9 +164,26 @@
                         <i class="fas fa-sign-in-alt me-2"></i> Masuk
                     </a>
                 @else
-                    <a href="{{ route('campaign.create') }}" class="btn btn-light btn-lg">
-                        <i class="fas fa-plus me-2"></i> Buat Campaign
-                    </a>
+                    {{-- Ganti bagian ini --}}
+                    {{-- Cek apakah user adalah admin --}}
+                    @auth('admin')
+                        {{-- Jika Anda memiliki kolom 'role' di tabel admin, atau cara lain untuk memeriksa admin --}}
+                        {{-- Misalnya, if(Auth::guard('admin')->user()->role === 'admin') --}}
+                        <a href="{{ route('admin.campaigns.create') }}" class="btn btn-light btn-lg">
+                            <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
+                        </a>
+                    @else
+                        {{-- Jika ini untuk user biasa yang login dan bisa membuat campaign,
+                            maka Anda perlu membuat rute baru (misal: 'user.campaign.create')
+                            dan controller untuk user.
+                            Untuk sementara, kita bisa menyembunyikannya atau mengarahkan ke halaman lain.
+                        --}}
+                        <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
+                        {{-- Atau, sembunyikan saja tombolnya untuk user biasa --}}
+                        {{-- <a href="#" class="btn btn-light btn-lg disabled">
+                            <i class="fas fa-plus me-2"></i> Buat Campaign (Segera Hadir)
+                        </a> --}}
+                    @endauth
                 @endguest
             </div>
         </div>
