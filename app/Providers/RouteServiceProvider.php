@@ -13,4 +13,25 @@ class RouteServiceProvider extends ServiceProvider
     
     // Jadi ini (atau hapus sama sekali):
     public const HOME = '/';
+
+    public function boot(): void
+    {
+        // ...existing code...
+
+        $this->configureRateLimiting();
+
+        $this->routes(function () {
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
+
+            Route::middleware('api')
+                ->prefix('api')
+                ->group(base_path('routes/api.php'));
+        });
+
+        // Add this to redirect unauthenticated users
+        $this->app['router']->middlewareGroup('admin', [
+            \App\Http\Middleware\AdminMiddleware::class,
+        ]);
+    }
 }

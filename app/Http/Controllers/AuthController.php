@@ -16,15 +16,15 @@ class AuthController extends Controller
     // --- Metode untuk Menampilkan Halaman Login (Universal) ---
     public function showLogin()
     {
-        return view('auth.login'); 
+        return view('admin.auth.login'); 
     }
 
     // --- Metode untuk Menangani Proses Login (Universal) ---
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
-            'password' => ['required'],
+            'email' => 'required|email',
+            'password' => 'required'
         ]);
 
         Log::info('--- LOGIN ATTEMPT START ---');
@@ -77,20 +77,11 @@ class AuthController extends Controller
     // --- Metode untuk Menangani Proses Logout (Universal) ---
     public function logout(Request $request)
     {
-        if (Auth::guard('admin')->check()) {
-            Auth::guard('admin')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect()->route('admin.login')->with('success', 'Admin berhasil logout.');
-        } 
-        elseif (Auth::guard('web')->check()) {
-            Auth::guard('web')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            return redirect()->route('login')->with('success', 'Anda berhasil logout.');
-        }
-
-        return redirect('/'); 
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        return redirect()->route('admin.login');
     }
 
     // --- Metode showRegister dan register admin Anda ---

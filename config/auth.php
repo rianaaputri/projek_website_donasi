@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Authentication Defaults
@@ -19,18 +18,14 @@ return [
     |--------------------------------------------------------------------------
     */
 
-'guards' => [
+    'guards' => [
         'web' => [
             'driver' => 'session',
             'provider' => 'users',
         ],
-        'admin' => [ // Tambahkan guard admin ini
+        'admin' => [
             'driver' => 'session',
-            'provider' => 'users', // Atau 'admins' jika Anda memiliki model Admin terpisah
-        ],
-        'sanctum' => [
-            'driver' => 'sanctum',
-            'provider' => 'users',
+            'provider' => 'admins',
         ],
     ],
 
@@ -39,10 +34,10 @@ return [
             'driver' => 'eloquent',
             'model' => App\Models\User::class,
         ],
-        // 'admins' => [ // Jika Anda punya model Admin terpisah, aktifkan ini
-        //     'driver' => 'eloquent',
-        //     'model' => App\Models\Admin::class,
-        // ],
+        'admins' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Admin::class,
+        ],
     ],
 
     /*
@@ -74,5 +69,4 @@ return [
     */
 
     'password_timeout' => 10800,
-
 ];

@@ -51,17 +51,7 @@ class CampaignController extends Controller
 
     public function edit(Campaign $campaign)
     {
-        // Definisikan categories yang akan digunakan di view
-        $categories = [
-            'Kesehatan',
-            'Pendidikan',
-            'Lingkungan',
-            'Kemanusiaan', 
-            'Bencana',
-            'Sosial'
-        ];
-
-        return view('campaign.edit', compact('campaign', 'categories'));
+        return view('campaign.edit', compact('campaign'));
     }
 
     public function update(Request $request, Campaign $campaign)
