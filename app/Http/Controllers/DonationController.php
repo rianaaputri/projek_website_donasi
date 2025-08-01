@@ -152,4 +152,36 @@ public function index()
         ]);
     }
 
+    public function adminIndex(Request $request)
+{
+    $query = Donation::with(['campaign', 'user'])->latest();
+
+    // Apply filters
+    if ($request->status) {
+        $query->where('status', $request->status);
+    }
+    if ($request->campaign_id) {
+        $query->where('campaign_id', $request->campaign_id);
+    }
+    if ($request->date_from) {
+        $query->whereDate('created_at', '>=', $request->date_from);
+    }
+    if ($request->date_to) {
+        $query->whereDate('created_at', '<=', $request->date_to);
+    }
+    if ($request->search) {
+        $query->where('donor_name', 'like', "%{$request->search}%");
+    }
+
+    $donations = $query->paginate(10)->withQueryString();
+    $campaigns = Campaign::all();
+    
+    return view('admin.donations.index', compact('donations', 'campaigns'));
+}
+
+public function adminShow(Donation $donation)
+{
+    $donation->load(['campaign', 'user']);
+    return view('admin.donations.show', compact('donation'));
+}
 }
