@@ -80,72 +80,77 @@
                 </div>
             </div>
         @else
-            <div class="row">
-                @foreach($campaigns as $campaign)
-                    <div class="col-lg-4 col-md-6 mb-4">
-                        <div class="card campaign-card">
-                            @if($campaign->image)
-                                <img src="{{ asset('storage/'.$campaign->image) }}" class="card-img-top" alt="{{ $campaign->title }}">
-                            @else
-                                <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(45deg, #e8f4fd, #b3e5fc);">
-                                    <i class="fas fa-image" style="font-size: 3rem; color: #6c757d; opacity: 0.5;"></i>
-                                </div>
-                            @endif
-                            <div class="card-body">
-                                <span class="badge bg-primary mb-2">{{ $campaign->category }}</span>
-                                <h5 class="card-title">{{ $campaign->title }}</h5>
-                                <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
-
-                                <div class="progress progress-custom">
-                                    <div class="progress-bar" role="progressbar" style="width: {{ $campaign->progress_percentage }}%"></div>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
-                                    <small class="text-muted">
-                                        <i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur
-                                    </small>
-                                </div>
-
-                                <div class="mb-3">
-                                    <div class="fw-bold text-success fs-5">{{ $campaign->formatted_collected }}</div>
-                                    <small class="text-muted">dari target {{ $campaign->formatted_target }}</small>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
-                                        <i class="fas fa-eye me-1"></i> Lihat Detail
-                                    </a>
-                                    @if($campaign->progress_percentage < 100)
-                                        <small class="text-muted">
-                                            <i class="fas fa-clock me-1"></i>
-                                            @if($campaign->end_date)
-                                                {{ \Carbon\Carbon::parse($campaign->end_date)->diffForHumans() }}
+            {{-- Carousel Start --}}
+            <div id="campaignCarousel" class="carousel slide" data-bs-ride="carousel">
+                <div class="carousel-indicators">
+                    @foreach($campaigns->chunk(3) as $key => $chunk)
+                        <button type="button" data-bs-target="#campaignCarousel" data-bs-slide-to="{{ $key }}" class="{{ $key == 0 ? 'active' : '' }}" aria-current="{{ $key == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $key + 1 }}"></button>
+                    @endforeach
+                </div>
+                <div class="carousel-inner">
+                    @foreach($campaigns->chunk(3) as $key => $chunk)
+                        <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
+                            <div class="row justify-content-center"> {{-- Added justify-content-center for better alignment if less than 3 campaigns --}}
+                                @foreach($chunk as $campaign)
+                                    <div class="col-lg-4 col-md-6 mb-4">
+                                        <div class="card campaign-card">
+                                            @if($campaign->image)
+                                                <img src="{{ asset('storage/'.$campaign->image) }}" class="card-img-top" alt="{{ $campaign->title }}">
                                             @else
-                                                Aktif
+                                                <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(45deg, #e8f4fd, #b3e5fc);">
+                                                    <i class="fas fa-image" style="font-size: 3rem; color: #6c757d; opacity: 0.5;"></i>
+                                                </div>
                                             @endif
-                                        </small>
-                                    @else
-                                        <span class="badge bg-success">
-                                            <i class="fas fa-check me-1"></i>Tercapai
-                                        </span>
-                                    @endif
-                                </div>
+                                            <div class="card-body">
+                                                <span class="badge bg-primary mb-2">{{ $campaign->category }}</span>
+                                                <h5 class="card-title">{{ $campaign->title }}</h5>
+                                                <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
+
+                                                <div class="progress progress-custom">
+                                                    <div class="progress-bar" role="progressbar" style="width: {{ $campaign->progress_percentage }}%"></div>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur
+                                                    </small>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <div class="fw-bold text-success fs-5">{{ $campaign->formatted_collected }}</div>
+                                                    <small class="text-muted">dari target {{ $campaign->formatted_target }}</small>
+                                                </div>
+
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
+                                                        <i class="fas fa-eye me-1"></i> Lihat Detail
+                                                    </a>
+                                                    {{-- Informasi "Hari berjalan" dipindahkan ke halaman detail campaign --}}
+                                                    @if($campaign->progress_percentage >= 100)
+                                                        <span class="badge bg-success">
+                                                            <i class="fas fa-check me-1"></i>Tercapai
+                                                        </span>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </div>
-                    </div>
-                @endforeach
-            </div>
-
-            @if($campaigns->count() >= 6)
-                <div class="row">
-                    <div class="col text-center">
-                        <a href="#" class="btn btn-outline-primary btn-lg">
-                            <i class="fas fa-plus me-2"></i> Lihat Lebih Banyak
-                        </a>
-                    </div>
+                    @endforeach
                 </div>
-            @endif
+                <button class="carousel-control-prev" type="button" data-bs-target="#campaignCarousel" data-bs-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Previous</span>
+                </button>
+                <button class="carousel-control-next" type="button" data-bs-target="#campaignCarousel" data-bs-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="visually-hidden">Next</span>
+                </button>
+            </div>
+            {{-- Carousel End --}}
         @endif
     </div>
 </section>
@@ -164,25 +169,12 @@
                         <i class="fas fa-sign-in-alt me-2"></i> Masuk
                     </a>
                 @else
-                    {{-- Ganti bagian ini --}}
-                    {{-- Cek apakah user adalah admin --}}
                     @auth('admin')
-                        {{-- Jika Anda memiliki kolom 'role' di tabel admin, atau cara lain untuk memeriksa admin --}}
-                        {{-- Misalnya, if(Auth::guard('admin')->user()->role === 'admin') --}}
                         <a href="{{ route('admin.campaigns.create') }}" class="btn btn-light btn-lg">
                             <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
                         </a>
                     @else
-                        {{-- Jika ini untuk user biasa yang login dan bisa membuat campaign,
-                            maka Anda perlu membuat rute baru (misal: 'user.campaign.create')
-                            dan controller untuk user.
-                            Untuk sementara, kita bisa menyembunyikannya atau mengarahkan ke halaman lain.
-                        --}}
                         <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
-                        {{-- Atau, sembunyikan saja tombolnya untuk user biasa --}}
-                        {{-- <a href="#" class="btn btn-light btn-lg disabled">
-                            <i class="fas fa-plus me-2"></i> Buat Campaign (Segera Hadir)
-                        </a> --}}
                     @endauth
                 @endguest
             </div>
@@ -210,6 +202,32 @@
 
 .campaign-card .card-body > div:last-child {
     margin-top: auto;
+}
+
+/* Custom CSS for Carousel adjustments if needed */
+.carousel-item {
+    padding-bottom: 30px; /* To prevent cutting off the card shadow */
+}
+
+/* Optional: Make carousel controls stand out more */
+.carousel-control-prev,
+.carousel-control-next {
+    width: 5%; /* Adjust width of control area */
+    color: #0d6efd; /* Bootstrap primary blue */
+    opacity: 1;
+}
+
+.carousel-control-prev-icon,
+.carousel-control-next-icon {
+    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(200deg) brightness(80%); /* Makes icon blue */
+}
+
+/* Responsive adjustments for carousel */
+@media (max-width: 767.98px) { /* For small devices */
+    .carousel-item .col-md-6 {
+        flex: 0 0 100%; /* Make each card take full width */
+        max-width: 100%;
+    }
 }
 </style>
 
