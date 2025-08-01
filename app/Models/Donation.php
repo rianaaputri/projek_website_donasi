@@ -17,12 +17,17 @@ class Donation extends Model
         'payment_status',
         'midtrans_order_id',
         'comment',
+        'payment_method', // <-- Tambahkan ini
+        'transaction_id', // <-- Tambahkan ini
+        'midtrans_response', // <-- Tambahkan ini
+        'paid_at',          // <-- Tambahkan ini
     ];
 
     protected $casts = [
         'amount' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'paid_at' => 'datetime', // <-- Tambahkan ini
     ];
 
     public function campaign()
@@ -32,7 +37,9 @@ class Donation extends Model
 
     public function scopePaid($query)
     {
-        return $query->where('payment_status', 'paid');
+        // Ganti 'paid' menjadi 'success' jika Anda konsisten menggunakan 'success'
+        // di MidtransController untuk status berhasil
+        return $query->where('payment_status', 'success');
     }
 
     public function getFormattedAmountAttribute()

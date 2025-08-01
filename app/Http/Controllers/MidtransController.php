@@ -3,27 +3,27 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Donation; // Pastikan ini di-import
+use App\Models\Donation;
 use Illuminate\Support\Facades\Log;
-use Midtrans\Config;     // Import Midtrans\Config
-use Midtrans\Notification; // Import Midtrans\Notification
+use Midtrans\Config;
+use Midtrans\Notification;
 
 class MidtransController extends Controller
 {
-    // Ubah nama metode dari 'callback' menjadi 'handleCallback' agar sesuai dengan route Anda
     public function handleCallback(Request $request)
     {
         // --- 1. Inisialisasi Konfigurasi Midtrans ---
-        // Ini SANGAT PENTING agar notifikasi dari Midtrans dapat divalidasi
         Config::$serverKey = env('MIDTRANS_SERVER_KEY');
         Config::$isProduction = env('MIDTRANS_IS_PRODUCTION', false); // Sesuaikan dengan APP_ENV Anda
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
         // --- 2. Buat instance notifikasi dari Midtrans ---
-        // Ini akan secara otomatis memvalidasi notifikasi yang masuk
         try {
             $notif = new Notification();
+            // --- DEBUGGING SEMENTARA ---
+            // dd($notif->jsonSerialize()); // <-- HAPUS BARIS INI SETELAH BERHASIL MELIHAT OUTPUTNYA
+            // --- END DEBUGGING ---
         } catch (\Exception $e) {
             Log::error('Midtrans Notification Error: ' . $e->getMessage());
             return response()->json(['message' => 'Invalid Midtrans Notification'], 400);
@@ -35,7 +35,7 @@ class MidtransController extends Controller
         $fraudStatus = $notif->fraud_status;
         $paymentType = $notif->payment_type;
         $grossAmount = $notif->gross_amount; // Jumlah pembayaran
-        $transactionTime = $notif->transaction_time; // Waktu transaksi
+        // $transactionTime = $notif->transaction_time; // Waktu transaksi - Tidak digunakan langsung di sini, tapi bisa disave jika perlu
 
         // --- 3. Cari donasi berdasarkan midtrans_order_id ---
         $donation = Donation::where('midtrans_order_id', $orderId)->first();
@@ -59,43 +59,64 @@ class MidtransController extends Controller
             // Untuk kartu kredit, status 'capture' berarti dana sudah ditangkap
             if ($paymentType == 'credit_card') {
                 if ($fraudStatus == 'accept') {
-                    $donation->payment_status = 'success';
+                    $newPaymentStatus = 'success';
                 } elseif ($fraudStatus == 'challenge') {
-                    $donation->payment_status = 'pending'; // Perlu verifikasi manual
+                    $newPaymentStatus = 'pending'; // Perlu verifikasi manual
                 } else {
-                    $donation->payment_status = 'failed'; // Status fraud lainnya
+                    $newPaymentStatus = 'failed'; // Status fraud lainnya
                 }
+            } else {
+                // Should not happen for 'capture' as it's credit card specific
+                $newPaymentStatus = 'failed';
             }
         } elseif ($transactionStatus == 'settlement') {
             // Untuk non-kartu kredit, 'settlement' berarti pembayaran berhasil
-            $donation->payment_status = 'success';
+            $newPaymentStatus = 'success';
         } elseif ($transactionStatus == 'pending') {
             // Menunggu pembayaran
-            $donation->payment_status = 'pending';
+            $newPaymentStatus = 'pending';
         } elseif (in_array($transactionStatus, ['deny', 'cancel', 'expire'])) {
             // Pembayaran ditolak, dibatalkan, atau kadaluarsa
-            $donation->payment_status = 'failed';
+            $newPaymentStatus = 'failed';
         } elseif ($transactionStatus == 'refund' || $transactionStatus == 'partial_refund') {
             // Pembayaran dikembalikan (opsional, tergantung kebutuhan Anda)
-            $donation->payment_status = 'refunded';
+            $newPaymentStatus = 'refunded';
+        } else {
+            // Status tidak dikenal
+            $newPaymentStatus = $donation->payment_status; // Tetap pada status sebelumnya
+            Log::warning('Unknown transaction status received: ' . $transactionStatus . ' for Order ID: ' . $orderId);
         }
 
         // --- 5. Perbarui Kolom Lain yang Penting ---
-        // Hanya perbarui jika statusnya berubah atau jika ini adalah status final
-        if ($donation->isDirty('payment_status') || $donation->payment_status === 'success' || $donation->payment_status === 'failed') {
+        // Hanya perbarui jika statusnya berubah atau jika ini adalah status final yang sukses/gagal
+        // Menggunakan 'isDirty' untuk menghindari update yang tidak perlu, tapi pastikan juga untuk update data penting lainnya
+        $updateNeeded = false;
+        if ($donation->payment_status !== $newPaymentStatus) {
+            $donation->payment_status = $newPaymentStatus;
+            $updateNeeded = true;
+        }
+
+        if ($updateNeeded || $newPaymentStatus === 'success' || $newPaymentStatus === 'failed') {
             $donation->payment_method = $paymentType;
             $donation->transaction_id = $notif->transaction_id; // ID transaksi dari Midtrans
-            $donation->midtrans_response = json_encode($notif); // Simpan seluruh respon notifikasi
-            
-            // Hanya set paid_at jika statusnya sukses/berhasil
-            if ($donation->payment_status === 'success') {
+            $donation->midtrans_response = json_encode($notif->jsonSerialize()); // Simpan seluruh respon notifikasi dalam bentuk JSON string
+
+            // Hanya set paid_at jika statusnya sukses/berhasil dan belum di-set
+            if ($donation->payment_status === 'success' && is_null($donation->paid_at)) {
                 $donation->paid_at = date('Y-m-d H:i:s'); // Waktu saat pembayaran berhasil
             }
         }
 
+        // Simpan perubahan ke database
         $donation->save();
 
-        Log::info('Payment status updated for Order ID ' . $orderId . ': ' . $donation->payment_status);
+        // Update collected_amount di Campaign
+        if ($donation->payment_status === 'success' && $donation->campaign) {
+            $donation->campaign->updateCollectedAmount();
+        }
+
+
+        Log::info('Final Payment status for Order ID ' . $orderId . ': ' . $donation->payment_status);
 
         return response()->json(['message' => 'Payment status updated'], 200);
     }
