@@ -62,14 +62,20 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Dashboard Redirect (tetap sama, ini untuk saat login/akses /dashboard secara umum)
-    Route::get('/dashboard', function () {
-        $user = auth()->user();
-        return match ($user->role) {
-            'admin' => redirect()->route('admin.dashboard'),
-            'user' => redirect()->route('user.dashboard'),
-            default => redirect('/'),
-        };
-    })->name('dashboard');
+    // web.php
+// web.php
+
+Route::get('/dashboard', function () {
+    $user = auth()->user();
+
+    return match ($user->role) {
+        'admin' => redirect()->route('admin.dashboard'),
+        'user' => view('profile.show'),
+        default => redirect('/'),
+    };
+})->name('dashboard')->middleware('auth');
+
+
 
     // Rute untuk halaman pembayaran donasi
     // DILINDUNGI OLEH MIDDLEWARE 'auth'
@@ -82,14 +88,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 });
 
-// Authenticated & Verified User Routes
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::prefix('user')->name('user.')->group(function () {
-        Route::get('/dashboard', fn () => view('user.dashboard'))->name('dashboard');
-    });
 
 
-});
 
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
