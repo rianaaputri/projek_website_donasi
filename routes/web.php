@@ -11,12 +11,17 @@ use App\Http\Controllers\{
     ProfileController,
     DonationController,
     AuthController,
-    AdminDashboardController // Pastikan ini di-import untuk route admin
+    AdminDashboardController,
+    PasswordController // Pastikan ini di-import untuk route admin
 };
 
 // Public Routes
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
+
+
+//pasword reset routes
+Route::post('/password/update', [PasswordController::class, 'update'])->name('password.update');
 
 // Guest Routes (Login/Register)
 Route::middleware('guest')->group(function () {
@@ -60,6 +65,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
+
 
     // Dashboard Redirect (tetap sama, ini untuk saat login/akses /dashboard secara umum)
     // web.php
@@ -70,12 +77,10 @@ Route::get('/dashboard', function () {
 
     return match ($user->role) {
         'admin' => redirect()->route('admin.dashboard'),
-        'user' => view('profile.show'),
+        'user' => redirect()->route('profile.show'),
         default => redirect('/'),
     };
 })->name('dashboard')->middleware('auth');
-
-
 
     // Rute untuk halaman pembayaran donasi
     // DILINDUNGI OLEH MIDDLEWARE 'auth'
@@ -89,8 +94,6 @@ Route::get('/dashboard', function () {
 });
 
 
-
-
 // Admin Routes
 Route::prefix('admin')->name('admin.')->group(function () {
     // Guest admin routes
@@ -102,7 +105,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
     // Protected admin routes
     Route::middleware(['auth:admin'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/dashboard', [AdminDashboardController::class, 'layouts.admin'])->name('dashboard');
+
         
         // Campaign routes
         Route::resource('campaigns', \App\Http\Controllers\Admin\CampaignController::class);
@@ -142,15 +146,11 @@ Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])-
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
-
-
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
-
-
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
@@ -159,8 +159,6 @@ Route::get('/donation-success/{id}', [DonationController::class, 'success'])->na
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
-
-
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
