@@ -8,10 +8,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    // // Ganti ini:
-    // public const HOME = '/dashboard';
-    
-    // Jadi ini (atau hapus sama sekali):
+   
     public const HOME = '/';
 
     public function boot(): void
