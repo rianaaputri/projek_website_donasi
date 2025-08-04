@@ -497,7 +497,7 @@
     <div id="loginSection" class="form-section">
       <div class="login-header">
         <h3>Selamat Datang</h3>
-        <p>Silakan login ke akun admin Anda</p>
+        <p>Silakan login ke akun Anda</p>
       </div>
 
       @if(session('error'))
