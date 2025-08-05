@@ -11,19 +11,19 @@ use Illuminate\Http\Request;
 class RouteServiceProvider extends ServiceProvider
 {
     /**
-     * Jalur default untuk redirect pengguna setelah login.
+     * Default redirect path setelah login.
      */
     public const HOME = '/';
     public const ADMIN_HOME = '/admin/dashboard';
 
     /**
-     * Boot method untuk routing & rate limiting.
+     * Bootstrap routing & rate limiting.
      */
     public function boot(): void
     {
         $this->configureRateLimiting();
 
-        // Definisikan route web dan api
+        // Register web & api routes
         $this->routes(function () {
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
@@ -32,17 +32,10 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
         });
-
-        // Jika Anda ingin membuat group middleware 'admin' (tidak umum di ServiceProvider)
-        // lebih baik pindahkan ini ke Kernel.php jika digunakan secara global
-        // Namun jika tetap ingin di sini, pastikan AdminMiddleware ada
-        Route::middlewareGroup('admin', [
-            \App\Http\Middleware\AdminMiddleware::class,
-        ]);
     }
 
     /**
-     * Konfigurasi Rate Limiting (default Laravel).
+     * Konfigurasi batasan request (rate limiting).
      */
     protected function configureRateLimiting(): void
     {

@@ -13,37 +13,47 @@ class Donation extends Model
         'campaign_id',
         'donor_name',
         'donor_email',
+        'donor_phone',
         'amount',
+        'message',
+        'is_anonymous',
         'payment_status',
         'midtrans_order_id',
-        'comment',
-        'payment_method', // <-- Tambahkan ini
-        'transaction_id', // <-- Tambahkan ini
-        'midtrans_response', // <-- Tambahkan ini
-        'paid_at',          // <-- Tambahkan ini
+        'payment_method',
+        'transaction_id',
+        'midtrans_response',
+        'paid_at',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'paid_at' => 'datetime', // <-- Tambahkan ini
+        'is_anonymous' => 'boolean',
+        'amount'       => 'decimal:2',
+        'created_at'   => 'datetime',
+        'updated_at'   => 'datetime',
+        'paid_at'      => 'datetime',
     ];
 
+    // Relasi ke campaign
     public function campaign()
     {
         return $this->belongsTo(Campaign::class);
     }
 
+    // Scope donasi yang berhasil
     public function scopePaid($query)
     {
-        // Ganti 'paid' menjadi 'success' jika Anda konsisten menggunakan 'success'
-        // di MidtransController untuk status berhasil
         return $query->where('payment_status', 'success');
     }
 
+    // Format jumlah donasi
     public function getFormattedAmountAttribute()
     {
         return 'Rp ' . number_format($this->amount, 0, ',', '.');
+    }
+
+    // Nama donor ditampilkan berdasarkan status anonimitas
+    public function getDisplayNameAttribute()
+    {
+        return $this->is_anonymous ? 'Hamba Allah' : $this->donor_name;
     }
 }

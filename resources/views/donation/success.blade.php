@@ -159,40 +159,54 @@
 @endsection
 @push('scripts')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const statusText = document.getElementById('status-text');
     const statusAlert = document.getElementById('status-alert');
+    const collectedText = document.getElementById('collected-amount');
+    const donorCountText = document.getElementById('donor-count');
+    const progressBar = document.querySelector('.progress-bar');
 
     function updateStatus() {
-        fetch('/donation/status/{{ $donation->id }}')
+        fetch("{{ route('donation.status', $donation->id) }}")
             .then(res => res.json())
             .then(data => {
-                if (data.status === 'success') {
-                   statusText.innerHTML = `
-    <div class="col-sm-4 fw-bold">Status:</div>
-    <div class="col-sm-8">
-        <span class="badge bg-success">Berhasil</span>
-    </div>
-`;
-                    if (statusAlert) {
-                        statusAlert.style.display = 'none';
-                    }
+                if (!data || !data.status) return;
 
-                    // Optional: Reload page or show notification
+                // Update status badge
+                let badgeHTML = '';
+                if (data.status === 'success') {
+                    badgeHTML = '<span class="badge bg-success">Berhasil</span>';
+                    if (statusAlert) statusAlert.style.display = 'none';
+                } else if (data.status === 'pending') {
+                    badgeHTML = '<span class="badge bg-warning">Menunggu Pembayaran</span>';
                 } else if (data.status === 'failed') {
-                    statusText.innerHTML = '<span class="badge bg-danger">Gagal</span>';
-                    if (statusAlert) {
-                        statusAlert.style.display = 'none';
-                    }
+                    badgeHTML = '<span class="badge bg-danger">Gagal</span>';
+                    if (statusAlert) statusAlert.style.display = 'none';
                 }
-                // Update campaign progress (optional)
-                document.querySelector('.progress-bar').style.width = data.progress + '%';
-                document.querySelectorAll('h6.text-success')[0].innerText = data.collected;
-                document.querySelectorAll('h6.text-warning')[0].innerText = data.donors;
-            });
+
+                statusText.innerHTML = `
+                    <div class="col-sm-4 fw-bold">Status:</div>
+                    <div class="col-sm-8">${badgeHTML}</div>
+                `;
+
+                // Update progress bar and text if available
+                if (data.progress && progressBar) {
+                    progressBar.style.width = data.progress + '%';
+                }
+
+                if (data.collected && collectedText) {
+                    collectedText.innerText = data.collected;
+                }
+
+                if (data.donors && donorCountText) {
+                    donorCountText.innerText = data.donors;
+                }
+            })
+            .catch(error => console.error('Status update error:', error));
     }
 
-    setInterval(updateStatus, 2000); // setiap 2 detik
+    // Poll only if status not final (handled on backend if needed)
+    setInterval(updateStatus, 5000); // update setiap 5 detik
 });
 </script>
 @endpush
