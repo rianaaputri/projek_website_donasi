@@ -12,7 +12,7 @@ use Illuminate\View\View;
 class ProfileController extends Controller
 {
     /**
-     * Display the user's profile form.
+     * Tampilkan form edit profil.
      */
     public function edit(Request $request): View
     {
@@ -22,23 +22,26 @@ class ProfileController extends Controller
     }
 
     /**
-     * Update the user's profile information.
+     * Simpan perubahan data profil user.
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $user->fill($request->validated());
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
         }
 
-        $request->user()->save();
+        $user->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return Redirect::route('profile.edit')
+            ->with('status', 'profile-updated');
     }
 
     /**
-     * Delete the user's account.
+     * Hapus akun user secara permanen.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -55,13 +58,16 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return Redirect::to('/');
+        return Redirect::to('/')->with('success', 'Akun Anda telah dihapus.');
     }
-    public function show(Request $request): View
-{
-    return view('profile.show', [
-        'user' => $request->user(),
-    ]);
-}
 
+    /**
+     * Tampilkan profil user (read-only).
+     */
+    public function show(Request $request): View
+    {
+        return view('profile.show', [
+            'user' => $request->user(),
+        ]);
+    }
 }

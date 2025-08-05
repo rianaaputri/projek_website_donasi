@@ -10,11 +10,6 @@ use Illuminate\Support\Facades\Storage;
 
 class CampaignController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:admin');
-    }
-
     public function index()
     {
         $campaigns = Campaign::latest()->paginate(10);
@@ -29,22 +24,23 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
-            'target_amount' => 'required|numeric',
-            'category' => 'required',
-            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'title'         => 'required|string|max:255',
+            'description'   => 'required|string',
+            'category'      => 'required|string|max:100',
+            'target_amount' => 'required|numeric|min:1000',
+            'image'         => 'nullable|image|max:2048',
         ]);
 
+        $validated['collected_amount'] = 0;
+        $validated['status'] = 'active';
+
         if ($request->hasFile('image')) {
-            $image = $request->file('image')->store('campaign-images', 'public');
-            $validated['image'] = $image;
+            $validated['image'] = $request->file('image')->store('images/campaign', 'public');
         }
 
         Campaign::create($validated);
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign created successfully');
+        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dibuat.');
     }
 
     public function edit(Campaign $campaign)
@@ -55,24 +51,23 @@ class CampaignController extends Controller
     public function update(Request $request, Campaign $campaign)
     {
         $validated = $request->validate([
-            'title' => 'required|max:255',
-            'description' => 'required',
-            'target_amount' => 'required|numeric',
-            'category' => 'required',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'title'         => 'required|string|max:255',
+            'description'   => 'required|string',
+            'category'      => 'required|string|max:100',
+            'target_amount' => 'required|numeric|min:1000',
+            'image'         => 'nullable|image|max:2048',
         ]);
 
         if ($request->hasFile('image')) {
             if ($campaign->image) {
                 Storage::disk('public')->delete($campaign->image);
             }
-            $validated['image'] = $request->file('image')->store('campaign-images', 'public');
+            $validated['image'] = $request->file('image')->store('images/campaign', 'public');
         }
 
         $campaign->update($validated);
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign updated successfully');
+        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil diperbarui.');
     }
 
     public function destroy(Campaign $campaign)
@@ -80,10 +75,9 @@ class CampaignController extends Controller
         if ($campaign->image) {
             Storage::disk('public')->delete($campaign->image);
         }
-        
+
         $campaign->delete();
 
-        return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign deleted successfully');
+        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dihapus.');
     }
 }

@@ -14,20 +14,16 @@ class User extends Authenticatable implements MustVerifyEmail
 
     /**
      * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
      */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role', // Tambahkan kolom role
+        'role',
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * The attributes that should be hidden for arrays.
      */
     protected $hidden = [
         'password',
@@ -35,28 +31,18 @@ class User extends Authenticatable implements MustVerifyEmail
     ];
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * The attributes that should be cast to native types.
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    // Cek apakah user adalah admin
-    public function isAdmin()
+    /**
+     * Cek apakah user memiliki role admin.
+     */
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
-    }
-
-    // Untuk mengelola autentikasi multi-guard
-    // UBAH NAMA METODE INI
-    public function getAuthGuard() // <-- Ganti 'guard' menjadi 'getAuthGuard'
-    {
-        if ($this->isAdmin()) {
-            return 'admin';
-        }
-        return 'web';
     }
 }

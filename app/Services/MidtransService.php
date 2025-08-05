@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Services;
 
 use Midtrans\Snap;
@@ -14,11 +15,17 @@ class MidtransService
         Config::$is3ds = true;
     }
 
-      public function getSnapToken(array $params)
+    /**
+     * Generate Snap Token dengan parameter langsung
+     */
+    public function getSnapToken(array $params)
     {
         return Snap::getSnapToken($params);
     }
 
+    /**
+     * Generate Snap Token berdasarkan model Donasi
+     */
     public function createSnapToken($donation)
     {
         $params = [
@@ -31,11 +38,19 @@ class MidtransService
                 'email' => $donation->donor_email,
                 'phone' => $donation->donor_phone,
             ],
+            'item_details' => [
+                [
+                    'id' => $donation->campaign_id,
+                    'name' => 'Donasi untuk ' . $donation->campaign->title,
+                    'price' => (int) $donation->amount,
+                    'quantity' => 1,
+                ]
+            ],
             'callbacks' => [
                 'finish' => route('donation.success', $donation->id),
             ],
         ];
 
+        return Snap::getSnapToken($params);
     }
 }
-

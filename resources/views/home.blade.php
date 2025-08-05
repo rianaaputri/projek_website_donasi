@@ -9,7 +9,7 @@
         <div class="row align-items-center">
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold mb-4">Mau Berbuat Baik Apa Hari Ini?</h1>
-                <p class="lead mb-4">Yuk bergabung dengan platform terpercaya untuk berbagi kebaikan dan membantu sesama yang membutuhkan. Berbagi Kebaikan untuk Indonesia.</p>
+                <p class="lead mb-4">Yuk bergabung dengan platform terpercaya untuk berbagi kebaikan dan membantu sesama yang membutuhkan.</p>
                 <a href="#campaigns" class="btn btn-light btn-lg">
                     <i class="fas fa-heart me-2"></i> Mulai Berdonasi
                 </a>
@@ -28,30 +28,24 @@
 
 <section class="stats-section">
     <div class="container">
-        <div class="row">
+        <div class="row text-center">
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum(fn($c) => $c->donations->count())) }}</div>
                     <div class="stat-label">Donatur Bergabung</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-hand-holding-heart"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-hand-holding-heart"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->count()) }}</div>
                     <div class="stat-label">Campaign Aktif</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum('collected_amount'), 0, ',', '.') }}</div>
                     <div class="stat-label">Dana Terkumpul (Rp)</div>
                 </div>
@@ -65,32 +59,29 @@
         <div class="row mb-5">
             <div class="col-lg-8 mx-auto text-center">
                 <h2 class="section-title">Program Donasi Terbaru</h2>
-                <p class="section-subtitle">Pilih program donasi yang ingin Anda dukung dan mulai berbagi kebaikan untuk sesama yang membutuhkan.</p>
+                <p class="section-subtitle">Pilih program donasi yang ingin Anda dukung dan mulai berbagi kebaikan.</p>
             </div>
         </div>
 
         @if($campaigns->isEmpty())
             <div class="row">
-                <div class="col text-center">
-                    <div class="py-5">
-                        <i class="fas fa-heart-broken" style="font-size: 4rem; color: #e9ecef; margin-bottom: 2rem;"></i>
-                        <h4 class="text-muted">Belum Ada Campaign Aktif</h4>
-                        <p class="text-muted">Saat ini belum ada campaign donasi yang tersedia. Silakan cek kembali nanti.</p>
-                    </div>
+                <div class="col text-center py-5">
+                    <i class="fas fa-heart-broken" style="font-size: 4rem; color: #e9ecef;"></i>
+                    <h4 class="text-muted mt-3">Belum Ada Campaign Aktif</h4>
+                    <p class="text-muted">Silakan cek kembali nanti ya.</p>
                 </div>
             </div>
         @else
-            {{-- Carousel Start --}}
             <div id="campaignCarousel" class="carousel slide" data-bs-ride="carousel">
                 <div class="carousel-indicators">
                     @foreach($campaigns->chunk(3) as $key => $chunk)
-                        <button type="button" data-bs-target="#campaignCarousel" data-bs-slide-to="{{ $key }}" class="{{ $key == 0 ? 'active' : '' }}" aria-current="{{ $key == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $key + 1 }}"></button>
+                        <button type="button" data-bs-target="#campaignCarousel" data-bs-slide-to="{{ $key }}" class="{{ $key == 0 ? 'active' : '' }}" aria-label="Slide {{ $key + 1 }}"></button>
                     @endforeach
                 </div>
                 <div class="carousel-inner">
                     @foreach($campaigns->chunk(3) as $key => $chunk)
                         <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
-                            <div class="row justify-content-center"> {{-- Added justify-content-center for better alignment if less than 3 campaigns --}}
+                            <div class="row justify-content-center">
                                 @foreach($chunk as $campaign)
                                     <div class="col-lg-4 col-md-6 mb-4">
                                         <div class="card campaign-card">
@@ -106,15 +97,13 @@
                                                 <h5 class="card-title">{{ $campaign->title }}</h5>
                                                 <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
 
-                                                <div class="progress progress-custom">
-                                                    <div class="progress-bar" role="progressbar" style="width: {{ $campaign->progress_percentage }}%"></div>
+                                                <div class="progress progress-custom mb-2">
+                                                    <div class="progress-bar" style="width: {{ $campaign->progress_percentage }}%"></div>
                                                 </div>
 
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <div class="d-flex justify-content-between mb-2">
                                                     <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur
-                                                    </small>
+                                                    <small class="text-muted"><i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur</small>
                                                 </div>
 
                                                 <div class="mb-3">
@@ -126,10 +115,9 @@
                                                     <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
                                                         <i class="fas fa-eye me-1"></i> Lihat Detail
                                                     </a>
-                                                    {{-- Informasi "Hari berjalan" dipindahkan ke halaman detail campaign --}}
                                                     @if($campaign->progress_percentage >= 100)
                                                         <span class="badge bg-success">
-                                                            <i class="fas fa-check me-1"></i>Tercapai
+                                                            <i class="fas fa-check me-1"></i> Tercapai
                                                         </span>
                                                     @endif
                                                 </div>
@@ -142,57 +130,46 @@
                     @endforeach
                 </div>
                 <button class="carousel-control-prev" type="button" data-bs-target="#campaignCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
+                    <span class="carousel-control-prev-icon"></span>
                 </button>
                 <button class="carousel-control-next" type="button" data-bs-target="#campaignCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
+                    <span class="carousel-control-next-icon"></span>
                 </button>
             </div>
-            {{-- Carousel End --}}
         @endif
     </div>
 </section>
 
-<section class="py-5" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);">
-    <div class="container">
-        <div class="row text-center text-white">
-            <div class="col-lg-8 mx-auto">
-                <h2 class="mb-4">Ingin Membuat Campaign Donasi?</h2>
-                <p class="lead mb-4">Bergabunglah dengan ribuan orang yang telah mempercayakan campaign donasi mereka kepada kami. Platform yang aman, terpercaya, dan mudah digunakan.</p>
-                @guest
-                    <a href="{{ route('register') }}" class="btn btn-light btn-lg me-3">
-                        <i class="fas fa-user-plus me-2"></i> Daftar Sekarang
-                    </a>
-                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-lg">
-                        <i class="fas fa-sign-in-alt me-2"></i> Masuk
+<section class="py-5" style="background: linear-gradient(135deg, var(--primary-blue), var(--light-blue));">
+    <div class="container text-center text-white">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4">Ingin Membuat Campaign Donasi?</h2>
+            <p class="lead mb-4">Platform donasi terpercaya untuk Anda yang ingin berkontribusi lebih.</p>
+            @guest
+                <a href="{{ route('register') }}" class="btn btn-light btn-lg me-3">
+                    <i class="fas fa-user-plus me-2"></i> Daftar Sekarang
+                </a>
+                <a href="{{ route('login') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-sign-in-alt me-2"></i> Masuk
+                </a>
+            @else
+                @auth('admin')
+                    <a href="{{ route('admin.campaigns.create') }}" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
                     </a>
                 @else
-                    @auth('admin')
-                        <a href="{{ route('admin.campaigns.create') }}" class="btn btn-light btn-lg">
-                            <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
-                        </a>
-                    @else
-                        <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
-                    @endauth
-                @endguest
-            </div>
+                    <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
+                @endauth
+            @endguest
         </div>
     </div>
 </section>
 
 <style>
 @keyframes heartbeat {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
-    }
-    50% {
-        transform: translate(-50%, -50%) scale(1.1);
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-    }
+    0%   { transform: translate(-50%, -50%) scale(1); }
+    50%  { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 .campaign-card .card-body {
@@ -204,28 +181,25 @@
     margin-top: auto;
 }
 
-/* Custom CSS for Carousel adjustments if needed */
 .carousel-item {
-    padding-bottom: 30px; /* To prevent cutting off the card shadow */
+    padding-bottom: 30px;
 }
 
-/* Optional: Make carousel controls stand out more */
 .carousel-control-prev,
 .carousel-control-next {
-    width: 5%; /* Adjust width of control area */
-    color: #0d6efd; /* Bootstrap primary blue */
+    width: 5%;
+    color: #0d6efd;
     opacity: 1;
 }
 
 .carousel-control-prev-icon,
 .carousel-control-next-icon {
-    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(200deg) brightness(80%); /* Makes icon blue */
+    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(200deg) brightness(80%);
 }
 
-/* Responsive adjustments for carousel */
-@media (max-width: 767.98px) { /* For small devices */
+@media (max-width: 767.98px) {
     .carousel-item .col-md-6 {
-        flex: 0 0 100%; /* Make each card take full width */
+        flex: 0 0 100%;
         max-width: 100%;
     }
 }
