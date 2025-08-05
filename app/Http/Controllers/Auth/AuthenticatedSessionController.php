@@ -11,11 +11,17 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
+    /**
+     * Tampilkan form login
+     */
     public function create(): View
     {
         return view('auth.login');
     }
 
+    /**
+     * Proses login
+     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
@@ -23,16 +29,21 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
+        // Redirect berdasarkan role
         if ($user->role === 'admin') {
             return redirect()->route('admin.dashboard');
         }
 
-        return redirect('/');
+        // Default redirect
+        return redirect()->route('home');
     }
 
+    /**
+     * Logout
+     */
     public function destroy(Request $request): RedirectResponse
     {
-        Auth::guard('web')->logout();
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 

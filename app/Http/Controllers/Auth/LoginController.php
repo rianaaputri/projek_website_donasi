@@ -16,7 +16,7 @@ class LoginController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/dashboard'; // Akan ditimpa oleh logic di routes/web.php
+    protected $redirectTo = '/dashboard';
 
     /**
      * Create a new controller instance.
@@ -29,6 +29,37 @@ class LoginController extends Controller
         $this->middleware('guest')->except('logout');
         $this->middleware('guest:admin')->except('adminLogout');
     }
+    protected function authenticated(Request $request, $user)
+{
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard'); 
+    }
+
+    return redirect()->route('home'); 
+}
+
+
+public function login(Request $request)
+{
+    $credentials = $request->only('email', 'password');
+
+    if (Auth::attempt($credentials)) {
+        $user = Auth::user();
+
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->route('home');
+    }
+
+    return back()->withErrors([
+        'email' => 'Email atau password salah.',
+    ]);
+}
+
+
+
 
     // --- User Login ---
     public function showLoginForm()
@@ -81,7 +112,7 @@ class LoginController extends Controller
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login')->with('success', 'Anda telah berhasil logout dari admin panel.');
+        return redirect()->route('login')->with('success', 'Anda telah berhasil logout dari admin panel.');
     }
 
     // Helper method needed for AuthenticatesUsers trait, Laravel UI often adds this

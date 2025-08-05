@@ -1,18 +1,18 @@
 <?php
 
-use Illuminate\Http\Request; // Pastikan ini di-import
+use Illuminate\Http\Request; 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
-    MidtransController, // Pastikan ini di-import jika digunakan
+    MidtransController, 
     CampaignController,
     UserController,
     ProfileController,
     DonationController,
     AuthController,
     AdminDashboardController,
-    PasswordController // Pastikan ini di-import untuk route admin
+    PasswordController
 };
 
 // Public Routes
@@ -73,14 +73,17 @@ Route::middleware(['auth'])->group(function () {
 // web.php
 
 Route::get('/dashboard', function () {
-    $user = auth()->user();
+    if (auth('admin')->check()) {
+        return redirect()->route('admin.dashboard');
+    }
 
-    return match ($user->role) {
-        'admin' => redirect()->route('admin.dashboard'),
-        'user' => redirect()->route('profile.show'),
-        default => redirect('/'),
-    };
-})->name('dashboard')->middleware('auth');
+    if (auth()->check()) {
+        return redirect()->route('profile.show');
+    }
+
+    return redirect('/');
+})->name('dashboard');
+
 
     // Rute untuk halaman pembayaran donasi
     // DILINDUNGI OLEH MIDDLEWARE 'auth'
@@ -103,9 +106,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 
     // Protected admin routes
-    Route::middleware(['auth:admin'])->group(function () {
+        Route::middleware(['auth:admin'])->group(function () {
         Route::post('/logout', [AuthController::class, 'logout'])->name('auth.logout');
-        Route::get('/dashboard', [AdminDashboardController::class, 'layouts.admin'])->name('dashboard');
+        Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
         
         // Campaign routes
@@ -140,31 +143,16 @@ Route::get('/debug-auth', function () {
 
 //midtrans callback route
 // Proses Pembayaran Donasi
-Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
-Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
-Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
-
 // Midtrans Callback (dari dashboard Midtrans)
-Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
-Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
 // Midtrans Callback (dari dashboard Midtrans)
 Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
 Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
 Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
-// Midtrans Callback (dari dashboard Midtrans)
-Route::post('/midtrans/callback', [DonationController::class, 'handleCallback'])->name('midtrans.callback');
-Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
-Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
-Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
 
 
 
