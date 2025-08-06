@@ -220,6 +220,10 @@
             <a href="{{ route('admin.logout') }}" class="logout-btn">
                 <i class="fas fa-sign-out-alt me-2"></i> Logout
             </a>
+            <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
+    @csrf
+    <button type="submit" class="dropdown-item text-danger">Logout</button>
+</form>
         </div>
     </div>
 
