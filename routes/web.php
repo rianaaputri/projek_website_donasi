@@ -13,9 +13,9 @@ use App\Http\Controllers\{
     Auth\LoginController,
     Auth\PasswordResetLinkController,
     Auth\NewPasswordController,
-    AdminDashboardController,
-    PasswordController
+    AdminDashboardController
 };
+use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 
@@ -25,8 +25,15 @@ use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/admin/add-admin', [AdminController::class, 'addAdmin'])->name('admin.add-admin');
+    Route::post('/admin/add-admin', [AdminController::class, 'storeAdmin'])->name('admin.store-admin');
+    // routes lainnya...
+});
+
 // ==============================
-// AUTH ROUTES
+// AUTH ROUTES (guest only)
 // ==============================
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
@@ -38,14 +45,14 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store'); // UBAH NAMA INI jika perlu
 });
 
-// Logout
+// Logout (authenticated) — satu route global untuk semua users
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ==============================
-// EMAIL VERIFICATION
+// EMAIL VERIFICATION (auth)
 // ==============================
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', function () {
@@ -65,33 +72,40 @@ Route::middleware('auth')->group(function () {
 });
 
 // ==============================
-// DASHBOARD REDIRECT
+// DASHBOARD REDIRECT (optional)
 // ==============================
 Route::get('/dashboard', function () {
     $user = auth()->user();
     return $user->role === 'admin'
         ? redirect()->route('admin.dashboard')
         : redirect('/');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth'])->name('dashboard');
 
 // ==============================
 // USER PROTECTED ROUTES
 // ==============================
-Route::middleware(['auth', 'verified', 'role.check:user'])->group(function () {
+// Profile & user routes: protected by auth (so admin can access their profile too)
+Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
 
     // Manual Password Update
-    Route::post('/password/update', [PasswordController::class, 'update'])->name('password.update');
+    Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
 // ==============================
 // ADMIN ROUTES
 // ==============================
-Route::prefix('admin')->middleware(['auth', 'verified', 'role.check:admin'])->name('admin.')->group(function () {
+// Use auth + role.check:admin. No 'verified' so admin not blocked by email verification.
+Route::prefix('admin')->middleware(['auth', 'role.check:admin'])->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    // Admin logout confirmation page (GET) — displays view with form that posts to global logout
+    Route::get('/logout', function () {
+        return view('admin.logout'); // resources/views/admin/logout.blade.php
+    })->name('logout');
 
     // Campaign Management
     Route::resource('campaigns', AdminCampaignController::class);
@@ -131,7 +145,6 @@ Route::get('/debug-auth', function () {
         'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
     ]);
 });
-// ... (route lain sebelumnya)
 
 Route::get('/debug-role', function () {
     $user = auth()->user();
@@ -156,4 +169,3 @@ Route::get('/debug-user-only', function () {
 Route::get('/debug-admin-only', function () {
     return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
 })->middleware(['auth', 'role.check:admin']);
-

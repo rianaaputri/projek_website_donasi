@@ -8,6 +8,12 @@ use Illuminate\Support\Facades\DB;
 
 class AdminDashboardController extends Controller
 {
+    public function __construct()
+    {
+        // Pastikan hanya admin yang bisa akses
+        $this->middleware(['auth', 'verified', 'role.check:admin']);
+    }
+
     /**
      * Tampilkan halaman utama dashboard admin.
      */
@@ -26,10 +32,10 @@ class AdminDashboardController extends Controller
     protected function getDashboardStats()
     {
         return [
-            'total_campaigns'  => Campaign::count(),
-            'total_donations'  => Donation::count(),
-            'total_collected'  => Donation::sum('amount'),
-            'total_users'      => User::where('role', 'user')->count(),
+            'total_campaigns'  => (int) Campaign::count(),
+            'total_donations'  => (int) Donation::count(),
+            'total_collected'  => (float) Donation::sum('amount'),
+            'total_users'      => (int) User::where('role', 'user')->count(),
         ];
     }
 
@@ -38,8 +44,8 @@ class AdminDashboardController extends Controller
      */
     protected function getRecentCampaigns()
     {
-        return Campaign::with('donations')
-            ->withSum('donations as current_amount', 'amount')
+        // Gunakan withSum untuk menghindari eager loading semua donasi jika tidak diperlukan
+        return Campaign::withSum('donations', 'amount')
             ->latest()
             ->take(5)
             ->get();
@@ -61,23 +67,32 @@ class AdminDashboardController extends Controller
      */
     public function getStatistics()
     {
-        $monthly_donations = Donation::select(
-                DB::raw('MONTH(created_at) as month'),
-                DB::raw('YEAR(created_at) as year'),
-                DB::raw('SUM(amount) as total')
-            )
-            ->whereYear('created_at', now()->year)
-            ->groupBy('year', 'month')
-            ->orderBy('month')
-            ->get();
+        try {
+            $year = now()->year;
 
-        $campaign_by_category = Campaign::select('category', DB::raw('count(*) as total'))
-            ->groupBy('category')
-            ->get();
+            $monthly_donations = Donation::select(
+                    DB::raw('MONTH(created_at) as month'),
+                    DB::raw('YEAR(created_at) as year'),
+                    DB::raw('SUM(amount) as total')
+                )
+                ->whereYear('created_at', $year)
+                ->groupBy('year', 'month')
+                ->orderBy('month')
+                ->get();
 
-        return response()->json([
-            'monthly_donations'     => $monthly_donations,
-            'campaign_by_category'  => $campaign_by_category
-        ]);
+            $campaign_by_category = Campaign::select('category', DB::raw('count(*) as total'))
+                ->groupBy('category')
+                ->get();
+
+            return response()->json([
+                'monthly_donations'     => $monthly_donations,
+                'campaign_by_category'  => $campaign_by_category
+            ]);
+        } catch (\Throwable $e) {
+            // log error jika perlu: \Log::error($e);
+            return response()->json([
+                'error' => 'Gagal mengambil data statistik'
+            ], 500);
+        }
     }
 }
