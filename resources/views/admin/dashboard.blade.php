@@ -215,14 +215,11 @@
         </nav>
         
         <div class="sidebar-logout">
-            <!-- FIXED: Proper logout form with CSRF token -->
-            <form action="{{ route('admin.logout') }}" method="POST" id="logout-form">
-                @csrf
-                <button type="button" class="logout-btn" onclick="confirmLogout()">
-                    <i class="fas fa-sign-out-alt me-2"></i>
-                    Logout
-                </button>
-            </form>
+            <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
+    @csrf
+    <button type="submit" class="dropdown-item text-danger">Logout</button>
+</form>
+
         </div>
     </div>
 
