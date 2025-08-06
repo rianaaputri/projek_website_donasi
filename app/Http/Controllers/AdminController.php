@@ -23,35 +23,28 @@ class AdminController extends Controller
         ]);
 
         $credentials = $request->only('email', 'password');
-        
-        // Tambahkan kondisi untuk hanya admin yang bisa login
-        $user = User::where('email', $request->email)
-                   ->where('role', 'admin')
-                   ->first();
 
-        if (!$user) {
-            return back()->withErrors(['email' => 'Email tidak terdaftar sebagai admin.'])->withInput();
+        // Attempt login first (lebih aman)
+        if (! Auth::attempt($credentials)) {
+            return back()->withErrors(['email' => 'Login gagal. Email atau password salah.'])->withInput();
         }
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            
-            // Cek apakah user adalah admin
-            if ($user->role !== 'admin') {
-                Auth::logout();
-                return back()->withErrors(['email' => 'Akses ditolak. Hanya admin yang bisa login.']);
-            }
+        $user = Auth::user();
 
-            // Cek verifikasi email
-            if (!$user->hasVerifiedEmail()) {
-                Auth::logout();
-                return back()->withErrors(['email' => 'Email belum diverifikasi. Silakan cek email Anda.']);
-            }
-            
-            return redirect()->intended('/admin/dashboard');
+        // Pastikan user punya role admin
+        if ($user->role !== 'admin') {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Akses ditolak. Hanya admin yang bisa login.']);
         }
 
-        return back()->withErrors(['email' => 'Login gagal. Email atau password salah.'])->withInput();
+        // Pastikan email sudah diverifikasi
+        if (! $user->hasVerifiedEmail()) {
+            Auth::logout();
+            return back()->withErrors(['email' => 'Email belum diverifikasi. Silakan cek email Anda.']);
+        }
+
+        // Redirect ke intended (jika ada) atau ke admin dashboard
+        return redirect()->intended(route('admin.dashboard'));
     }
 
     public function showRegister()
@@ -64,31 +57,28 @@ class AdminController extends Controller
         // Validasi input
         $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email|ends_with:@gmail.com',
+            'email' => 'required|email|unique:users,email', // ubah jika perlu ends_with
             'password' => 'required|min:6|confirmed',
         ], [
-            'email.ends_with' => 'Email harus menggunakan domain @gmail.com',
             'email.unique' => 'Email sudah terdaftar.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
             'password.min' => 'Password minimal 6 karakter.'
         ]);
 
         try {
-            // Buat user admin baru
             $admin = User::create([
                 'name' => $request->name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'role' => 'admin', // Set role sebagai admin
+                'role' => 'admin',
             ]);
 
-            // Trigger event untuk mengirim email verifikasi
+            // Kirim email verifikasi (pastikan User implements MustVerifyEmail)
             event(new Registered($admin));
 
-            // Redirect ke halaman login dengan pesan sukses
-            return redirect('/admin/login')->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi sebelum login.');
-
+            return redirect()->route('/login')->with('success', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi sebelum login.');
         } catch (\Exception $e) {
+            // Optional: log error with $e->getMessage()
             return back()->withErrors(['error' => 'Terjadi kesalahan saat registrasi. Silakan coba lagi.'])->withInput();
         }
     }
@@ -96,6 +86,6 @@ class AdminController extends Controller
     public function logout()
     {
         Auth::logout();
-        return redirect('/admin/login')->with('success', 'Berhasil logout.');
+        return redirect()->route('/login')->with('success', 'Berhasil logout.');
     }
 }

@@ -4,19 +4,41 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 
 class RoleCheck
 {
-    public function handle(Request $request, Closure $next, ...$roles): Response
+    /**
+     * Handle an incoming request.
+     */
+    public function handle(Request $request, Closure $next, $role = null)
     {
-        $user = $request->user();
+        // Debug log untuk troubleshooting (opsional)
+        // \Log::info('RoleCheck middleware called', [
+        //     'user_id' => auth()->id(),
+        //     'user_role' => auth()->user()->role ?? 'no role',
+        //     'required_role' => $role,
+        //     'url' => $request->url()
+        // ]);
 
-        if ($user && in_array($user->role, $roles)) {
-            return $next($request);
+        // Cek apakah user sudah login
+        if (!Auth::check()) {
+            return redirect('/login');
         }
 
-        abort(403, 'Unauthorized - Anda tidak memiliki akses ke halaman ini.');
+        $user = Auth::user();
+
+        // Jika parameter role diberikan, cek role specific
+        if ($role) {
+            if ($user->role !== $role) {
+                // \Log::warning('Role mismatch', [
+                //     'user_role' => $user->role,
+                //     'required_role' => $role
+                // ]);
+                abort(403, "Access denied. {$role} role required. Your role: {$user->role}");
+            }
+        }
+
+        return $next($request);
     }
 }

@@ -92,6 +92,9 @@
             color: white;
             border-radius: 8px;
             transition: all 0.3s ease;
+            display: block;
+            text-align: center;
+            text-decoration: none;
         }
         
         .logout-btn:hover {
@@ -177,9 +180,8 @@
         <div class="sidebar-header">
             <h3><i class="fas fa-heart me-2"></i>Kindify.id</h3>
             <p>Admin Panel</p>
-            <!-- Display admin name -->
-            @auth('admin')
-                <small class="text-white-50">Welcome, {{ auth('admin')->user()->name }}</small>
+            @auth
+                <small class="text-white-50">Welcome, {{ auth()->user()->name }}</small>
             @endauth
         </div>
         
@@ -192,10 +194,10 @@
                 <i class="fas fa-bullhorn"></i>
                 Campaign Management
             </a>
-            <a href="#" class="menu-item">
+            <!--<a href="#" class="menu-item">
                 <i class="fas fa-users"></i>
                 Registered Users
-            </a>
+            </a>-->
             <a href="#" class="menu-item">
                 <i class="fas fa-hand-holding-heart"></i>
                 Donations
@@ -215,11 +217,13 @@
         </nav>
         
         <div class="sidebar-logout">
+            <a href="{{ route('admin.logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </a>
             <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
     @csrf
     <button type="submit" class="dropdown-item text-danger">Logout</button>
 </form>
-
         </div>
     </div>
 
@@ -230,7 +234,6 @@
             <div class="text-muted">{{ date('d F Y') }}</div>
         </div>
 
-        <!-- Success/Error Messages -->
         @if(session('success'))
             <div class="alert alert-success alert-dismissible fade show" role="alert">
                 <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
@@ -336,7 +339,7 @@
                                                              style="width:40px;height:40px;object-fit:cover;" 
                                                              alt="{{ $campaign->title }}">
                                                     @else
-                                                        <div class="bg-primary rounded me-2" style="width:40px;height:40px; background: linear-gradient(45deg, #667eea, #764ba2) !important;"></div>
+                                                        <div class="bg-primary rounded me-2" style="width:40px;height:40px;"></div>
                                                     @endif
                                                     <div>
                                                         <strong>{{ Str::limit($campaign->title, 20) }}</strong>
@@ -412,24 +415,5 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Add interactivity
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.addEventListener('click', function(e) {
-                if(!this.href || this.href === '#') {
-                    e.preventDefault();
-                }
-                document.querySelectorAll('.menu-item').forEach(i => i.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
-
-        // FIXED: Proper logout confirmation and form submission
-        function confirmLogout() {
-            if(confirm('Yakin mau logout?')) {
-                document.getElementById('logout-form').submit();
-            }
-        }
-    </script>
 </body>
 </html>

@@ -22,31 +22,33 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        // Validasi input
+        // Validasi input singkat
         $credentials = $request->validate([
-            'email' => ['required', 'email'],
+            'email'    => ['required', 'email'],
             'password' => ['required'],
         ]);
 
-        // Coba login
+        // Coba login dengan credentials
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $user = Auth::user();
 
-            // Cek apakah email sudah diverifikasi
-            if (!$user->hasVerifiedEmail()) {
+            // Jika model User menggunakan verifikasi email, pastikan terverifikasi
+            if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
                 Auth::logout();
                 return redirect()->route('login')->with('error', 'Email kamu belum diverifikasi.');
             }
 
-            // Regenerasi session
+            // Regenerasi session untuk keamanan
             $request->session()->regenerate();
 
-            // Redirect berdasarkan role
-            return redirect()->intended(
-                $user->role === 'admin'
-                    ? RouteServiceProvider::ADMIN_HOME
-                    : RouteServiceProvider::HOME
-            );
+            // Redirect berdasarkan role — gunakan route constants (RouteServiceProvider) atau named routes
+            if ($user->role === 'admin') {
+                // Redirect ke admin dashboard
+                return redirect()->intended(route('admin.dashboard'));
+            }
+
+            // Default: redirect ke home
+            return redirect()->intended(RouteServiceProvider::HOME);
         }
 
         // Gagal login
@@ -57,14 +59,27 @@ class LoginController extends Controller
 
     /**
      * Logout user.
+     *
+     * Admin -> redirected to login page.
+     * Regular user -> redirected to home.
      */
     public function logout(Request $request)
     {
+        // Tangkap role sebelum logout (karena setelah logout auth()->user() null)
+        $role = auth()->check() ? auth()->user()->role : null;
+
         Auth::logout();
 
+        // Invalidate session & CSRF token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/')->with('success', 'Berhasil logout.');
+        // Redirect berdasarkan role sebelumnya
+        if ($role === 'admin') {
+            return redirect()->route('login')->with('success', 'Berhasil logout.');
+        }
+
+        return redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
     }
 }
+        
