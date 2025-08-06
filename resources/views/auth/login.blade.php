@@ -2,119 +2,729 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
+  <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Login</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
+    :root {
+      --primary-blue: #E3F2FD;
+      --secondary-blue: #BBDEFB;
+      --accent-blue: #64B5F6;
+      --dark-blue: #2196F3;
+      --text-primary: #1E3A8A;
+      --text-secondary: #64748B;
+      --border-color: #E1E7EF;
+      --shadow-light: rgba(33, 150, 243, 0.08);
+      --shadow-medium: rgba(33, 150, 243, 0.15);
+      --warning-color: #F59E0B;
+      --warning-bg: #FEF3C7;
+      --success-color: #10B981;
+      --success-bg: #D1FAE5;
+      --danger-color: #EF4444;
+      --danger-bg: #FEE2E2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #E3F2FD 0%, #F8FAFC 100%);
       min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 1rem;
+      position: relative;
+      overflow-x: hidden;
     }
-    .login-container {
-      background: white;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
-      max-width: 400px;
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
+      height: 100%;
+      background-image: radial-gradient(circle at 25% 25%, rgba(33, 150, 243, 0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, rgba(33, 150, 243, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: -1;
     }
-    .form-floating {
-      margin-bottom: 1rem;
+
+    .login-wrapper {
+      width: 100%;
+      max-width: 450px;
+      position: relative;
     }
+
+    .login-container {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 8px 32px var(--shadow-light),
+                  0 2px 16px rgba(0, 0, 0, 0.02);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-blue), var(--dark-blue));
+      border-radius: 24px 24px 0 0;
+    }
+
+    .login-container:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 48px var(--shadow-medium),
+                  0 4px 24px rgba(0, 0, 0, 0.04);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .login-header h3 {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 1.75rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .login-header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    /* Form Group Styling */
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+    }
+
+    .form-group.mt-4 {
+      margin-top: 1.5rem;
+    }
+
+    /* Floating Label Container */
+    .floating-label {
+      position: relative;
+    }
+
+    /* Input Label Styling - Floating */
+    .floating-label label {
+      position: absolute;
+      left: 1.25rem;
+      top: 1rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 2;
+      background: transparent;
+      padding: 0 0.25rem;
+      transform-origin: left center;
+    }
+
+    /* Label animation when focused or filled */
+    .floating-label input:focus ~ label,
+    .floating-label input:not(:placeholder-shown) ~ label,
+    .floating-label input.has-value ~ label,
+    .floating-label input[type="text"] ~ label {
+      top: -0.5rem;
+      left: 1rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--dark-blue);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0 0.5rem;
+      transform: scale(0.9);
+    }
+
+    /* Input Field Styling */
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      border: 2px solid var(--border-color) !important;
+      border-radius: 16px !important;
+      padding: 1rem 1.25rem !important;
+      font-size: 0.95rem !important;
+      background-color: rgba(248, 250, 252, 0.5) !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      width: 100% !important;
+      min-height: 3.5rem !important;
+      max-height: 3.5rem !important;
+      height: 3.5rem !important;
+      outline: none !important;
+      box-sizing: border-box !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent-blue) !important;
+      box-shadow: 0 0 0 4px rgba(100, 181, 246, 0.1) !important;
+      background-color: white !important;
+    }
+
+    /* Remove default placeholder visibility */
+    input::placeholder {
+      color: transparent;
+    }
+
+    input:focus::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
+    }
+
+    /* Password field with icon */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper input {
+      padding-right: 3.5rem !important;
+    }
+
+    /* Ensure consistent styling for password fields */
+    .password-wrapper input[type="password"],
+    .password-wrapper input[type="text"] {
+      border: 2px solid var(--border-color) !important;
+      border-radius: 16px !important;
+      padding: 1rem 3.5rem 1rem 1.25rem !important;
+      font-size: 0.95rem !important;
+      background-color: rgba(248, 250, 252, 0.5) !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      width: 100% !important;
+      min-height: 3.5rem !important;
+      max-height: 3.5rem !important;
+      height: 3.5rem !important;
+      outline: none !important;
+      box-sizing: border-box !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
+    }
+
     .toggle-password {
       position: absolute;
       right: 1rem;
       top: 50%;
       transform: translateY(-50%);
       cursor: pointer;
+      z-index: 10;
+      color: var(--text-secondary);
+      font-size: 1.25rem;
+      transition: color 0.2s ease;
+      padding: 0.5rem;
+      border-radius: 8px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
     }
+
+    .toggle-password:hover {
+      color: var(--dark-blue);
+      background-color: rgba(33, 150, 243, 0.1);
+    }
+
+    /* Error Styling */
     .error-message {
-      color: #DC2626;
+      color: var(--danger-color);
       font-size: 0.85rem;
-      margin-top: 0.25rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--danger-bg);
+      border-radius: 8px;
+      border: 1px solid #FECACA;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .error-message::before {
+      content: '⚠️';
+      font-size: 0.9rem;
+    }
+
+    .error-message ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .error-message li {
+      margin: 0;
+    }
+
+    /* Alert Styling */
+    .alert {
+      border-radius: 12px;
+      border: none;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .alert-danger {
+      background: var(--danger-bg);
+      color: var(--danger-color);
+      border: 1px solid #FECACA;
+    }
+
+    /* Forgot Password Link */
+    .forgot-password-container {
+      text-align: right;
+      margin-bottom: 1.5rem;
+    }
+
+    .forgot-password {
+      display: inline-block;
+      color: var(--dark-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .forgot-password::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .forgot-password:hover {
+      color: var(--accent-blue);
+      background-color: rgba(33, 150, 243, 0.05);
+      transform: translateY(-1px);
+      text-decoration: none;
+    }
+
+    .forgot-password:hover::before {
+      left: 100%;
+    }
+
+    .forgot-password:active {
+      transform: translateY(0);
+    }
+
+    /* Button Styling */
+    .btn-login {
+      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--dark-blue) 100%);
+      border: none;
+      border-radius: 16px;
+      padding: 1rem 1.5rem;
+      font-weight: 600;
+      font-size: 1rem;
+      color: white;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    .btn-login:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(33, 150, 243, 0.4);
+      background: linear-gradient(135deg, var(--dark-blue) 0%, #1976D2 100%);
+    }
+
+    .btn-login:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
+    }
+
+    /* Register Link */
+    .register-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .register-link a {
+      color: var(--dark-blue);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      transition: color 0.2s ease;
+    }
+
+    .register-link a:hover {
+      color: var(--accent-blue);
+      text-decoration: underline;
+    }
+
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+      }
+      
+      .login-header h3 {
+        font-size: 1.5rem;
+      }
+    }
+
+    .bounce-in {
+      animation: bounceIn 0.5s ease-out;
+    }
+
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: scale(0.3); }
+      50% { opacity: 1; transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* Client-side validation styling */
+    input.needs-attention {
+      border-color: var(--warning-color) !important;
+      background-color: var(--warning-bg) !important;
+    }
+
+    input.looks-good {
+      border-color: var(--success-color) !important;
+      background-color: var(--success-bg) !important;
+    }
+
+    .friendly-message {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .friendly-message.helper {
+      background: var(--warning-bg);
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    .friendly-message.success {
+      background: var(--success-bg);
+      color: #065F46;
+      border: 1px solid #A7F3D0;
+    }
+
+    /* Shimmer animation for forgot password */
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: calc(200px + 100%) 0; }
+    }
+
+    .forgot-password:hover {
+      background-image: linear-gradient(90deg, transparent 0%, rgba(33, 150, 243, 0.1) 50%, transparent 100%);
+      background-size: 200px 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
     }
   </style>
 </head>
 <body>
-<div class="login-container">
-  <h4 class="text-center mb-4">Login ke Akun Anda</h4>
 
-  @if(session('error'))
-    <div class="alert alert-danger">
-      {{ session('error') }}
-    </div>
-  @endif
-
-  <form method="POST" action="{{ route('login') }}" id="loginForm" onsubmit="return validateForm()">
-    @csrf
-    <div class="form-floating">
-      <input type="email" class="form-control @error('email') is-invalid @enderror" id="email" name="email" placeholder="Email" required>
-      <label for="email">Email</label>
-      @error('email')
-        <div class="error-message">{{ $message }}</div>
-      @enderror
+<div class="login-wrapper">
+  <div class="login-container">
+    <div class="login-header">
+      <h3>Sign In</h3>
     </div>
 
-    <div class="form-floating position-relative">
-      <input type="password" class="form-control @error('password') is-invalid @enderror" id="password" name="password" placeholder="Password" required minlength="6">
-      <label for="password">Password</label>
-      <span class="toggle-password" onclick="togglePassword()">
-        <i class="bi bi-eye-slash" id="eyeIcon"></i>
-      </span>
-      <div id="passwordError" class="error-message" style="display: none;">Password minimal 6 karakter</div>
-      @error('password')
-        <div class="error-message">{{ $message }}</div>
-      @enderror
-    </div>
+    @if(session('error'))
+      <div class="alert alert-danger bounce-in">
+        {{ session('error') }}
+      </div>
+    @endif
 
-    <div class="text-end mb-3">
-      <a href="{{ route('password.request') }}">Lupa password?</a>
-    </div>
+    <form method="POST" action="{{ route('login') }}" id="loginForm">
+      @csrf
 
-    <button type="submit" class="btn btn-primary w-100">Login</button>
+      <!-- Email Address -->
+      <div class="form-group">
+        <div class="floating-label">
+          <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder=" " onblur="validateEmail()" onkeyup="validateEmail()" />
+          <label for="email">
+            <i class="bi bi-envelope"></i>
+            Email (Gmail)
+          </label>
+        </div>
+        @if($errors->get('email'))
+          <div class="error-message bounce-in">
+            <ul>
+              @foreach($errors->get('email') as $message)
+                <li>{{ $message }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+        <div id="emailMessage"></div>
+      </div>
 
-    <div class="text-center mt-3">
-      <p>Belum punya akun? <a href="{{ route('register') }}">Daftar sekarang</a></p>
-    </div>
-  </form>
+      <!-- Password -->
+      <div class="form-group mt-4">
+        <div class="floating-label password-wrapper">
+          <input id="password" type="password" name="password" required autocomplete="current-password" onblur="validatePassword()" onkeyup="validatePassword()" placeholder=" " />
+          <label for="password">
+            <i class="bi bi-lock"></i>
+            Password
+          </label>
+          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button" aria-label="Toggle password visibility">
+            <i class="bi bi-eye-slash" id="passwordEyeIcon"></i>
+          </span>
+        </div>
+        @if($errors->get('password'))
+          <div class="error-message bounce-in">
+            <ul>
+              @foreach($errors->get('password') as $message)
+                <li>{{ $message }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+        <div id="passwordMessage"></div>
+      </div>
+
+      <!-- Forgot Password Link -->
+      <div class="forgot-password-container">
+        <a href="{{ route('password.request') }}" class="forgot-password">
+          <i class="bi bi-key me-1"></i>
+          Lupa password?
+        </a>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-login" id="submitBtn">
+          <i class="bi bi-box-arrow-in-right me-2"></i>
+          Login
+        </button>
+        
+        <div class="register-link">
+          <p class="mb-0">Belum punya akun? <a href="{{ route('register') }}">Daftar sekarang</a></p>
+        </div>
+      </div>
+    </form>
+  </div>
 </div>
 
-<script>
-  function togglePassword() {
-    const passwordField = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
-    if (passwordField.type === 'password') {
-      passwordField.type = 'text';
-      eyeIcon.classList.remove('bi-eye-slash');
-      eyeIcon.classList.add('bi-eye');
-    } else {
-      passwordField.type = 'password';
-      eyeIcon.classList.remove('bi-eye');
-      eyeIcon.classList.add('bi-eye-slash');
+<script>
+  const friendlyMessages = {
+    email: {
+      invalid: "Format email tidak valid!",
+      noAt: "Email harus menggunakan format @gmail.com!",
+    },
+    password: {
+      tooShort: "Password minimal 6 karakter ya biar aman!",
     }
+  };
+
+  function showMessage(elementId, message, type = 'helper') {
+    const element = document.getElementById(elementId);
+    if (!message) {
+      element.innerHTML = '';
+      return;
+    }
+    
+    const iconMap = {
+      helper: 'bi-lightbulb',
+      success: 'bi-check-circle'
+    };
+    
+    element.innerHTML = `
+      <div class="friendly-message ${type} bounce-in">
+        <i class="bi ${iconMap[type]}"></i>
+        ${message}
+      </div>
+    `;
   }
 
-  function validateForm() {
-    const password = document.getElementById('password').value;
-    const passwordError = document.getElementById('passwordError');
-
-    passwordError.style.display = 'none';
-
-    if (password.length < 6) {
-      passwordError.style.display = 'block';
+  function validateEmail() {
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const field = document.getElementById('email');
+    
+    if (email === '') {
+      field.className = '';
+      showMessage('emailMessage', '');
+      return true; 
+    }
+    
+    // Check if email contains @
+    if (!email.includes('@')) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.noAt, 'helper');
       return false;
     }
+    
+    // Check if email ends with @gmail.com
+    if (!email.endsWith('@gmail.com')) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
+      return false;
+    }
+    
+    // Check if there's a username before @gmail.com
+    const username = email.split('@')[0];
+    if (username.length === 0) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.noUsername, 'helper');
+      return false;
+    }
+    
+    // Additional check: make sure it's exactly @gmail.com (not subdomain)
+    const emailParts = email.split('@');
+    if (emailParts.length !== 2 || emailParts[1] !== 'gmail.com') {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
+      return false;
+    }
+    
+    field.className = 'looks-good';
+    showMessage('emailMessage', '');
     return true;
   }
+
+  function validatePassword() {
+    const password = document.getElementById('password').value;
+    const field = document.getElementById('password');
+    
+    if (password === '') {
+      field.className = '';
+      showMessage('passwordMessage', '');
+      return true;
+    }
+    
+    if (password.length < 6) {
+      field.className = 'needs-attention';
+      showMessage('passwordMessage', friendlyMessages.password.tooShort, 'helper');
+      return false;
+    }
+    
+    field.className = 'looks-good';
+    showMessage('passwordMessage', '');
+    return true;
+  }
+
+  function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const eyeIcon = document.getElementById(fieldId + 'EyeIcon');
+    
+    if (passwordField.type === 'password') {
+      passwordField.type = 'text';
+      eyeIcon.className = 'bi bi-eye';
+    } else {
+      passwordField.type = 'password';
+      eyeIcon.className = 'bi bi-eye-slash';
+    }
+    
+    // Force floating label to stay in correct position
+    if (passwordField.value && passwordField.value.trim() !== '') {
+      passwordField.classList.add('has-value');
+    } else {
+      passwordField.classList.remove('has-value');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('loginForm');
+    const inputs = form.querySelectorAll('input');
+    
+    // Handle floating labels for inputs with values (like from old() helper)
+    inputs.forEach(input => {
+      // Check if input has value on page load
+      if (input.value && input.value.trim() !== '') {
+        input.classList.add('has-value');
+      }
+      
+      input.addEventListener('input', function() {
+        if (this.value && this.value.trim() !== '') {
+          this.classList.add('has-value');
+        } else {
+          this.classList.remove('has-value');
+        }
+      });
+      
+      input.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused');
+      });
+      
+      input.addEventListener('blur', function() {
+        this.parentElement.classList.remove('focused');
+        // Keep has-value class if input still has content
+        if (!this.value || this.value.trim() === '') {
+          this.classList.remove('has-value');
+        }
+      });
+    });
+    
+    // Enhanced toggle password accessibility
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+      toggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.click();
+        }
+      });
+    });
+
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+      const isEmailValid = validateEmail();
+      const isPasswordValid = validatePassword();
+      
+      if (!isEmailValid || !isPasswordValid) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
+      }
+    });
+  });
 </script>
+
 </body>
 </html>
