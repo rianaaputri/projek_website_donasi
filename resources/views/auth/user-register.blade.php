@@ -5,7 +5,7 @@
   <title>Register User</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
   <style>
     :root {
@@ -31,7 +31,7 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #E3F2FD 0%, #F8FAFC 100%);
       min-height: 100vh;
       display: flex;
@@ -367,8 +367,8 @@
 <div class="register-wrapper">
   <div class="register-container">
     <div class="register-header">
-      <h3>Daftar Akun Baru</h3>
-      <p>Yuk lengkapi data di bawah untuk membuat akun! 🚀</p>
+      <h3>Sign Up</h3>
+      <p>Lengkapi data di bawah untuk membuat akun!</p>
     </div>
 
     {{-- Notifikasi Error --}}
@@ -463,7 +463,7 @@
       </button>
 
       <div class="login-link">
-        <p>Sudah punya akun? <a href="{{ route('login') }}">Login di sini</a></p>
+        <p>Sudah punya akun? <a href="{{ route('login') }}">Masuk di sini</a></p>
       </div>
     </form>
   </div>
