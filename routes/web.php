@@ -11,13 +11,15 @@ use App\Http\Controllers\{
     ProfileController,
     DonationController,
     Auth\LoginController,
-    Auth\PasswordResetLinkController,
-    Auth\NewPasswordController,
     AdminDashboardController,
-    PasswordController
+    AdminController
 };
+use App\Http\Controllers\Auth\PasswordController; 
+use App\Http\Controllers\Auth\PasswordResetLinkController; 
+use App\Http\Controllers\Auth\NewPasswordController; 
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
+ use App\Http\Middleware\RoleCheck; 
 
 // ==============================
 // PUBLIC ROUTES
@@ -77,21 +79,22 @@ Route::get('/dashboard', function () {
 // ==============================
 // USER PROTECTED ROUTES
 // ==============================
-Route::middleware(['auth', 'verified', 'role.check:user'])->group(function () {
+Route::middleware(['auth', 'verified', 'rolecheck:user'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
-
     // Manual Password Update
-    Route::post('/password/update', [PasswordController::class, 'update'])->name('password.update');
+    Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
 // ==============================
 // ADMIN ROUTES
 // ==============================
-Route::prefix('admin')->middleware(['auth', 'verified', 'role.check:admin'])->name('admin.')->group(function () {
+Route::prefix('admin')->middleware(['auth', 'verified', 'rolecheck:admin'])->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
+
+    Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
 
     // Campaign Management
     Route::resource('campaigns', AdminCampaignController::class);
@@ -151,9 +154,14 @@ Route::get('/debug-role', function () {
 
 Route::get('/debug-user-only', function () {
     return 'HALAMAN INI HANYA BISA DIAKSES USER';
-})->middleware(['auth', 'role.check:user']);
+})->middleware(['auth', 'rolecheck:user']);
 
 Route::get('/debug-admin-only', function () {
     return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
-})->middleware(['auth', 'role.check:admin']);
+})->middleware(['auth', 'rolecheck:admin']);
+
+Route::get('/debug-rolecheck-test', function () {
+    return 'Middleware role.check BERHASIL DIJALANKAN';
+})->middleware(['auth', 'rolecheck:admin']);
+
 
