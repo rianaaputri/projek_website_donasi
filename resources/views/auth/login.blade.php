@@ -2,18 +2,12 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Login Admin</title>
+  <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <!-- Bootstrap CSS -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <!-- Google Font: Inter for modern look -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-  <!-- Bootstrap Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
-
   <style>
     :root {
       --primary-blue: #E3F2FD;
@@ -25,6 +19,12 @@
       --border-color: #E1E7EF;
       --shadow-light: rgba(33, 150, 243, 0.08);
       --shadow-medium: rgba(33, 150, 243, 0.15);
+      --warning-color: #F59E0B;
+      --warning-bg: #FEF3C7;
+      --success-color: #10B981;
+      --success-bg: #D1FAE5;
+      --danger-color: #EF4444;
+      --danger-bg: #FEE2E2;
     }
 
     * {
@@ -32,7 +32,7 @@
     }
 
     body {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #E3F2FD 0%, #F8FAFC 100%);
       min-height: 100vh;
       display: flex;
@@ -43,7 +43,6 @@
       overflow-x: hidden;
     }
 
-    /* Subtle background pattern */
     body::before {
       content: '';
       position: fixed;
@@ -59,7 +58,7 @@
 
     .login-wrapper {
       width: 100%;
-      max-width: 420px;
+      max-width: 450px;
       position: relative;
     }
 
@@ -103,7 +102,6 @@
       font-weight: 600;
       font-size: 1.75rem;
       margin-bottom: 0.5rem;
-      transition: all 0.3s ease;
     }
 
     .login-header p {
@@ -111,45 +109,94 @@
       font-size: 0.95rem;
       margin: 0;
       font-weight: 400;
-      transition: all 0.3s ease;
     }
 
-    /* Enhanced Form Controls */
-    .form-floating {
+    /* Form Group Styling */
+    .form-group {
       margin-bottom: 1.5rem;
       position: relative;
     }
 
-    .form-floating > .form-control {
-      border: 2px solid var(--border-color);
-      border-radius: 16px;
-      padding: 1rem 1.25rem;
-      font-size: 0.95rem;
-      background-color: rgba(248, 250, 252, 0.5);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      height: auto;
-      min-height: 3.5rem;
+    .form-group.mt-4 {
+      margin-top: 1.5rem;
     }
 
-    .form-floating > .form-control:focus {
-      border-color: var(--accent-blue);
-      box-shadow: 0 0 0 4px rgba(100, 181, 246, 0.1);
-      background-color: white;
-      outline: none;
+    /* Floating Label Container */
+    .floating-label {
+      position: relative;
     }
 
-    .form-floating > label {
+    /* Input Label Styling - Floating */
+    .floating-label label {
+      position: absolute;
+      left: 1.25rem;
+      top: 1rem;
       color: var(--text-secondary);
       font-weight: 500;
-      font-size: 0.9rem;
-      padding: 1rem 1.25rem;
-      transition: all 0.2s ease;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 2;
+      background: transparent;
+      padding: 0 0.25rem;
+      transform-origin: left center;
     }
 
-    .form-floating > .form-control:focus ~ label,
-    .form-floating > .form-control:not(:placeholder-shown) ~ label {
-      color: var(--dark-blue);
+    /* Label animation when focused or filled */
+    .floating-label input:focus ~ label,
+    .floating-label input:not(:placeholder-shown) ~ label,
+    .floating-label input.has-value ~ label,
+    .floating-label input[type="text"] ~ label {
+      top: -0.5rem;
+      left: 1rem;
+      font-size: 0.8rem;
       font-weight: 600;
+      color: var(--dark-blue);
+      background: rgba(255, 255, 255, 0.95);
+      padding: 0 0.5rem;
+      transform: scale(0.9);
+    }
+
+    /* Input Field Styling */
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      border: 2px solid var(--border-color) !important;
+      border-radius: 16px !important;
+      padding: 1rem 1.25rem !important;
+      font-size: 0.95rem !important;
+      background-color: rgba(248, 250, 252, 0.5) !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      width: 100% !important;
+      min-height: 3.5rem !important;
+      max-height: 3.5rem !important;
+      height: 3.5rem !important;
+      outline: none !important;
+      box-sizing: border-box !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
+    }
+
+    input[type="email"]:focus,
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+      border-color: var(--accent-blue) !important;
+      box-shadow: 0 0 0 4px rgba(100, 181, 246, 0.1) !important;
+      background-color: white !important;
+    }
+
+    /* Remove default placeholder visibility */
+    input::placeholder {
+      color: transparent;
+    }
+
+    input:focus::placeholder {
+      color: var(--text-secondary);
+      opacity: 0.6;
     }
 
     /* Password field with icon */
@@ -157,8 +204,28 @@
       position: relative;
     }
 
-    .password-wrapper .form-control {
-      padding-right: 3.5rem;
+    .password-wrapper input {
+      padding-right: 3.5rem !important;
+    }
+
+    /* Ensure consistent styling for password fields */
+    .password-wrapper input[type="password"],
+    .password-wrapper input[type="text"] {
+      border: 2px solid var(--border-color) !important;
+      border-radius: 16px !important;
+      padding: 1rem 3.5rem 1rem 1.25rem !important;
+      font-size: 0.95rem !important;
+      background-color: rgba(248, 250, 252, 0.5) !important;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+      width: 100% !important;
+      min-height: 3.5rem !important;
+      max-height: 3.5rem !important;
+      height: 3.5rem !important;
+      outline: none !important;
+      box-sizing: border-box !important;
+      font-family: 'Poppins', sans-serif !important;
+      font-weight: 400 !important;
+      line-height: 1.5 !important;
     }
 
     .toggle-password {
@@ -173,6 +240,12 @@
       transition: color 0.2s ease;
       padding: 0.5rem;
       border-radius: 8px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
     }
 
     .toggle-password:hover {
@@ -180,7 +253,96 @@
       background-color: rgba(33, 150, 243, 0.1);
     }
 
-    /* Custom Button */
+    /* Error Styling */
+    .error-message {
+      color: var(--danger-color);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      background: var(--danger-bg);
+      border-radius: 8px;
+      border: 1px solid #FECACA;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .error-message::before {
+      content: '⚠️';
+      font-size: 0.9rem;
+    }
+
+    .error-message ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .error-message li {
+      margin: 0;
+    }
+
+    /* Alert Styling */
+    .alert {
+      border-radius: 12px;
+      border: none;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+
+    .alert-danger {
+      background: var(--danger-bg);
+      color: var(--danger-color);
+      border: 1px solid #FECACA;
+    }
+
+    /* Forgot Password Link */
+    .forgot-password-container {
+      text-align: right;
+      margin-bottom: 1.5rem;
+    }
+
+    .forgot-password {
+      display: inline-block;
+      color: var(--dark-blue);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .forgot-password::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(33, 150, 243, 0.1), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .forgot-password:hover {
+      color: var(--accent-blue);
+      background-color: rgba(33, 150, 243, 0.05);
+      transform: translateY(-1px);
+      text-decoration: none;
+    }
+
+    .forgot-password:hover::before {
+      left: 100%;
+    }
+
+    .forgot-password:active {
+      transform: translateY(0);
+    }
+
+    /* Button Styling */
     .btn-login {
       background: linear-gradient(135deg, var(--accent-blue) 0%, var(--dark-blue) 100%);
       border: none;
@@ -189,10 +351,11 @@
       font-weight: 600;
       font-size: 1rem;
       color: white;
-      width: 100%;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
-      margin-bottom: 1.5rem;
+      cursor: pointer;
+      width: 100%;
+      font-family: 'Poppins', sans-serif;
     }
 
     .btn-login:hover {
@@ -206,145 +369,6 @@
       box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
     }
 
-    /* Forgot Password Button */
-    .btn-forgot-password {
-      background: transparent;
-      border: 2px solid var(--accent-blue);
-      border-radius: 16px;
-      padding: 1rem 1.5rem;
-      font-weight: 600;
-      font-size: 1rem;
-      color: var(--dark-blue);
-      width: 100%;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-bottom: 1.5rem;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .btn-forgot-password::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, var(--accent-blue) 0%, var(--dark-blue) 100%);
-      transition: left 0.3s ease;
-      z-index: -1;
-    }
-
-    .btn-forgot-password:hover {
-      color: white;
-      border-color: var(--dark-blue);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 24px rgba(33, 150, 243, 0.3);
-    }
-
-    .btn-forgot-password:hover::before {
-      left: 0;
-    }
-
-    .btn-forgot-password:active {
-      transform: translateY(0);
-    }
-
-    /* Custom Alert Styles */
-    .custom-alert {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: white;
-      border: 2px solid var(--accent-blue);
-      border-radius: 12px;
-      padding: 1rem 1.5rem;
-      box-shadow: 0 8px 32px var(--shadow-medium);
-      z-index: 1050;
-      max-width: 350px;
-      opacity: 0;
-      transform: translateX(100%);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .custom-alert.show {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .custom-alert.success {
-      border-color: #10B981;
-      background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
-    }
-
-    .custom-alert.warning {
-      border-color: #F59E0B;
-      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
-    }
-
-    .custom-alert.info {
-      border-color: var(--accent-blue);
-      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
-    }
-
-    .alert {
-      border: none;
-      border-radius: 12px;
-      padding: 1rem 1.25rem;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
-    }
-
-    .alert-danger {
-      background-color: #FEF2F2;
-      color: #DC2626;
-      border-left: 4px solid #EF4444;
-    }
-
-    /* Error Messages */
-    .error-message {
-      color: #DC2626;
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    /* Forgot Password Link */
-    .forgot-password-link {
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    .forgot-password-link a {
-      color: var(--dark-blue);
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    .forgot-password-link a::after {
-      content: '';
-      position: absolute;
-      width: 0;
-      height: 2px;
-      bottom: -2px;
-      left: 50%;
-      background: var(--accent-blue);
-      transition: all 0.3s ease;
-      transform: translateX(-50%);
-    }
-
-    .forgot-password-link a:hover {
-      color: var(--accent-blue);
-    }
-
-    .forgot-password-link a:hover::after {
-      width: 100%;
-    }
-
     /* Register Link */
     .register-link {
       text-align: center;
@@ -353,16 +377,11 @@
       border-top: 1px solid var(--border-color);
     }
 
-    .register-link p {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin: 0;
-    }
-
     .register-link a {
       color: var(--dark-blue);
       text-decoration: none;
       font-weight: 600;
+      font-size: 0.9rem;
       transition: color 0.2s ease;
     }
 
@@ -371,42 +390,14 @@
       text-decoration: underline;
     }
 
-    /* Form Transition Effects */
-    .form-section {
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Form Actions */
+    .form-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 2rem;
     }
 
-    .form-section.hidden {
-      opacity: 0;
-      transform: translateY(20px);
-      pointer-events: none;
-      height: 0;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-    }
-
-    /* Back Button */
-    .btn-back {
-      background: transparent;
-      border: 2px solid var(--text-secondary);
-      border-radius: 16px;
-      padding: 0.75rem 1.5rem;
-      font-weight: 500;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      width: 100%;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      margin-top: 1rem;
-    }
-
-    .btn-back:hover {
-      border-color: var(--dark-blue);
-      color: var(--dark-blue);
-      background-color: rgba(33, 150, 243, 0.05);
-    }
-
-    /* Responsive Design */
     @media (max-width: 480px) {
       .login-container {
         padding: 2rem 1.5rem;
@@ -416,76 +407,63 @@
       .login-header h3 {
         font-size: 1.5rem;
       }
-
-      .custom-alert {
-        max-width: calc(100vw - 40px);
-        right: 20px;
-        left: 20px;
-        transform: translateY(-100%);
-      }
-
-      .custom-alert.show {
-        transform: translateY(0);
-      }
     }
 
-    /* Loading Animation */
-    .btn-login.loading,
-    .btn-forgot-password.loading {
-      position: relative;
-      color: transparent;
+    .bounce-in {
+      animation: bounceIn 0.5s ease-out;
     }
 
-    .btn-login.loading::after,
-    .btn-forgot-password.loading::after {
-      content: '';
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      top: 50%;
-      left: 50%;
-      margin-left: -10px;
-      margin-top: -10px;
-      border: 2px solid transparent;
-      border-top-color: currentColor;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: scale(0.3); }
+      50% { opacity: 1; transform: scale(1.05); }
+      70% { transform: scale(0.9); }
+      100% { opacity: 1; transform: scale(1); }
     }
 
-    .btn-login.loading::after {
-      border-top-color: white;
+    /* Client-side validation styling */
+    input.needs-attention {
+      border-color: var(--warning-color) !important;
+      background-color: var(--warning-bg) !important;
     }
 
-    .btn-forgot-password.loading::after {
-      border-top-color: var(--dark-blue);
+    input.looks-good {
+      border-color: var(--success-color) !important;
+      background-color: var(--success-bg) !important;
     }
 
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+    .friendly-message {
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
     }
 
-    /* Success message styling */
-    .success-message {
-      background: linear-gradient(135deg, #ECFDF5 0%, #F0FDF4 100%);
-      border: 2px solid #10B981;
-      border-radius: 16px;
-      padding: 1.5rem;
-      text-align: center;
+    .friendly-message.helper {
+      background: var(--warning-bg);
+      color: #92400E;
+      border: 1px solid #FDE68A;
+    }
+
+    .friendly-message.success {
+      background: var(--success-bg);
       color: #065F46;
-      margin-bottom: 1.5rem;
+      border: 1px solid #A7F3D0;
     }
 
-    .success-message i {
-      font-size: 2rem;
-      color: #10B981;
-      margin-bottom: 0.5rem;
+    /* Shimmer animation for forgot password */
+    @keyframes shimmer {
+      0% { background-position: -200px 0; }
+      100% { background-position: calc(200px + 100%) 0; }
     }
 
-    .success-message h5 {
-      color: #065F46;
-      font-weight: 600;
-      margin-bottom: 0.5rem;
+    .forgot-password:hover {
+      background-image: linear-gradient(90deg, transparent 0%, rgba(33, 150, 243, 0.1) 50%, transparent 100%);
+      background-size: 200px 100%;
+      animation: shimmer 1.5s ease-in-out infinite;
     }
   </style>
 </head>
@@ -493,126 +471,188 @@
 
 <div class="login-wrapper">
   <div class="login-container">
-    <!-- Login Form -->
-    <div id="loginSection" class="form-section">
-      <div class="login-header">
-        <h3>Selamat Datang</h3>
-        <p>Silakan login ke akun admin Anda</p>
+    <div class="login-header">
+      <h3>Sign In</h3>
+    </div>
+
+    @if(session('error'))
+      <div class="alert alert-danger bounce-in">
+        {{ session('error') }}
+      </div>
+    @endif
+
+    <form method="POST" action="{{ route('login') }}" id="loginForm">
+      @csrf
+
+      <!-- Email Address -->
+      <div class="form-group">
+        <div class="floating-label">
+          <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder=" " onblur="validateEmail()" onkeyup="validateEmail()" />
+          <label for="email">
+            <i class="bi bi-envelope"></i>
+            Email (Gmail)
+          </label>
+        </div>
+        @if($errors->get('email'))
+          <div class="error-message bounce-in">
+            <ul>
+              @foreach($errors->get('email') as $message)
+                <li>{{ $message }}</li>
+              @endforeach
+            </ul>
+          </div>
+        @endif
+        <div id="emailMessage"></div>
       </div>
 
-      @if(session('error'))
-        <div class="alert alert-danger d-flex align-items-center">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>
-          {{ session('error') }}
-        </div>
-      @endif
-
-      <form method="POST" action="{{ route('login') }}" onsubmit="return validateForm()" id="loginForm">
-        @csrf
-
-        <!-- Email Field -->
-        <div class="form-floating">
-          <input type="email" class="form-control" id="email" name="email" 
-                 placeholder="Email" required autocomplete="email">
-          <label for="email">
-            <i class="bi bi-envelope me-2"></i>Alamat Email
-          </label>
-        </div>
-
-        <!-- Password Field -->
-        <div class="form-floating password-wrapper">
-          <input type="password" class="form-control @error('password') is-invalid @enderror"
-                 id="password" name="password" placeholder="Password" required 
-                 autocomplete="current-password" minlength="6">
+      <!-- Password -->
+      <div class="form-group mt-4">
+        <div class="floating-label password-wrapper">
+          <input id="password" type="password" name="password" required autocomplete="current-password" onblur="validatePassword()" onkeyup="validatePassword()" placeholder=" " />
           <label for="password">
-            <i class="bi bi-lock me-2"></i>Kata Sandi
+            <i class="bi bi-lock"></i>
+            Password
           </label>
-          
-          <span class="toggle-password" onclick="togglePassword()" tabindex="0" role="button" 
-                aria-label="Toggle password visibility">
-            <i class="bi bi-eye-slash" id="eyeIcon"></i>
+          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button" aria-label="Toggle password visibility">
+            <i class="bi bi-eye-slash" id="passwordEyeIcon"></i>
           </span>
         </div>
-
-        <!-- Password Error -->
-        <div id="passwordError" class="error-message" style="display: none;">
-          <i class="bi bi-exclamation-circle"></i>
-          Password minimal 6 karakter
-        </div>
-
-        @error('password')
-          <div class="error-message">
-            <i class="bi bi-exclamation-circle"></i>
-            {{ $message }}
+        @if($errors->get('password'))
+          <div class="error-message bounce-in">
+            <ul>
+              @foreach($errors->get('password') as $message)
+                <li>{{ $message }}</li>
+              @endforeach
+            </ul>
           </div>
-        @enderror
+        @endif
+        <div id="passwordMessage"></div>
+      </div>
 
-        <!-- Forgot Password Link -->
-        <div class="forgot-password-link">
-          <a href="#" onclick="showForgotPassword()" id="forgotPasswordLink">
-            <i class="bi bi-key me-1"></i>Lupa kata sandi?
-          </a>
-        </div>
+      <!-- Forgot Password Link -->
+      <div class="forgot-password-container">
+        <a href="{{ route('password.request') }}" class="forgot-password">
+          <i class="bi bi-key me-1"></i>
+          Lupa password?
+        </a>
+      </div>
 
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-login" id="submitBtn">
+      <div class="form-actions">
+        <button type="submit" class="btn-login" id="submitBtn">
           <i class="bi bi-box-arrow-in-right me-2"></i>
-          Masuk ke Dashboard
+          Login
         </button>
-
-        <!-- Register Link -->
+        
         <div class="register-link">
-          <p>Belum memiliki akun? <a href="/register" onclick="return validateRegistration()">Daftar sekarang</a></p>
+          <p class="mb-0">Belum punya akun? <a href="{{ route('register') }}">Daftar sekarang</a></p>
         </div>
-      </form>
-    </div>
-
-    <!-- Forgot Password Form -->
-    <div id="forgotPasswordSection" class="form-section hidden">
-      <div class="login-header">
-        <h3>Lupa Kata Sandi</h3>
-        <p>Masukkan email Anda untuk reset kata sandi</p>
       </div>
-
-      <div id="forgotPasswordSuccess" class="success-message" style="display: none;">
-        <i class="bi bi-check-circle-fill d-block"></i>
-        <h5>Email Terkirim!</h5>
-        <p class="mb-0">Link reset kata sandi telah dikirim ke email Anda. Silakan cek kotak masuk atau folder spam.</p>
-      </div>
-
-      <form id="forgotPasswordForm" onsubmit="return handleForgotPassword(event)">
-        <!-- Email Field for Reset -->
-        <div class="form-floating">
-          <input type="email" class="form-control" id="forgotEmail" name="email" 
-                 placeholder="Email" required autocomplete="email">
-          <label for="forgotEmail">
-            <i class="bi bi-envelope me-2"></i>Alamat Email
-          </label>
-        </div>
-
-        <!-- Submit Button -->
-        <button type="submit" class="btn btn-forgot-password" id="forgotSubmitBtn">
-          <i class="bi bi-send me-2"></i>
-          Kirim Link Reset
-        </button>
-
-        <!-- Back Button -->
-        <button type="button" class="btn btn-back" onclick="showLogin()">
-          <i class="bi bi-arrow-left me-2"></i>
-          Kembali ke Login
-        </button>
-      </form>
-    </div>
+    </form>
   </div>
 </div>
 
-<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-  function togglePassword() {
-    const passwordField = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
+  const friendlyMessages = {
+    email: {
+      invalid: "Format email tidak valid!",
+      noAt: "Email harus menggunakan format @gmail.com!",
+    },
+    password: {
+      tooShort: "Password minimal 6 karakter ya biar aman!",
+    }
+  };
+
+  function showMessage(elementId, message, type = 'helper') {
+    const element = document.getElementById(elementId);
+    if (!message) {
+      element.innerHTML = '';
+      return;
+    }
+    
+    const iconMap = {
+      helper: 'bi-lightbulb',
+      success: 'bi-check-circle'
+    };
+    
+    element.innerHTML = `
+      <div class="friendly-message ${type} bounce-in">
+        <i class="bi ${iconMap[type]}"></i>
+        ${message}
+      </div>
+    `;
+  }
+
+  function validateEmail() {
+    const email = document.getElementById('email').value.trim().toLowerCase();
+    const field = document.getElementById('email');
+    
+    if (email === '') {
+      field.className = '';
+      showMessage('emailMessage', '');
+      return true; 
+    }
+    
+    // Check if email contains @
+    if (!email.includes('@')) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.noAt, 'helper');
+      return false;
+    }
+    
+    // Check if email ends with @gmail.com
+    if (!email.endsWith('@gmail.com')) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
+      return false;
+    }
+    
+    // Check if there's a username before @gmail.com
+    const username = email.split('@')[0];
+    if (username.length === 0) {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.noUsername, 'helper');
+      return false;
+    }
+    
+    // Additional check: make sure it's exactly @gmail.com (not subdomain)
+    const emailParts = email.split('@');
+    if (emailParts.length !== 2 || emailParts[1] !== 'gmail.com') {
+      field.className = 'needs-attention';
+      showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
+      return false;
+    }
+    
+    field.className = 'looks-good';
+    showMessage('emailMessage', '');
+    return true;
+  }
+
+  function validatePassword() {
+    const password = document.getElementById('password').value;
+    const field = document.getElementById('password');
+    
+    if (password === '') {
+      field.className = '';
+      showMessage('passwordMessage', '');
+      return true;
+    }
+    
+    if (password.length < 6) {
+      field.className = 'needs-attention';
+      showMessage('passwordMessage', friendlyMessages.password.tooShort, 'helper');
+      return false;
+    }
+    
+    field.className = 'looks-good';
+    showMessage('passwordMessage', '');
+    return true;
+  }
+
+  function togglePassword(fieldId) {
+    const passwordField = document.getElementById(fieldId);
+    const eyeIcon = document.getElementById(fieldId + 'EyeIcon');
     
     if (passwordField.type === 'password') {
       passwordField.type = 'text';
@@ -621,187 +661,31 @@
       passwordField.type = 'password';
       eyeIcon.className = 'bi bi-eye-slash';
     }
-  }
-
-  function showForgotPassword() {
-    const loginSection = document.getElementById('loginSection');
-    const forgotSection = document.getElementById('forgotPasswordSection');
     
-    loginSection.classList.add('hidden');
-    
-    setTimeout(() => {
-      forgotSection.classList.remove('hidden');
-    }, 200);
-  }
-
-  function showLogin() {
-    const loginSection = document.getElementById('loginSection');
-    const forgotSection = document.getElementById('forgotPasswordSection');
-    const successDiv = document.getElementById('forgotPasswordSuccess');
-    
-    forgotSection.classList.add('hidden');
-    successDiv.style.display = 'none';
-    document.getElementById('forgotPasswordForm').style.display = 'block';
-    
-    setTimeout(() => {
-      loginSection.classList.remove('hidden');
-    }, 200);
-  }
-
-  function handleForgotPassword(event) {
-    event.preventDefault();
-    
-    const email = document.getElementById('forgotEmail').value;
-    const submitBtn = document.getElementById('forgotSubmitBtn');
-    const form = document.getElementById('forgotPasswordForm');
-    const successDiv = document.getElementById('forgotPasswordSuccess');
-    
-    // Validasi email
-    if (!email || !validateEmailFormat(email)) {
-      showCustomAlert('Silakan masukkan alamat email yang valid.', 'warning');
-      return false;
+    // Force floating label to stay in correct position
+    if (passwordField.value && passwordField.value.trim() !== '') {
+      passwordField.classList.add('has-value');
+    } else {
+      passwordField.classList.remove('has-value');
     }
-    
-    // Loading state
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    // Simulate API call
-    setTimeout(() => {
-      // Reset button state
-      submitBtn.classList.remove('loading');
-      submitBtn.disabled = false;
-      
-      // Show success message
-      form.style.display = 'none';
-      successDiv.style.display = 'block';
-      
-      // In real implementation, you would make an actual API call:
-      /*
-      fetch('/forgot-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-        },
-        body: JSON.stringify({ email: email })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          form.style.display = 'none';
-          successDiv.style.display = 'block';
-        } else {
-          showCustomAlert(data.message || 'Terjadi kesalahan. Silakan coba lagi.', 'warning');
-        }
-      })
-      .catch(error => {
-        showCustomAlert('Terjadi kesalahan jaringan. Silakan coba lagi.', 'warning');
-      })
-      .finally(() => {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
-      });
-      */
-      
-    }, 2000); // Simulate network delay
-    
-    return false;
   }
 
-  function validateEmailFormat(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  }
-
-  function validateRegistration() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    
-    if (!email && !password) {
-      return true;
-    }
-    
-    if (email && !password) {
-      showCustomAlert('Email sudah diisi. Silakan masukkan password untuk login, atau kosongkan email untuk daftar akun baru.', 'warning');
-      return false;
-    }
-    
-    if (!email && password) {
-      showCustomAlert('Password sudah diisi. Silakan masukkan email untuk login, atau kosongkan password untuk daftar akun baru.', 'warning');
-      return false;
-    }
-    
-    if (email && password) {
-      const confirmLeave = confirm('Data login sudah diisi. Yakin ingin meninggalkan halaman ini untuk mendaftar akun baru?');
-      return confirmLeave;
-    }
-    
-    return true;
-  }
-
-  function showCustomAlert(message, type = 'info') {
-    const existingAlerts = document.querySelectorAll('.custom-alert');
-    existingAlerts.forEach(alert => alert.remove());
-    
-    const alertDiv = document.createElement('div');
-    alertDiv.className = `custom-alert ${type}`;
-    
-    const iconClass = {
-      'info': 'bi-info-circle',
-      'warning': 'bi-exclamation-triangle',
-      'success': 'bi-check-circle'
-    };
-    
-    alertDiv.innerHTML = `
-      <div class="d-flex align-items-center">
-        <i class="bi ${iconClass[type]} me-2" style="font-size: 1.2rem;"></i>
-        <span style="font-size: 0.9rem; font-weight: 500;">${message}</span>
-      </div>
-    `;
-    
-    document.body.appendChild(alertDiv);
-    
-    setTimeout(() => alertDiv.classList.add('show'), 100);
-    
-    setTimeout(() => {
-      alertDiv.classList.remove('show');
-      setTimeout(() => alertDiv.remove(), 400);
-    }, 5000);
-  }
-
-  function validateForm() {
-    const password = document.getElementById('password').value;
-    const passwordError = document.getElementById('passwordError');
-    const submitBtn = document.getElementById('submitBtn');
-    
-    passwordError.style.display = 'none';
-    
-    if (password.length < 6) {
-      passwordError.style.display = 'block';
-      return false;
-    }
-    
-    submitBtn.classList.add('loading');
-    submitBtn.disabled = true;
-    
-    return true;
-  }
-
-  // Enhanced form interactions
   document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('loginForm');
-    const inputs = form.querySelectorAll('.form-control');
+    const inputs = form.querySelectorAll('input');
     
+    // Handle floating labels for inputs with values (like from old() helper)
     inputs.forEach(input => {
+      // Check if input has value on page load
+      if (input.value && input.value.trim() !== '') {
+        input.classList.add('has-value');
+      }
+      
       input.addEventListener('input', function() {
-        if (this.id === 'password') {
-          const passwordError = document.getElementById('passwordError');
-          if (this.value.length > 0 && this.value.length < 6) {
-            passwordError.style.display = 'block';
-          } else {
-            passwordError.style.display = 'none';
-          }
+        if (this.value && this.value.trim() !== '') {
+          this.classList.add('has-value');
+        } else {
+          this.classList.remove('has-value');
         }
       });
       
@@ -811,24 +695,32 @@
       
       input.addEventListener('blur', function() {
         this.parentElement.classList.remove('focused');
+        // Keep has-value class if input still has content
+        if (!this.value || this.value.trim() === '') {
+          this.classList.remove('has-value');
+        }
       });
     });
     
-    // Keyboard support for password toggle
-    document.querySelector('.toggle-password').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        togglePassword();
-      }
+    // Enhanced toggle password accessibility
+    document.querySelectorAll('.toggle-password').forEach(toggle => {
+      toggle.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.click();
+        }
+      });
     });
 
-    // Auto-fill email in forgot password form
-    document.getElementById('forgotPasswordLink').addEventListener('click', function() {
-      const loginEmail = document.getElementById('email').value;
-      if (loginEmail) {
-        setTimeout(() => {
-          document.getElementById('forgotEmail').value = loginEmail;
-        }, 300);
+    // Form submission validation
+    form.addEventListener('submit', function(e) {
+      const isEmailValid = validateEmail();
+      const isPasswordValid = validatePassword();
+      
+      if (!isEmailValid || !isPasswordValid) {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return false;
       }
     });
   });

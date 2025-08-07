@@ -3,23 +3,27 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Notifications\Messages\MailMessage;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Request;
 
 class RouteServiceProvider extends ServiceProvider
 {
-    // // Ganti ini:
-    // public const HOME = '/dashboard';
-    
-    // Jadi ini (atau hapus sama sekali):
+    /**
+     * Default redirect path setelah login.
+     */
     public const HOME = '/';
+    public const ADMIN_HOME = '/admin/dashboard';
 
+    /**
+     * Bootstrap routing & rate limiting.
+     */
     public function boot(): void
     {
-        // ...existing code...
-
         $this->configureRateLimiting();
 
+        // Register web & api routes
         $this->routes(function () {
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
@@ -28,10 +32,15 @@ class RouteServiceProvider extends ServiceProvider
                 ->prefix('api')
                 ->group(base_path('routes/api.php'));
         });
+    }
 
-        // Add this to redirect unauthenticated users
-        $this->app['router']->middlewareGroup('admin', [
-            \App\Http\Middleware\AdminMiddleware::class,
-        ]);
+    /**
+     * Konfigurasi batasan request (rate limiting).
+     */
+    protected function configureRateLimiting(): void
+    {
+        RateLimiter::for('api', function (Request $request) {
+            return Limit::perMinute(60)->by($request->user()?->id ?: $request->ip());
+        });
     }
 }

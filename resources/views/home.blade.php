@@ -4,12 +4,15 @@
 
 @section('content')
 
+<!-- Import Google Fonts Poppins -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
                 <h1 class="display-4 fw-bold mb-4">Mau Berbuat Baik Apa Hari Ini?</h1>
-                <p class="lead mb-4">Yuk bergabung dengan platform terpercaya untuk berbagi kebaikan dan membantu sesama yang membutuhkan. Berbagi Kebaikan untuk Indonesia.</p>
+                <p class="lead mb-4">Yuk bergabung dengan platform terpercaya untuk berbagi kebaikan dan membantu sesama yang membutuhkan.</p>
                 <a href="#campaigns" class="btn btn-light btn-lg">
                     <i class="fas fa-heart me-2"></i> Mulai Berdonasi
                 </a>
@@ -28,30 +31,24 @@
 
 <section class="stats-section">
     <div class="container">
-        <div class="row">
+        <div class="row text-center">
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-users"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum(fn($c) => $c->donations->count())) }}</div>
                     <div class="stat-label">Donatur Bergabung</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-hand-holding-heart"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-hand-holding-heart"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->count()) }}</div>
                     <div class="stat-label">Campaign Aktif</div>
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="stat-card">
-                    <div class="stat-icon">
-                        <i class="fas fa-coins"></i>
-                    </div>
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum('collected_amount'), 0, ',', '.') }}</div>
                     <div class="stat-label">Dana Terkumpul (Rp)</div>
                 </div>
@@ -65,134 +62,400 @@
         <div class="row mb-5">
             <div class="col-lg-8 mx-auto text-center">
                 <h2 class="section-title">Program Donasi Terbaru</h2>
-                <p class="section-subtitle">Pilih program donasi yang ingin Anda dukung dan mulai berbagi kebaikan untuk sesama yang membutuhkan.</p>
+                <p class="section-subtitle">Pilih program donasi yang ingin Anda dukung dan mulai berbagi kebaikan.</p>
+            </div>
+        </div>
+
+        <!-- Search Section -->
+        <div class="row mb-4">
+            <div class="col-lg-8 mx-auto">
+                <div class="search-container">
+                    <div class="search-wrapper">
+                        <i class="fas fa-search search-icon"></i>
+                        <input 
+                            type="text" 
+                            id="campaignSearch" 
+                            class="form-control search-input" 
+                            placeholder="Cari campaign berdasarkan judul atau kategori..."
+                            value="{{ request('search') }}"
+                        >
+                        <button type="button" id="clearSearch" class="clear-search" style="display: none;">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="search-filters mt-3">
+                        <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary filter-btn active" data-category="all">
+                                <i class="fas fa-th-large me-1"></i> Semua
+                            </button>
+                            @php
+                                $categories = $campaigns->pluck('category')->unique()->filter();
+                            @endphp
+                            @foreach($categories as $category)
+                                <button type="button" class="btn btn-sm btn-outline-primary filter-btn" data-category="{{ $category }}">
+                                    <i class="fas fa-tag me-1"></i> {{ $category }}
+                                </button>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Info -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div id="searchResultsInfo" class="text-center text-muted" style="display: none;">
+                    <small id="searchResultsText"></small>
+                </div>
+                <div id="noResultsMessage" class="text-center" style="display: none;">
+                    <div class="py-4">
+                        <i class="fas fa-search" style="font-size: 3rem; color: #e9ecef;"></i>
+                        <h5 class="text-muted mt-3">Tidak Ada Campaign Yang Ditemukan</h5>
+                        <p class="text-muted">Coba gunakan kata kunci yang berbeda atau pilih kategori lain.</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         @if($campaigns->isEmpty())
             <div class="row">
-                <div class="col text-center">
-                    <div class="py-5">
-                        <i class="fas fa-heart-broken" style="font-size: 4rem; color: #e9ecef; margin-bottom: 2rem;"></i>
-                        <h4 class="text-muted">Belum Ada Campaign Aktif</h4>
-                        <p class="text-muted">Saat ini belum ada campaign donasi yang tersedia. Silakan cek kembali nanti.</p>
-                    </div>
+                <div class="col text-center py-5">
+                    <i class="fas fa-heart-broken" style="font-size: 4rem; color: #e9ecef;"></i>
+                    <h4 class="text-muted mt-3">Belum Ada Campaign Aktif</h4>
+                    <p class="text-muted">Silakan cek kembali nanti ya.</p>
                 </div>
             </div>
         @else
-            {{-- Carousel Start --}}
-            <div id="campaignCarousel" class="carousel slide" data-bs-ride="carousel">
-                <div class="carousel-indicators">
-                    @foreach($campaigns->chunk(3) as $key => $chunk)
-                        <button type="button" data-bs-target="#campaignCarousel" data-bs-slide-to="{{ $key }}" class="{{ $key == 0 ? 'active' : '' }}" aria-current="{{ $key == 0 ? 'true' : 'false' }}" aria-label="Slide {{ $key + 1 }}"></button>
-                    @endforeach
-                </div>
-                <div class="carousel-inner">
-                    @foreach($campaigns->chunk(3) as $key => $chunk)
-                        <div class="carousel-item {{ $key == 0 ? 'active' : '' }}">
-                            <div class="row justify-content-center"> {{-- Added justify-content-center for better alignment if less than 3 campaigns --}}
-                                @foreach($chunk as $campaign)
-                                    <div class="col-lg-4 col-md-6 mb-4">
-                                        <div class="card campaign-card">
-                                            @if($campaign->image)
-                                                <img src="{{ asset('storage/'.$campaign->image) }}" class="card-img-top" alt="{{ $campaign->title }}">
-                                            @else
-                                                <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(45deg, #e8f4fd, #b3e5fc);">
-                                                    <i class="fas fa-image" style="font-size: 3rem; color: #6c757d; opacity: 0.5;"></i>
-                                                </div>
-                                            @endif
-                                            <div class="card-body">
-                                                <span class="badge bg-primary mb-2">{{ $campaign->category }}</span>
-                                                <h5 class="card-title">{{ $campaign->title }}</h5>
-                                                <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
+            <!-- Campaign Grid (replacing carousel for better search experience) -->
+            <div id="campaignGrid" class="row justify-content-center">
+                @foreach($campaigns as $campaign)
+                    <div class="col-lg-4 col-md-6 mb-4 campaign-item" 
+                         data-title="{{ strtolower($campaign->title) }}" 
+                         data-category="{{ strtolower($campaign->category) }}"
+                         data-description="{{ strtolower($campaign->description) }}">
+                        <div class="card campaign-card">
+                            @if($campaign->image)
+                                <img src="{{ asset('storage/'.$campaign->image) }}" class="card-img-top" alt="{{ $campaign->title }}">
+                            @else
+                                <div class="card-img-top d-flex align-items-center justify-content-center" style="height: 200px; background: linear-gradient(45deg, #e8f4fd, #b3e5fc);">
+                                    <i class="fas fa-image" style="font-size: 3rem; color: #6c757d; opacity: 0.5;"></i>
+                                </div>
+                            @endif
+                            <div class="card-body">
+                                <span class="badge bg-primary mb-2">{{ $campaign->category }}</span>
+                                <h5 class="card-title">{{ $campaign->title }}</h5>
+                                <p class="card-text text-muted">{{ Str::limit($campaign->description, 100) }}</p>
 
-                                                <div class="progress progress-custom">
-                                                    <div class="progress-bar" role="progressbar" style="width: {{ $campaign->progress_percentage }}%"></div>
-                                                </div>
+                                <div class="progress progress-custom mb-2">
+                                    <div class="progress-bar" style="width: {{ $campaign->progress_percentage }}%"></div>
+                                </div>
 
-                                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                                    <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
-                                                    <small class="text-muted">
-                                                        <i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur
-                                                    </small>
-                                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <small class="text-muted">{{ number_format($campaign->progress_percentage, 1) }}% tercapai</small>
+                                    <small class="text-muted"><i class="fas fa-users me-1"></i>{{ $campaign->donations->count() }} donatur</small>
+                                </div>
 
-                                                <div class="mb-3">
-                                                    <div class="fw-bold text-success fs-5">{{ $campaign->formatted_collected }}</div>
-                                                    <small class="text-muted">dari target {{ $campaign->formatted_target }}</small>
-                                                </div>
+                                <div class="mb-3">
+                                    <div class="fw-bold text-success fs-5">{{ $campaign->formatted_collected }}</div>
+                                    <small class="text-muted">dari target {{ $campaign->formatted_target }}</small>
+                                </div>
 
-                                                <div class="d-flex justify-content-between align-items-center">
-                                                    <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
-                                                        <i class="fas fa-eye me-1"></i> Lihat Detail
-                                                    </a>
-                                                    {{-- Informasi "Hari berjalan" dipindahkan ke halaman detail campaign --}}
-                                                    @if($campaign->progress_percentage >= 100)
-                                                        <span class="badge bg-success">
-                                                            <i class="fas fa-check me-1"></i>Tercapai
-                                                        </span>
-                                                    @endif
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                @endforeach
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i> Lihat Detail
+                                    </a>
+                                    @if($campaign->progress_percentage >= 100)
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check me-1"></i> Tercapai
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    @endforeach
-                </div>
-                <button class="carousel-control-prev" type="button" data-bs-target="#campaignCarousel" data-bs-slide="prev">
-                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Previous</span>
-                </button>
-                <button class="carousel-control-next" type="button" data-bs-target="#campaignCarousel" data-bs-slide="next">
-                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                    <span class="visually-hidden">Next</span>
-                </button>
+                    </div>
+                @endforeach
             </div>
-            {{-- Carousel End --}}
         @endif
     </div>
 </section>
 
-<section class="py-5" style="background: linear-gradient(135deg, var(--primary-blue) 0%, var(--light-blue) 100%);">
-    <div class="container">
-        <div class="row text-center text-white">
-            <div class="col-lg-8 mx-auto">
-                <h2 class="mb-4">Ingin Membuat Campaign Donasi?</h2>
-                <p class="lead mb-4">Bergabunglah dengan ribuan orang yang telah mempercayakan campaign donasi mereka kepada kami. Platform yang aman, terpercaya, dan mudah digunakan.</p>
-                @guest
-                    <a href="{{ route('register') }}" class="btn btn-light btn-lg me-3">
+<section class="py-5" style="background: linear-gradient(135deg, var(--primary-blue), var(--light-blue));">
+    <div class="container text-center text-white">
+        <div class="col-lg-8 mx-auto">
+            <h2 class="mb-4">Ingin Membuat Campaign Donasi?</h2>
+            <p class="lead mb-4">Platform donasi terpercaya untuk Anda yang ingin berkontribusi lebih.</p>
+            @guest
+                <div class="button-group">
+                    <a href="{{ route('register') }}" class="btn-custom btn-primary-custom">
                         <i class="fas fa-user-plus me-2"></i> Daftar Sekarang
                     </a>
-                    <a href="{{ route('login') }}" class="btn btn-outline-light btn-lg">
+                    <a href="{{ route('login') }}" class="btn-custom btn-outline-custom">
                         <i class="fas fa-sign-in-alt me-2"></i> Masuk
                     </a>
+                </div>
+            @else
+                @auth('admin')
+                    <a href="{{ route('admin.campaigns.create') }}" class="btn-custom btn-primary-custom">
+                        <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
+                    </a>
                 @else
-                    @auth('admin')
-                        <a href="{{ route('admin.campaigns.create') }}" class="btn btn-light btn-lg">
-                            <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
-                        </a>
-                    @else
-                        <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
-                    @endauth
-                @endguest
-            </div>
+                    <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
+                @endauth
+            @endguest
         </div>
     </div>
 </section>
 
 <style>
+/* Import Poppins Font */
+* {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* Search Container Styles */
+.search-container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.search-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-icon {
+    position: absolute;
+    left: 15px;
+    color: #6c757d;
+    font-size: 16px;
+    z-index: 2;
+}
+
+.search-input {
+    padding: 12px 45px 12px 45px;
+    border: 2px solid #e9ecef;
+    border-radius: 50px;
+    font-size: 16px;
+    background: #fff;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.search-input:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25), 0 4px 20px rgba(0, 0, 0, 0.1);
+    outline: none;
+}
+
+.clear-search {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    z-index: 2;
+}
+
+.clear-search:hover {
+    color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.search-filters {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+.filter-btn {
+    border-radius: 25px;
+    padding: 6px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid #e9ecef;
+    color: #6c757d;
+    background: #fff;
+}
+
+.filter-btn:hover {
+    border-color: #0d6efd;
+    color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
+}
+
+.filter-btn.active {
+    background: #0d6efd;
+    border-color: #0d6efd;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
+}
+
+/* Campaign Item Animation */
+.campaign-item {
+    transition: all 0.3s ease;
+}
+
+.campaign-item.fade-out {
+    opacity: 0;
+    transform: scale(0.95);
+}
+
+.campaign-item.fade-in {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Custom Button Styles */
+.btn-custom {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 28px;
+    font-size: 16px;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 50px;
+    border: 2px solid transparent;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    margin: 0 8px;
+    min-width: 160px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.btn-custom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-custom:hover::before {
+    left: 100%;
+}
+
+/* Primary Button */
+.btn-primary-custom {
+    background: linear-gradient(135deg, #ffffff, #f8f9fa);
+    color: #0d6efd;
+    border: 2px solid #ffffff;
+}
+
+.btn-primary-custom:hover {
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    color: #0b5ed7;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btn-primary-custom:active {
+    transform: translateY(0);
+}
+
+/* Outline Button */
+.btn-outline-custom {
+    background: transparent;
+    color: #ffffff;
+    border: 2px solid #ffffff;
+}
+
+.btn-outline-custom:hover {
+    background: #ffffff;
+    color: #0d6efd;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+}
+
+.btn-outline-custom:active {
+    transform: translateY(0);
+}
+
+/* Button Group */
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+}
+
+/* Navbar Button Styles - untuk tombol di navbar */
+.navbar .btn {
+    font-family: 'Poppins', sans-serif;
+    padding: 8px 20px;
+    font-size: 14px;
+    font-weight: 500;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    min-width: 100px;
+}
+
+.navbar .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.navbar .btn:hover::before {
+    left: 100%;
+}
+
+.navbar .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Heartbeat Animation */
 @keyframes heartbeat {
-    0% {
-        transform: translate(-50%, -50%) scale(1);
+    0%   { transform: translate(-50%, -50%) scale(1); }
+    50%  { transform: translate(-50%, -50%) scale(1.1); }
+    100% { transform: translate(-50%, -50%) scale(1); }
+}
+
+/* Fade In Up Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    50% {
-        transform: translate(-50%, -50%) scale(1.1);
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    100% {
-        transform: translate(-50%, -50%) scale(1);
-    }
+}
+
+/* Pulse Animation for Buttons */
+@keyframes pulse {
+    0% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+    50% { box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); }
+    100% { box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+}
+
+.btn-custom:hover {
+    animation: pulse 1.5s ease-in-out infinite;
 }
 
 .campaign-card .card-body {
@@ -204,31 +467,191 @@
     margin-top: auto;
 }
 
-/* Custom CSS for Carousel adjustments if needed */
-.carousel-item {
-    padding-bottom: 30px; /* To prevent cutting off the card shadow */
+/* Responsive Design */
+@media (max-width: 767.98px) {
+    .search-container {
+        padding: 20px 15px;
+    }
+    
+    .search-input {
+        font-size: 14px;
+        padding: 10px 40px 10px 40px;
+    }
+    
+    .filter-btn {
+        font-size: 12px;
+        padding: 5px 12px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-custom {
+        width: 100%;
+        max-width: 280px;
+        margin: 0;
+    }
 }
 
-/* Optional: Make carousel controls stand out more */
-.carousel-control-prev,
-.carousel-control-next {
-    width: 5%; /* Adjust width of control area */
-    color: #0d6efd; /* Bootstrap primary blue */
-    opacity: 1;
-}
-
-.carousel-control-prev-icon,
-.carousel-control-next-icon {
-    filter: invert(20%) sepia(90%) saturate(2000%) hue-rotate(200deg) brightness(80%); /* Makes icon blue */
-}
-
-/* Responsive adjustments for carousel */
-@media (max-width: 767.98px) { /* For small devices */
-    .carousel-item .col-md-6 {
-        flex: 0 0 100%; /* Make each card take full width */
-        max-width: 100%;
+@media (max-width: 575.98px) {
+    .btn-custom {
+        padding: 10px 24px;
+        font-size: 14px;
+        min-width: 140px;
     }
 }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('campaignSearch');
+    const clearSearchBtn = document.getElementById('clearSearch');
+    const campaignItems = document.querySelectorAll('.campaign-item');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const searchResultsInfo = document.getElementById('searchResultsInfo');
+    const searchResultsText = document.getElementById('searchResultsText');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    const campaignGrid = document.getElementById('campaignGrid');
+    
+    let currentCategory = 'all';
+    let searchTimeout;
+
+    // Search functionality
+    function performSearch() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        let visibleCount = 0;
+        
+        // Clear previous timeout
+        clearTimeout(searchTimeout);
+        
+        // Show/hide clear button
+        clearSearchBtn.style.display = searchTerm ? 'block' : 'none';
+        
+        // Add small delay for better UX
+        searchTimeout = setTimeout(() => {
+            campaignItems.forEach(item => {
+                const title = item.dataset.title;
+                const category = item.dataset.category;
+                const description = item.dataset.description;
+                
+                const matchesSearch = !searchTerm || 
+                    title.includes(searchTerm) || 
+                    category.includes(searchTerm) || 
+                    description.includes(searchTerm);
+                
+                const matchesCategory = currentCategory === 'all' || category === currentCategory;
+                
+                if (matchesSearch && matchesCategory) {
+                    item.style.display = 'block';
+                    item.classList.remove('fade-out');
+                    item.classList.add('fade-in');
+                    visibleCount++;
+                } else {
+                    item.classList.add('fade-out');
+                    item.classList.remove('fade-in');
+                    setTimeout(() => {
+                        if (item.classList.contains('fade-out')) {
+                            item.style.display = 'none';
+                        }
+                    }, 300);
+                }
+            });
+            
+            // Update search results info
+            updateSearchResults(searchTerm, visibleCount);
+        }, 200);
+    }
+    
+    // Update search results display
+    function updateSearchResults(searchTerm, visibleCount) {
+        const totalItems = campaignItems.length;
+        
+        if (searchTerm || currentCategory !== 'all') {
+            if (visibleCount > 0) {
+                searchResultsInfo.style.display = 'block';
+                noResultsMessage.style.display = 'none';
+                
+                let resultText = `Menampilkan ${visibleCount} dari ${totalItems} campaign`;
+                if (searchTerm) {
+                    resultText += ` untuk "${searchTerm}"`;
+                }
+                if (currentCategory !== 'all') {
+                    resultText += ` dalam kategori "${currentCategory}"`;
+                }
+                
+                searchResultsText.textContent = resultText;
+            } else {
+                searchResultsInfo.style.display = 'none';
+                noResultsMessage.style.display = 'block';
+            }
+        } else {
+            searchResultsInfo.style.display = 'none';
+            noResultsMessage.style.display = 'none';
+        }
+    }
+    
+    // Category filter functionality
+    function filterByCategory(category) {
+        currentCategory = category.toLowerCase();
+        
+        // Update active filter button
+        filterButtons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category.toLowerCase() === currentCategory) {
+                btn.classList.add('active');
+            }
+        });
+        
+        performSearch();
+    }
+    
+    // Event listeners
+    searchInput.addEventListener('input', performSearch);
+    
+    clearSearchBtn.addEventListener('click', function() {
+        searchInput.value = '';
+        performSearch();
+        searchInput.focus();
+    });
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            filterByCategory(this.dataset.category);
+        });
+    });
+    
+    // Search input focus effects
+    searchInput.addEventListener('focus', function() {
+        this.parentElement.style.transform = 'scale(1.02)';
+    });
+    
+    searchInput.addEventListener('blur', function() {
+        this.parentElement.style.transform = 'scale(1)';
+    });
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Focus search with Ctrl/Cmd + K
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+        
+        // Clear search with Escape
+        if (e.key === 'Escape' && document.activeElement === searchInput) {
+            searchInput.value = '';
+            performSearch();
+            searchInput.blur();
+        }
+    });
+    
+    // Initialize search if there's a value (from URL parameter)
+    if (searchInput.value) {
+        performSearch();
+    }
+});
+</script>
 
 @endsection

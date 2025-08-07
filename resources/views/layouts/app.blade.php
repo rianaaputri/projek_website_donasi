@@ -318,7 +318,20 @@
                                 <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
                             </a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{{ route('admin.dashboard') }}"><i class="fas fa-tachometer-alt me-2"></i>Admin Panel</a></li>
+                               @if (Auth::user()->role === 'admin')
+    <li>
+        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+            <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
+        </a>
+    </li>
+@elseif (Auth::user()->role === 'user')
+    <li>
+        <a class="dropdown-item" href="{{ route('profile.show') }}">
+            <i class="fas fa-user me-2"></i>Profil Saya
+        </a>
+    </li>
+@endif
+
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <a class="dropdown-item" href="{{ route('logout') }}" 

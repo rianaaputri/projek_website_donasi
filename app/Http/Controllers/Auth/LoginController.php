@@ -3,96 +3,83 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Providers\RouteServiceProvider;
 
 class LoginController extends Controller
 {
-    use AuthenticatesUsers;
-
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
+     * Tampilkan form login.
      */
-    protected $redirectTo = '/dashboard'; // Akan ditimpa oleh logic di routes/web.php
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        // Pastikan Panggilan middleware() Ada di SINI, di DALAM konstruktor
-        $this->middleware('guest')->except('logout');
-        $this->middleware('guest:admin')->except('adminLogout');
-    }
-
-    // --- User Login ---
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    public function logout(Request $request)
+    /**
+     * Proses login.
+     */
+    public function login(Request $request)
     {
-        Auth::guard('web')->logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect('/')->with('success', 'Anda telah berhasil logout.');
-    }
+        // Validasi input singkat
+        $credentials = $request->validate([
+            'email'    => ['required', 'email'],
+            'password' => ['required'],
+        ]);
 
-    // --- Admin Login ---
-    public function showAdminLoginForm()
-    {
-        return view('admin.auth.login'); // Pastikan Anda memiliki view ini
-    }
+        // Coba login dengan credentials
+        if (Auth::attempt($credentials, $request->filled('remember'))) {
+            $user = Auth::user();
 
-    public function adminLogin(Request $request)
-    {
-        $this->validateLogin($request);
-
-        if ($this->hasTooManyLoginAttempts($request)) {
-            $this->fireLockoutEvent($request);
-            return $this->sendLockoutResponse($request);
-        }
-
-        // Coba login sebagai admin
-        if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password, 'role' => 'admin'], $request->boolean('remember'))) {
-            $request->session()->regenerate();
-            $this->clearLoginAttempts($request);
-
-            if (!Auth::guard('admin')->user()->hasVerifiedEmail()) {
-                return redirect()->route('admin.verification.notice');
+            // Jika model User menggunakan verifikasi email, pastikan terverifikasi
+            if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
+                Auth::logout();
+                return redirect()->route('login')->with('error', 'Email kamu belum diverifikasi.');
             }
 
-            return redirect()->intended(route('admin.dashboard'));
+            // Regenerasi session untuk keamanan
+            $request->session()->regenerate();
+
+            // Redirect berdasarkan role — gunakan route constants (RouteServiceProvider) atau named routes
+            if ($user->role === 'admin') {
+                // Redirect ke admin dashboard
+                return redirect()->intended(route('admin.dashboard'));
+            }
+
+            // Default: redirect ke home
+            return redirect()->intended(RouteServiceProvider::HOME);
         }
 
-        $this->incrementLoginAttempts($request);
-
-        return $this->sendFailedLoginResponse($request);
+        // Gagal login
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
+        ])->withInput();
     }
 
-    public function adminLogout(Request $request)
+    /**
+     * Logout user.
+     *
+     * Admin -> redirected to login page.
+     * Regular user -> redirected to home.
+     */
+    public function logout(Request $request)
     {
-        Auth::guard('admin')->logout();
+        // Tangkap role sebelum logout (karena setelah logout auth()->user() null)
+        $role = auth()->check() ? auth()->user()->role : null;
+
+        Auth::logout();
+
+        // Invalidate session & CSRF token
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect()->route('admin.login')->with('success', 'Anda telah berhasil logout dari admin panel.');
-    }
 
-    // Helper method needed for AuthenticatesUsers trait, Laravel UI often adds this
-    protected function credentials(Request $request)
-    {
-        return $request->only($this->username(), 'password');
-    }
+        // Redirect berdasarkan role sebelumnya
+        if ($role === 'admin') {
+            return redirect()->route('login')->with('success', 'Berhasil logout.');
+        }
 
-    // Helper method needed for AuthenticatesUsers trait
-    public function username()
-    {
-        return 'email'; // Or 'username' if you use username for login
+        return redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
     }
 }
+        
