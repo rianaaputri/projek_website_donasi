@@ -16,6 +16,11 @@ class DonationController extends Controller
     public function __construct(MidtransService $midtrans)
     {
         $this->midtrans = $midtrans;
+
+        // Proteksi hanya untuk route yang butuh login & verifikasi email
+        $this->middleware(['auth', 'verified'])->only([
+            'payment', 'success'
+        ]);
     }
 
     public function index()
@@ -59,7 +64,7 @@ class DonationController extends Controller
 
         $donation = Donation::create([
             'campaign_id'       => $request->campaign_id,
-            'donor_name'        => $isAnonymous ? 'Hamba Allah' : $request->donor_name,
+            'donor_name'        => $isAnonymous ? 'Seseorang' : $request->donor_name,
             'donor_email'       => $request->donor_email,
             'donor_phone'       => $request->donor_phone,
             'amount'            => $request->amount,
@@ -69,6 +74,15 @@ class DonationController extends Controller
             'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
         ]);
 
+        // Simpan ID donasi di session untuk redirect setelah login
+        session(['pending_donation_id' => $donation->id]);
+
+        // Jika belum login, redirect ke login
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('message', 'Silakan login untuk melanjutkan pembayaran.');
+        }
+
+        // Jika sudah login, redirect langsung ke payment
         return redirect()->route('donation.payment', $donation->id);
     }
 
