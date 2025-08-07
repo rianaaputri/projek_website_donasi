@@ -199,6 +199,19 @@
             </div>
 
             <div class="card-body">
+                {{-- Tambahan: Alert jika verifikasi gagal karena verified_at tidak tersimpan --}}
+                @if (session('error') == 'verification_failed')
+                    <div class="alert alert-custom alert-danger">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-1">Verifikasi Gagal</h5>
+                                <p class="mb-0">Terjadi kesalahan saat menyimpan tanggal verifikasi. Silakan coba lagi atau hubungi admin.</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 @if (session('resent'))
                     <div id="successAlert" class="alert alert-custom alert-success">
                         <div class="d-flex align-items-center">
