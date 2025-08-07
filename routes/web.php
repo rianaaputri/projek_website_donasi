@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
+    AdminController,
     MidtransController,
     CampaignController,
     UserController,
@@ -24,13 +25,6 @@ use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 // ==============================
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
-
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/admin/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-    Route::get('/admin/add-admin', [AdminController::class, 'addAdmin'])->name('admin.add-admin');
-    Route::post('/admin/add-admin', [AdminController::class, 'storeAdmin'])->name('admin.store-admin');
-    // routes lainnya...
-});
 
 // ==============================
 // AUTH ROUTES (guest only)
@@ -106,6 +100,14 @@ Route::prefix('admin')->middleware(['auth', 'role.check:admin'])->name('admin.')
     Route::get('/logout', function () {
         return view('admin.logout'); // resources/views/admin/logout.blade.php
     })->name('logout');
+
+    // Add Admin Routes - DIPERBAIKI
+    Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
+    Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
+    
+    // Optional: List Admins Routes
+    Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
+    Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
     // Campaign Management
     Route::resource('campaigns', AdminCampaignController::class);
