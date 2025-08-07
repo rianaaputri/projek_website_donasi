@@ -47,3 +47,5 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->role === 'admin';
     }
 }
+
+// Tidak ada kesalahan pada model User terkait verifikasi email.

@@ -15,7 +15,7 @@ class Donation extends Model
         'donor_email',
         'donor_phone',
         'amount',
-        'message',
+        'comment', // ✅ ganti dari 'message' agar sesuai controller
         'is_anonymous',
         'payment_status',
         'midtrans_order_id',
@@ -55,5 +55,11 @@ class Donation extends Model
     public function getDisplayNameAttribute()
     {
         return $this->is_anonymous ? 'Hamba Allah' : $this->donor_name;
+    }
+
+    // (Opsional) Relasi ke user, jika kamu ingin simpan user_id
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

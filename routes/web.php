@@ -39,14 +39,14 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store'); // UBAH NAMA INI jika perlu
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
 
 // Logout (authenticated) — satu route global untuk semua users
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ==============================
-// EMAIL VERIFICATION (auth)
+// EMAIL VERIFICATION (auth) - FIXED VERSION
 // ==============================
 Route::middleware('auth')->group(function () {
     Route::get('/email/verify', function () {
@@ -54,8 +54,30 @@ Route::middleware('auth')->group(function () {
     })->name('verification.notice');
 
     Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        // Debug log sebelum fulfill
+        \Log::info('Email verification attempt', [
+            'user_id' => $request->user()->id,
+            'user_email' => $request->user()->email,
+            'verified_at_before' => $request->user()->email_verified_at
+        ]);
+
+        // Fulfill verification
         $request->fulfill();
+
+        // Get fresh user data untuk memastikan verified_at tersimpan
+        $user = $request->user()->fresh();
+        
+        // Debug log setelah fulfill
+        \Log::info('Email verification completed', [
+            'user_id' => $user->id,
+            'user_email' => $user->email,
+            'verified_at_after' => $user->email_verified_at,
+            'has_verified_email' => $user->hasVerifiedEmail()
+        ]);
+
+        // Logout SETELAH memastikan data tersimpan
         auth()->logout();
+        
         return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
     })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
@@ -137,7 +159,7 @@ Route::prefix('donation')->name('donation.')->group(function () {
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
 
 // ==============================
-// DEBUG (Remove in production)
+// DEBUG ROUTES (Remove in production)
 // ==============================
 Route::get('/debug-auth', function () {
     dd([
@@ -161,6 +183,7 @@ Route::get('/debug-role', function () {
         'Email' => $user->email,
         'Role' => $user->role,
         'Email Verified' => $user->hasVerifiedEmail(),
+        'Email Verified At' => $user->email_verified_at,
     ]);
 })->middleware(['auth']);
 
@@ -171,3 +194,40 @@ Route::get('/debug-user-only', function () {
 Route::get('/debug-admin-only', function () {
     return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
 })->middleware(['auth', 'role.check:admin']);
+
+// ==============================
+// DEBUG EMAIL VERIFICATION (Remove in production)
+// ==============================
+Route::get('/debug-verification', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return 'Not authenticated';
+    }
+
+    return response()->json([
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'email_verified_at' => $user->email_verified_at,
+        'has_verified_email' => $user->hasVerifiedEmail(),
+        'email_verified_at_raw' => $user->getRawOriginal('email_verified_at'),
+    ]);
+})->middleware('auth');
+
+Route::get('/debug-manual-verify', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return 'Not authenticated';
+    }
+
+    $user->markEmailAsVerified();
+    
+    return response()->json([
+        'message' => 'Manual verification completed',
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'email_verified_at' => $user->fresh()->email_verified_at,
+        'has_verified_email' => $user->fresh()->hasVerifiedEmail(),
+    ]);
+})->middleware('auth');

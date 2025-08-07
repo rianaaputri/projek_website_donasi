@@ -85,9 +85,11 @@ class UserController extends Controller
             $user = Auth::guard('web')->user();
 
             if (!$user->hasVerifiedEmail()) {
-                Auth::logout(); // Logout jika belum verifikasi
+                //Auth::logout(); // Logout jika belum verifikasi
+                //return redirect()->route('verification.notice')
+                //    ->with('error', 'Email kamu belum diverifikasi! Cek inbox dulu ya 📮');
                 return redirect()->route('verification.notice')
-                    ->with('error', 'Email kamu belum diverifikasi! Cek inbox dulu ya 📮');
+                ->with('warning', 'Silakan verifikasi email dulu ya!');
             }
 
             $request->session()->regenerate();

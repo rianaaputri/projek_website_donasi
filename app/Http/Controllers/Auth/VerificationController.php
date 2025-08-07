@@ -7,6 +7,7 @@ use Illuminate\Foundation\Auth\VerifiesEmails;
 use Illuminate\Http\Request;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Events\Verified;
+use Illuminate\Support\Facades\Auth;
 
 class VerificationController extends Controller
 {
@@ -50,9 +51,13 @@ class VerificationController extends Controller
      */
     public function show(Request $request)
     {
-        return $request->user()->hasVerifiedEmail()
-                    ? redirect($this->redirectPath())
-                    : view('auth.verify-email'); // View untuk user biasa
+        // Tambahkan logika jika ingin menampilkan pesan error jika email_verified_at tidak terisi
+        if ($request->user()->hasVerifiedEmail()) {
+            return redirect($this->redirectPath());
+        }
+
+        // Contoh: jika ada session error khusus, bisa diteruskan ke view
+        return view('auth.verify-email'); // View untuk user biasa
     }
 
     /**
