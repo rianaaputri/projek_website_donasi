@@ -137,7 +137,7 @@ Route::get('/debug-auth', function () {
 //midtrans callback route
 // Proses Pembayaran Donasi
 Route::get('/donation/payment/{id}', [DonationController::class, 'payment'])->name('donation.payment');
-Route::get('/donation-success/{id}', [DonationController::class, 'success'])->name('donation.success');
+Route::get('/donation-success/{id}', action: [DonationController::class, 'success'])->name('donation.success');
 Route::get('/donation/status/{id}', [DonationController::class, 'checkStatus'])->name('donation.status');
 Route::get('/donation/{campaign}', [DonationController::class, 'create'])->name('donation.create');
 Route::get('/donation/{id}/check-status', [DonationController::class, 'checkStatus'])->name('donation.checkStatus');
