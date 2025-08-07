@@ -202,7 +202,7 @@
                 <i class="fas fa-hand-holding-heart"></i>
                 Donations
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ route('admin.add-admin') }}" class="menu-item">
                 <i class="fas fa-user-shield"></i>
                 Add Admin
             </a>
