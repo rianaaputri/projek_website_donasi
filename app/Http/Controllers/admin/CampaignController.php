@@ -23,24 +23,25 @@ class CampaignController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'title'         => 'required|string|max:255',
-            'description'   => 'required|string',
-            'category'      => 'required|string|max:100',
-            'target_amount' => 'required|numeric|min:1000',
-            'image'         => 'nullable|image|max:2048',
+        $validatedData = $request->validate([
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'target_amount' => 'required|numeric',
+            'end_date' => 'required|date',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'category' => 'required'
         ]);
 
-        $validated['collected_amount'] = 0;
-        $validated['status'] = 'active';
-
-        if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('images/campaign', 'public');
+        if ($request->file('image')) {
+            $image = $request->file('image')->store('campaign-images', 'public');
+            $validatedData['image'] = $image;
         }
 
-        Campaign::create($validated);
+        $validatedData['slug'] = Str::slug($validatedData['title']);
+        Campaign::create($validatedData);
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dibuat.');
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign created successfully');
     }
 
     public function edit(Campaign $campaign)
@@ -50,24 +51,28 @@ class CampaignController extends Controller
 
     public function update(Request $request, Campaign $campaign)
     {
-        $validated = $request->validate([
-            'title'         => 'required|string|max:255',
-            'description'   => 'required|string',
-            'category'      => 'required|string|max:100',
-            'target_amount' => 'required|numeric|min:1000',
-            'image'         => 'nullable|image|max:2048',
+        $validatedData = $request->validate([
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'target_amount' => 'required|numeric',
+            'end_date' => 'required|date',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'category' => 'required'
         ]);
 
-        if ($request->hasFile('image')) {
+        if ($request->file('image')) {
             if ($campaign->image) {
                 Storage::disk('public')->delete($campaign->image);
             }
-            $validated['image'] = $request->file('image')->store('images/campaign', 'public');
+            $image = $request->file('image')->store('campaign-images', 'public');
+            $validatedData['image'] = $image;
         }
 
-        $campaign->update($validated);
+        $validatedData['slug'] = Str::slug($validatedData['title']);
+        $campaign->update($validatedData);
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil diperbarui.');
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign updated successfully');
     }
 
     public function destroy(Campaign $campaign)
@@ -75,9 +80,9 @@ class CampaignController extends Controller
         if ($campaign->image) {
             Storage::disk('public')->delete($campaign->image);
         }
-
         $campaign->delete();
 
-        return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dihapus.');
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign deleted successfully');
     }
 }
