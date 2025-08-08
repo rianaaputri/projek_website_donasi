@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use App\Models\Donation;
-use App\Models\Campaign;
+use App\Models\Campaign; // Pastikan ini di-import
 use App\Services\MidtransService;
-use Midtrans\Transaction;
+use Midtrans\Transaction; // Pastikan ini di-import jika digunakan
 
 class DonationController extends Controller
 {
@@ -18,80 +18,92 @@ class DonationController extends Controller
         $this->midtrans = $midtrans;
     }
 
-    public function index()
+
+
+public function index()
+{
+    $donations = Donation::latest()->paginate(10); // atau ->get() kalau tidak pakai pagination
+
+    $campaigns = Campaign::all(); // kalau bagian filter butuh data campaign
+
+    $stats = [
+        'total_donations' => Donation::sum('amount'),
+        'success_donations' => 0,
+        'pending_donations' => 0,
+        'today_donations' => Donation::whereDate('created_at', today())->sum('amount'),
+    ];
+
+    return view('admin.donation.index', compact('donations', 'campaigns', 'stats'));
+}
+
+
+    /**
+     * Show the form for creating a new donation for a specific campaign.
+     * Method ini dipanggil oleh route 'donation.create'.
+     *
+     * @param  \App\Models\Campaign  $campaign
+     * @return \Illuminate\Http\Response
+     */
+    public function create(Campaign $campaign) // <-- Pastikan method ini ada dan namanya 'create'
     {
-        $donations = Donation::latest()->paginate(10);
-        $campaigns = Campaign::all();
-
-        $stats = [
-            'total_donations'    => Donation::sum('amount'),
-            'success_donations'  => Donation::where('payment_status', 'success')->sum('amount'),
-            'pending_donations'  => Donation::where('payment_status', 'pending')->sum('amount'),
-            'today_donations'    => Donation::whereDate('created_at', today())->sum('amount'),
-        ];
-
-        return view('admin.donation.index', compact('donations', 'campaigns', 'stats'));
-    }
-
-    public function create(Campaign $campaign)
-    {
+        // Pastikan campaign aktif sebelum menampilkan form donasi
         if (!$campaign->is_active || $campaign->status !== 'active') {
             return redirect()->route('campaign.show', $campaign->id)
                              ->with('error', 'Campaign ini tidak aktif untuk donasi.');
         }
 
+        // Memuat view 'donation.form' yang Anda miliki di Canvas
         return view('donation.create', compact('campaign'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'campaign_id'   => 'required|exists:campaigns,id',
-            'donor_name'    => 'nullable|string|max:255',
-            'donor_email'   => 'required|email',
-            'donor_phone'   => 'nullable|string|max:20',
-            'amount'        => 'required|numeric|min:10000',
-            'comment'       => 'nullable|string|max:1000',
-            'is_anonymous'  => 'nullable|boolean',
+            'campaign_id' => 'required|exists:campaigns,id',
+            'donor_name' => 'required|string|max:255',
+            'donor_email' => 'required|email',
+            'donor_phone' => 'nullable|string|max:20',
+            'amount' => 'required|numeric|min:10000',
+            'comment' => 'nullable|string|max:1000',
+            'is_anonymous' => 'nullable|boolean', // Validasi untuk checkbox
         ]);
 
-        $isAnonymous = $request->has('is_anonymous');
+       $donation = Donation::create([
+    'campaign_id' => $request->campaign_id,
+    'donor_name' => $request->donor_name,
+    'donor_email' => $request->donor_email,
+    'donor_phone' => $request->donor_phone,
+    'amount' => $request->amount,
+    'message' => $request->comment, // ✅ GUNAKAN KOLOM YANG ADA
+    'is_anonymous' => $request->has('is_anonymous') ? true : false,
+    'payment_status' => 'pending',
+    'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
+]);
 
-        $donation = Donation::create([
-            'campaign_id'       => $request->campaign_id,
-            'donor_name'        => $isAnonymous ? 'Hamba Allah' : $request->donor_name,
-            'donor_email'       => $request->donor_email,
-            'donor_phone'       => $request->donor_phone,
-            'amount'            => $request->amount,
-            'comment'           => $request->comment,
-            'is_anonymous'      => $isAnonymous,
-            'payment_status'    => 'pending',
-            'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
-        ]);
 
         return redirect()->route('donation.payment', $donation->id);
     }
 
     public function payment($id)
     {
-        $donation = Donation::with('campaign')->findOrFail($id);
+        $donation = Donation::findOrFail($id);
 
         $params = [
             'transaction_details' => [
-                'order_id'     => $donation->midtrans_order_id,
+                'order_id' => $donation->midtrans_order_id,
                 'gross_amount' => $donation->amount,
             ],
             'customer_details' => [
                 'first_name' => $donation->donor_name,
-                'email'      => $donation->donor_email,
-                'phone'      => $donation->donor_phone,
+                'email' => $donation->donor_email,
+                'phone' => $donation->donor_phone, // Tambahkan phone jika ada
             ],
-            'item_details' => [
+            'item_details' => [ // Penting untuk Midtrans
                 [
-                    'id'       => $donation->campaign_id,
-                    'price'    => $donation->amount,
+                    'id' => $donation->campaign_id,
+                    'price' => $donation->amount,
                     'quantity' => 1,
-                    'name'     => 'Donasi untuk ' . $donation->campaign->title,
+                    'name' => 'Donasi untuk ' . $donation->campaign->title,
                 ]
             ]
         ];
@@ -106,12 +118,13 @@ class DonationController extends Controller
         $donation = Donation::findOrFail($id);
         return view('donation.success', compact('donation'));
     }
-
+      
     public function checkStatus($id)
     {
-        $donation = Donation::with('campaign')->findOrFail($id);
+        $donation = Donation::findOrFail($id);
 
         try {
+            // Pastikan Midtrans\Transaction sudah di-import di atas
             $status = Transaction::status($donation->midtrans_order_id);
 
             if (in_array($status->transaction_status, ['settlement', 'capture'])) {
@@ -123,52 +136,20 @@ class DonationController extends Controller
             }
 
             $donation->save();
-            $donation->campaign->updateCollectedAmount();
+
+            // PENTING: Update collected_amount di campaign setelah status donasi berubah
+            $donation->campaign->updateCollectedAmount(); 
+
         } catch (\Exception $e) {
             \Log::error('Midtrans status check failed: ' . $e->getMessage());
         }
 
         return response()->json([
-            'status'    => $donation->payment_status,
-            'progress'  => $donation->campaign->progress_percentage,
+            'status' => $donation->payment_status,
+            'progress' => $donation->campaign->progress_percentage,
             'collected' => $donation->campaign->formatted_collected,
-            'donors'    => $donation->campaign->donations()->count()
+            'donors' => $donation->campaign->donations()->count()
         ]);
     }
 
-    public function adminIndex(Request $request)
-    {
-        $query = Donation::with(['campaign', 'user'])->latest();
-
-        if ($request->status) {
-            $query->where('payment_status', $request->status);
-        }
-
-        if ($request->campaign_id) {
-            $query->where('campaign_id', $request->campaign_id);
-        }
-
-        if ($request->date_from) {
-            $query->whereDate('created_at', '>=', $request->date_from);
-        }
-
-        if ($request->date_to) {
-            $query->whereDate('created_at', '<=', $request->date_to);
-        }
-
-        if ($request->search) {
-            $query->where('donor_name', 'like', "%{$request->search}%");
-        }
-
-        $donations = $query->paginate(10)->withQueryString();
-        $campaigns = Campaign::all();
-
-        return view('admin.donations.index', compact('donations', 'campaigns'));
-    }
-
-    public function adminShow(Donation $donation)
-    {
-        $donation->load(['campaign', 'user']);
-        return view('admin.donations.show', compact('donation'));
-    }
 }
