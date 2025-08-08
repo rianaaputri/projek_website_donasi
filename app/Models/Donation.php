@@ -54,7 +54,7 @@ class Donation extends Model
     // Nama donor ditampilkan berdasarkan status anonimitas
     public function getDisplayNameAttribute()
     {
-        return $this->is_anonymous ? 'Hamba Allah' : $this->donor_name;
+        return $this->is_anonymous ? 'Seseorang' : $this->donor_name;
     }
 
     // (Opsional) Relasi ke user, jika kamu ingin simpan user_id
