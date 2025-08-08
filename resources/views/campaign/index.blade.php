@@ -335,7 +335,7 @@
     }
 
     .search-input {
-        width: 1000px;
+        width: 100%;
         padding: 0.75rem 0.75rem 0.75rem 2.5rem;
         border: 1px solid var(--blue-200);
         border-radius: 8px;
@@ -557,7 +557,7 @@
 
                 <!-- Action Bar -->
                 <div class="action-bar">
-                    <a href="{{ route('campaign.create') }}" class="btn btn-primary-soft">
+                    <a href="{{ route('admin.campaigns.create') }}" class="btn btn-primary-soft">
                         <i class="fas fa-plus me-2"></i>
                         Buat Campaign Baru
                     </a>
@@ -650,12 +650,12 @@
                                         </td>
                                         <td>
                                             <div class="btn-group-custom">
-                                                <a href="{{ route('campaign.edit', $c->id) }}" 
+                                                <a href="{{ route('admin.campaigns.edit', $c->id) }}" 
                                                    class="btn btn-success-soft btn-sm">
                                                     <i class="fas fa-edit me-1"></i>
                                                     Edit
                                                 </a>
-                                                <form action="{{ route('campaign.destroy', $c->id) }}" 
+                                                <form action="{{ route('admin.campaigns.destroy', $c->id) }}" 
                                                       method="POST" 
                                                       class="d-inline">
                                                     @csrf
@@ -681,7 +681,7 @@
                                                 <p class="empty-text">
                                                     Mulai buat campaign pertama Anda untuk menggalang dana dan mencapai tujuan yang bermakna.
                                                 </p>
-                                                <a href="{{ route('campaign.create') }}" class="btn btn-primary-soft">
+                                                <a href="{{ route('admin.campaigns.create') }}" class="btn btn-primary-soft">
                                                     <i class="fas fa-plus me-2"></i>
                                                     Buat Campaign Pertama
                                                 </a>
@@ -787,14 +787,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Event listeners
     searchInput.addEventListener('input', filterTable);
-    searchButton.addEventListener('click', function() {
-        filterTable();
-        // Add search button animation
-        this.style.transform = 'scale(0.95)';
-        setTimeout(() => {
-            this.style.transform = 'scale(1)';
-        }, 150);
-    });
+    if (searchButton) {
+        searchButton.addEventListener('click', function() {
+            filterTable();
+            // Add search button animation
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1)';
+            }, 150);
+        });
+    }
     
     // Allow Enter key to trigger search
     searchInput.addEventListener('keypress', function(e) {

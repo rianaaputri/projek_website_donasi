@@ -323,7 +323,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('campaign.update', $campaign->id) }}">
+                <form method="POST" action="{{ route('admin.campaigns.update', $campaign->id) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
@@ -353,12 +353,11 @@
                             <label class="form-label required">Kategori</label>
                             <select name="category" class="form-select" required>
                                 <option value="">-- Pilih Kategori --</option>
-                                @foreach ($categories as $category)
-                                    <option value="{{ $category }}" 
-                                        {{ old('category', $campaign->category) == $category ? 'selected' : '' }}>
-                                        {{ ucfirst($category) }}
-                                    </option>
-                                @endforeach
+                                <option value="bencana" {{ old('category', $campaign->category) == 'bencana' ? 'selected' : '' }}>Bencana</option>
+                                <option value="tempat ibadah" {{ old('category', $campaign->category) == 'tempat ibadah' ? 'selected' : '' }}>Tempat Ibadah</option>
+                                <option value="pendidikan" {{ old('category', $campaign->category) == 'pendidikan' ? 'selected' : '' }}>Pendidikan</option>
+                                <option value="kesehatan" {{ old('category', $campaign->category) == 'kesehatan' ? 'selected' : '' }}>Kesehatan</option>
+                                <option value="sosial" {{ old('category', $campaign->category) == 'sosial' ? 'selected' : '' }}>Sosial</option>
                             </select>
                         </div>
 
@@ -374,47 +373,42 @@
                         </div>
                     </div>
 
-                    <!-- Image URL -->
-                    <div class="form-group">
-                        <label class="form-label">Gambar Campaign (URL)</label>
-                        <input type="url" 
-                               name="image" 
-                               class="form-control" 
-                               value="{{ old('image', $campaign->image) }}" 
-                               placeholder="https://example.com/image.jpg">
-                    </div>
-
-                    <!-- Form Row for Status and Active -->
+                    <!-- End Date and Image -->
                     <div class="form-row">
                         <div class="form-group">
-                            <label class="form-label required">Status Campaign</label>
-                            <select name="status" class="form-select" required>
-                                <option value="active" 
-                                    {{ old('status', $campaign->status) == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="inactive" 
-                                    {{ old('status', $campaign->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
-                                <option value="completed" 
-                                    {{ old('status', $campaign->status) == 'completed' ? 'selected' : '' }}>Completed</option>
-                            </select>
+                            <label class="form-label required">Tanggal Berakhir</label>
+                            <input type="date" 
+                                   name="end_date" 
+                                   class="form-control" 
+                                   value="{{ old('end_date', $campaign->end_date ? $campaign->end_date->format('Y-m-d') : '') }}" 
+                                   required>
                         </div>
 
                         <div class="form-group">
-                            <label class="form-label">Pengaturan</label>
-                            <div class="checkbox-wrapper">
-                                <input type="checkbox" 
-                                       name="is_active" 
-                                       value="1" 
-                                       class="form-checkbox"
-                                       id="is_active"
-                                       {{ old('is_active', $campaign->is_active) ? 'checked' : '' }}>
-                                <label for="is_active" class="checkbox-label">Campaign Aktif</label>
-                            </div>
+                            <label class="form-label">Upload Gambar Baru (Opsional)</label>
+                            <input type="file" 
+                                   name="image" 
+                                   class="form-control"
+                                   accept="image/*">
+                            @if($campaign->image)
+                                <small class="text-muted">Gambar saat ini: {{ basename($campaign->image) }}</small>
+                            @endif
                         </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-group">
+                        <label class="form-label required">Status Campaign</label>
+                        <select name="status" class="form-select" required>
+                            <option value="active" {{ old('status', $campaign->status) == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="inactive" {{ old('status', $campaign->status) == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                            <option value="completed" {{ old('status', $campaign->status) == 'completed' ? 'selected' : '' }}>Completed</option>
+                        </select>
                     </div>
 
                     <!-- Form Actions -->
                     <div class="form-actions">
-                        <a href="{{ route('campaign.index') }}" class="btn-secondary-soft">
+                        <a href="{{ route('admin.campaigns.index') }}" class="btn-secondary-soft">
                             <i class="fas fa-arrow-left me-2"></i>
                             Kembali
                         </a>
@@ -531,6 +525,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
 .form-textarea::-webkit-scrollbar-thumb:hover {
     background: var(--primary-blue);
+}
+
+.text-muted {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    display: block;
 }
 </style>
 
