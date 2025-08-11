@@ -19,6 +19,7 @@ use App\Http\Controllers\{
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
+use App\Models\User;
 
 // ==============================
 // PUBLIC ROUTES
@@ -40,55 +41,50 @@ Route::middleware('guest')->group(function () {
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 });
 
 // Logout (authenticated) — satu route global untuk semua users
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ==============================
-// EMAIL VERIFICATION (auth) - FIXED VERSION
+// EMAIL VERIFICATION (fixed)
 // ==============================
-Route::middleware('auth')->group(function () {
-    Route::get('/email/verify', function () {
-        return view('auth.verify-email');
-    })->name('verification.notice');
 
-    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-        // Debug log sebelum fulfill
-        \Log::info('Email verification attempt', [
-            'user_id' => $request->user()->id,
-            'user_email' => $request->user()->email,
-            'verified_at_before' => $request->user()->email_verified_at
-        ]);
+// Halaman notice — butuh login
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
 
-        // Fulfill verification
-        $request->fulfill();
+// Proses verifikasi — tidak butuh login
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    $user = User::findOrFail($id);
 
-        // Get fresh user data untuk memastikan verified_at tersimpan
-        $user = $request->user()->fresh();
-        
-        // Debug log setelah fulfill
-        \Log::info('Email verification completed', [
-            'user_id' => $user->id,
-            'user_email' => $user->email,
-            'verified_at_after' => $user->email_verified_at,
-            'has_verified_email' => $user->hasVerifiedEmail()
-        ]);
+    // Cek hash email
+    if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        abort(403, 'Link verifikasi tidak valid.');
+    }
 
-        // Logout SETELAH memastikan data tersimpan
-        auth()->logout();
-        
-        return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
-    })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+    // Kalau sudah terverifikasi
+    if ($user->hasVerifiedEmail()) {
+        return redirect()->route('login')->with('success', 'Email sudah terverifikasi, silakan login.');
+    }
 
-    Route::post('/email/verification-notification', function (Request $request) {
-        $request->user()->sendEmailVerificationNotification();
-        return back()->with('message', 'Link verifikasi sudah dikirim!');
-    })->middleware(['throttle:6,1'])->name('verification.send');
-});
+    // Tandai sebagai terverifikasi
+    $user->markEmailAsVerified();
+
+    // Redirect ke login
+    return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
+// Kirim ulang email — hanya bisa saat login
+Route::post('/email/verification-notification', function (Request $request) {
+    $request->user()->sendEmailVerificationNotification();
+    return back()->with('message', 'Link verifikasi sudah dikirim ulang!');
+})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
 
 // ==============================
-// DASHBOARD REDIRECT (optional)
+// DASHBOARD REDIRECT
 // ==============================
 Route::get('/dashboard', function () {
     $user = auth()->user();
@@ -100,41 +96,32 @@ Route::get('/dashboard', function () {
 // ==============================
 // USER PROTECTED ROUTES
 // ==============================
-// Profile & user routes: protected by auth (so admin can access their profile too)
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
 
-    // Manual Password Update
     Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
 // ==============================
 // ADMIN ROUTES
 // ==============================
-// Use auth + role.check:admin. No 'verified' so admin not blocked by email verification.
 Route::prefix('admin')->middleware(['auth', 'role.check:admin'])->name('admin.')->group(function () {
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-    // Admin logout confirmation page (GET) — displays view with form that posts to global logout
     Route::get('/logout', function () {
-        return view('admin.logout'); // resources/views/admin/logout.blade.php
+        return view('admin.logout');
     })->name('logout');
 
-    // Add Admin Routes - DIPERBAIKI
     Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
     Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
-    
-    // Optional: List Admins Routes
     Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
     Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
-    // Campaign Management
     Route::resource('campaigns', AdminCampaignController::class);
 
-    // Donation Management
     Route::get('/donations', [AdminDonationController::class, 'index'])->name('donations.index');
     Route::get('/donations/{donation}', [AdminDonationController::class, 'show'])->name('donations.show');
     Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');

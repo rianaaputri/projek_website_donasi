@@ -3,39 +3,11 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\VerifiesEmails;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Auth\Events\Verified;
-use Illuminate\Support\Facades\Auth;
 
 class VerificationController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Email Verification Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller is responsible for handling email verification for any
-    | user that recently registered with the application. Emails may also
-    | be re-sent if the user didn't receive the original email.
-    |
-    */
-
-    use VerifiesEmails;
-
-    /**
-     * Where to redirect users after verification.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/dashboard'; // Akan ditimpa oleh logic di routes/web.php
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
     public function __construct()
     {
         $this->middleware('auth');
@@ -43,34 +15,32 @@ class VerificationController extends Controller
         $this->middleware('throttle:6,1')->only('verify', 'resend');
     }
 
-    /**
-     * Show the email verification notice for regular users.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Request $request)
+    public function show()
     {
-        // Tambahkan logika jika ingin menampilkan pesan error jika email_verified_at tidak terisi
-        if ($request->user()->hasVerifiedEmail()) {
-            return redirect($this->redirectPath());
-        }
-
-        // Contoh: jika ada session error khusus, bisa diteruskan ke view
-        return view('auth.verify-email'); // View untuk user biasa
+        $expires_at = auth()->user()->getVerificationExpiryTime();
+        return view('auth.verify-email', compact('expires_at'));
     }
 
-    /**
-     * Show the email verification notice for admin users.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function showAdmin(Request $request)
+    public function verify(EmailVerificationRequest $request)
     {
-        if (Auth::guard('admin')->check() && Auth::guard('admin')->user()->hasVerifiedEmail()) {
-            return redirect(route('admin.dashboard'));
+        $user = $request->user();
+
+        if ($user->isVerificationLinkExpired()) {
+            return redirect()->route('verification.notice')
+                ->with('error', 'expired');
         }
-        return view('auth.admin-verify-email'); // View khusus untuk admin
+
+        $request->fulfill();
+
+        auth()->logout();
+
+        return redirect()->route('login')
+            ->with('success', 'Email berhasil diverifikasi! Silakan login.');
+    }
+
+    public function resend(Request $request)
+    {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('resent', true);
     }
 }

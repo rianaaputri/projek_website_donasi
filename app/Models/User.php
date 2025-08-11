@@ -7,45 +7,63 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     */
-        protected $fillable = [
-            'name',
-            'email', 
-            'password',
-            'role',
-            'email_verified_at', 
-        ];
+    protected $fillable = [
+        'name',
+        'email', 
+        'password',
+        'role',
+        'email_verified_at', 
+    ];
 
-    /**
-     * The attributes that should be hidden for arrays.
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast to native types.
-     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
 
-    /**
-     * Cek apakah user memiliki role admin.
-     */
     public function isAdmin(): bool
     {
         return $this->role === 'admin';
     }
-}
 
-// Tidak ada kesalahan pada model User terkait verifikasi email.
+    /**
+     * Kirim email verifikasi dengan link expired 10 menit
+     */
+    public function sendEmailVerificationNotification()
+    {
+        $verifyUrl = URL::temporarySignedRoute(
+            'verification.verify',
+            Carbon::now()->addMinutes(10), // expired 10 menit
+            [
+                'id' => $this->getKey(),
+                'hash' => sha1($this->getEmailForVerification()),
+            ]
+        );
+
+        $this->notify(new class($verifyUrl) extends VerifyEmail {
+            protected $verifyUrl;
+
+            public function __construct($verifyUrl)
+            {
+                $this->verifyUrl = $verifyUrl;
+            }
+
+            protected function verificationUrl($notifiable)
+            {
+                return $this->verifyUrl;
+            }
+        });
+    }
+}

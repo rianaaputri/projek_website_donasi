@@ -242,134 +242,77 @@
                     </div>
                 @endif
 
-                {{-- Alert for when link has expired --}}
-                @if (session('error') == 'expired')
-                    <div id="expiredAlert" class="alert alert-custom alert-danger">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-                            <div>
-                                <h5 class="mb-1">Waduh, Link Verifikasi Udah Kadaluarsa!</h5>
-                                <p class="mb-0">Link verifikasi email kamu udah expired nih. Tenang aja, kamu bisa minta yang baru di bawah ini.</p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-
-                <div class="d-flex flex-column flex-md-row gap-3 justify-content-between align-items-center mt-4">
-                    <form method="POST" action="{{ route('verification.send') }}" class="w-100 w-md-auto">
-                        @csrf
-                        <button type="submit" class="btn btn-primary-custom w-100">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            <span id="resendBtnText">Kirim Ulang Email Verifikasi</span>
-                        </button>
-                    </form>
-                    <form method="POST" action="{{ route('logout') }}" class="w-100 w-md-auto">
-                        @csrf
-                        <button type="submit" class="btn btn-outline-custom w-100">
-                            <i class="fas fa-sign-out-alt me-2"></i> Logout
-                        </button>
-                    </form>
-                </div>
-
-                {{-- Only show countdown if not yet verified and no 'resent' session (meaning, this is first load) --}}
-                @if (!session('resent') && !session('error') == 'expired')
-                    <div id="countdownSection" class="countdown-timer">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-hourglass-half fa-lg me-3" style="color: #f59e0b;"></i>
-                            <div class="flex-grow-1">
-                                <p class="mb-1 fw-semibold" style="color: #92400e;">
-                                    Link verifikasi akan expired pada:
-                                    <span id="expiry-time" class="timer-display"></span>
-                                </p>
-                                <p class="mb-0">
-                                    <small>Sisa waktu: <span id="countdown" class="timer-display"></span></small>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-
-                <div class="text-center mt-4">
-                    <small class="text-muted-custom">
-                        <i class="fas fa-shield-alt me-1"></i>
-                        Verifikasi email membantu menjaga keamanan akun kamu
-                    </small>
-                </div>
-            </div>
+               {{-- Gunakan style kamu sebelumnya, hanya ditambah timer --}}
+<div class="card-body">
+    @if (session('error') == 'expired')
+        <div class="alert alert-custom alert-danger">
+            <h5 class="mb-1">Verification link has expired</h5>
+            <p class="mb-0">Please request a new verification link below.</p>
         </div>
+    @elseif (session('resent'))
+        <div class="alert alert-custom alert-success">
+            <h6 class="mb-1">Verification link sent!</h6>
+            <small>Check your email inbox or spam folder.</small>
+        </div>
+    @else
+        <div class="alert alert-custom alert-info" id="normalMessage">
+            <p class="mb-0">
+                A verification link has been sent to your email.
+                @if(!empty($expires_at))
+                    It will expire at: <strong>{{ $expires_at->format('H:i') }} WIB</strong>.
+                @endif
+            </p>
+        </div>
+    @endif
+
+    @if (!session('error') && !empty($expires_at))
+        <div id="countdownSection" class="countdown-timer">
+            <p class="mb-1">Time remaining:</p>
+            <span id="countdown" class="timer-display"></span>
+        </div>
+    @endif
+
+    <div class="d-flex flex-column flex-md-row gap-3 mt-4">
+        <form method="POST" action="{{ route('verification.send') }}" class="w-100 w-md-auto">
+            @csrf
+            <button type="submit" class="btn btn-primary-custom w-100">
+                <i class="fas fa-paper-plane me-2"></i> Resend Verification Email
+            </button>
+        </form>
+        <form method="POST" action="{{ route('logout') }}" class="w-100 w-md-auto">
+            @csrf
+            <button type="submit" class="btn btn-outline-secondary w-100">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </button>
+        </form>
     </div>
+</div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const card = document.querySelector('.verification-card');
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    @if(!empty($expires_at))
+        const expiryDate = new Date("{{ $expires_at->format('Y-m-d H:i:s') }}".replace(/-/g, '/'));
+        const countdownEl = document.getElementById('countdown');
 
-            setTimeout(() => {
-                card.style.transition = 'all 0.6s ease';
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 100);
+        function updateCountdown() {
+            const now = new Date().getTime();
+            const distance = expiryDate.getTime() - now;
 
-            // Countdown Timer Logic
-            const countdownSection = document.getElementById('countdownSection');
-            if (countdownSection) {
-                const expiryTimeElement = document.getElementById('expiry-time');
-                const countdownElement = document.getElementById('countdown');
-
-                // Set expiry time to 5 minutes from now for demonstration
-                let expiryTime = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
-
-                function updateCountdown() {
-                    const now = new Date().getTime();
-                    const distance = expiryTime.getTime() - now;
-
-                    if (distance < 0) {
-                        clearInterval(countdownInterval);
-                        countdownElement.innerHTML = '<span class="text-danger">EXPIRED</span>';
-                        // Optionally hide normal message and show expired alert after timeout
-                        document.getElementById('normalMessage').classList.add('d-none');
-                        // You might want to reload the page or trigger a 'showExpiredState'
-                        // For a dynamic update, you'd send an AJAX request to check expiry or change state
-                        const expiredAlert = document.getElementById('expiredAlert');
-                        if (expiredAlert) expiredAlert.classList.remove('d-none');
-                        countdownSection.classList.add('d-none'); // Hide timer section
-                        return;
-                    }
-
-                    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-                    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-                    expiryTimeElement.textContent = expiryTime.toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                    });
-
-                    countdownElement.innerHTML =
-                        (hours > 0 ? hours + "j " : "") +
-                        (minutes > 0 ? minutes + "m " : "") +
-                        seconds + "s";
-                }
-
-                // Initial call and set interval
-                updateCountdown();
-                const countdownInterval = setInterval(updateCountdown, 1000);
+            if (distance <= 0) {
+                countdownEl.innerHTML = '<span class="text-danger">EXPIRED</span>';
+                document.getElementById('normalMessage')?.classList.add('d-none');
+                return;
             }
 
-            // Hide success alert after 5 seconds if it exists
-            const successAlert = document.getElementById('successAlert');
-            if (successAlert) {
-                setTimeout(() => {
-                    successAlert.classList.add('d-none');
-                }, 5000);
-            }
-        });
-    </script>
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            countdownEl.textContent = minutes + "m " + seconds + "s";
+        }
+
+        updateCountdown();
+        setInterval(updateCountdown, 1000);
+    @endif
+});
+</script>
 </body>
 </html>
