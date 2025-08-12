@@ -10,7 +10,7 @@ class HomeController extends Controller
     {
         $campaigns = Campaign::active()
             ->with(['donations' => function ($q) {
-                $q->paid();
+                $q->success(); // ganti paid() jadi success()
             }])
             ->latest()
             ->get();
@@ -21,16 +21,15 @@ class HomeController extends Controller
     public function showCampaign($id)
     {
         $campaign = Campaign::with(['donations' => function ($q) {
-            $q->paid()->latest();
+            $q->success()->latest(); // ganti paid() jadi success()
         }])->findOrFail($id);
 
         $recentDonors = $campaign->donations()
-            ->paid()
+            ->success() // ganti paid() jadi success()
             ->latest()
             ->limit(10)
             ->get();
 
         return view('campaign.detail', compact('campaign', 'recentDonors'));
     }
-    
 }

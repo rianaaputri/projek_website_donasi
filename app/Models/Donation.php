@@ -1,6 +1,5 @@
 <?php
 
-// File: app/Models/Donation.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +10,6 @@ class Donation extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'user_id',
         'campaign_id',
@@ -25,9 +21,6 @@ class Donation extends Model
         'payment_reference'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'amount' => 'decimal:2',
         'is_anonymous' => 'boolean',
@@ -36,7 +29,7 @@ class Donation extends Model
     ];
 
     /**
-     * Relationship: Donation belongs to User
+     * Relasi: Donation belongs to User.
      */
     public function user(): BelongsTo
     {
@@ -44,7 +37,7 @@ class Donation extends Model
     }
 
     /**
-     * Relationship: Donation belongs to Campaign
+     * Relasi: Donation belongs to Campaign.
      */
     public function campaign(): BelongsTo
     {
@@ -52,19 +45,17 @@ class Donation extends Model
     }
 
     /**
-     * Accessor: Get donor name (considering anonymity)
+     * Accessor: Nama donatur dengan opsi anonim.
      */
     public function getDonorNameAttribute(): string
     {
-        if ($this->is_anonymous) {
-            return 'Hamba Allah';
-        }
-
-        return $this->user ? $this->user->name : 'Unknown';
+        return $this->is_anonymous
+            ? 'Hamba Allah'
+            : ($this->user ? $this->user->name : 'Unknown');
     }
 
     /**
-     * Accessor: Get payment status label
+     * Accessor: Label status pembayaran.
      */
     public function getPaymentStatusLabelAttribute(): array
     {
@@ -98,7 +89,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter successful donations
+     * Scope: Hanya donasi yang berhasil.
      */
     public function scopeSuccess($query)
     {
@@ -106,7 +97,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter by payment status
+     * Scope: Filter by payment status.
      */
     public function scopePaymentStatus($query, $status)
     {
@@ -114,7 +105,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter anonymous donations
+     * Scope: Hanya donasi anonim.
      */
     public function scopeAnonymous($query)
     {
@@ -122,7 +113,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter public donations
+     * Scope: Donasi publik.
      */
     public function scopePublic($query)
     {
@@ -130,30 +121,29 @@ class Donation extends Model
     }
 
     /**
-     * Boot the model
+     * Boot model untuk update jumlah donasi di campaign.
      */
     protected static function boot()
     {
         parent::boot();
 
-        // Update campaign current_amount when donation is created/updated/deleted
         static::created(function ($donation) {
             if ($donation->payment_status === 'success') {
-                $donation->campaign->increment('current_amount', $donation->amount);
+                $donation->campaign->increment('collected_amount', $donation->amount);
             }
         });
 
         static::updated(function ($donation) {
             if ($donation->wasChanged('payment_status')) {
                 $campaign = $donation->campaign;
-                $campaign->current_amount = $campaign->donations()->success()->sum('amount');
+                $campaign->collected_amount = $campaign->donations()->success()->sum('amount');
                 $campaign->save();
             }
         });
 
         static::deleted(function ($donation) {
             if ($donation->payment_status === 'success') {
-                $donation->campaign->decrement('current_amount', $donation->amount);
+                $donation->campaign->decrement('collected_amount', $donation->amount);
             }
         });
     }
