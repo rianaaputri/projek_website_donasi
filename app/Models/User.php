@@ -6,63 +6,140 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Auth\Notifications\VerifyEmail;
-use Illuminate\Support\Facades\URL;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory, Notifiable;
 
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
         'name',
-        'email', 
+        'email',
         'password',
+        'phone',
         'role',
-        'email_verified_at', 
+        'is_active',
+        'avatar'
     ];
 
+    /**
+     * The attributes that should be hidden for serialization.
+     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
+    /**
+     * The attributes that should be cast.
+     */
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_active' => 'boolean'
     ];
 
-    public function isAdmin(): bool
+    /**
+     * Relationship: User has many Campaigns
+     */
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
+    /**
+     * Relationship: User has many Donations
+     */
+    public function donations(): HasMany
+    {
+        return $this->hasMany(Donation::class);
+    }
+
+    /**
+     * Accessor: Check if user is admin
+     */
+    public function getIsAdminAttribute(): bool
     {
         return $this->role === 'admin';
     }
 
     /**
-     * Kirim email verifikasi dengan link expired 10 menit
+     * Accessor: Check if user is regular user
      */
-    public function sendEmailVerificationNotification()
+    public function getIsUserAttribute(): bool
     {
-        $verifyUrl = URL::temporarySignedRoute(
-            'verification.verify',
-            Carbon::now()->addMinutes(10), // expired 10 menit
-            [
-                'id' => $this->getKey(),
-                'hash' => sha1($this->getEmailForVerification()),
-            ]
-        );
+        return $this->role === 'user';
+    }
 
-        $this->notify(new class($verifyUrl) extends VerifyEmail {
-            protected $verifyUrl;
+    /**
+     * Accessor: Get total donations amount
+     */
+    public function getTotalDonatedAttribute(): float
+    {
+        return (float) $this->donations()->success()->sum('amount');
+    }
 
-            public function __construct($verifyUrl)
-            {
-                $this->verifyUrl = $verifyUrl;
+    /**
+     * Accessor: Get total campaigns created
+     */
+    public function getTotalCampaignsAttribute(): int
+    {
+        return $this->campaigns()->count();
+    }
+
+    /**
+     * Accessor: Get role label
+     */
+    public function getRoleLabelAttribute(): string
+    {
+        return match($this->role) {
+            'admin' => 'Administrator',
+            'user' => 'Pengguna',
+            default => ucfirst($this->role)
+        };
+    }
+
+    /**
+     * Scope: Filter by role
+     */
+    public function scopeRole($query, $role)
+    {
+        return $query->where('role', $role);
+    }
+
+    /**
+     * Scope: Filter active users
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope: Filter verified users
+     */
+    public function scopeVerified($query)
+    {
+        return $query->whereNotNull('email_verified_at');
+    }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Set default role when creating user
+        static::creating(function ($user) {
+            if (!$user->role) {
+                $user->role = 'user';
             }
-
-            protected function verificationUrl($notifiable)
-            {
-                return $this->verifyUrl;
+            if (!isset($user->is_active)) {
+                $user->is_active = true;
             }
         });
     }
