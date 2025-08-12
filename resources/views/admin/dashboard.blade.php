@@ -190,7 +190,7 @@
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ route('admin.campaigns.index') }}" class="menu-item">
                 <i class="fas fa-bullhorn"></i>
                 Campaign Management
             </a>
@@ -198,7 +198,7 @@
                 <i class="fas fa-users"></i>
                 Registered Users
             </a>-->
-            <a href="#" class="menu-item">
+            <a href="{{ route('admin.donations.index') }}" class="menu-item">
                 <i class="fas fa-hand-holding-heart"></i>
                 Donations
             </a>
@@ -210,24 +210,25 @@
                 <i class="fas fa-chart-bar"></i>
                 Reports
             </a>
-            <a href="#" class="menu-item">
-                <i class="fas fa-cog"></i>
-                Settings
-            </a>
         </nav>
         
         <div class="sidebar-logout">
-            <a href="{{ route('admin.logout') }}" class="logout-btn">
-                <i class="fas fa-sign-out-alt me-2"></i> Logout
-            </a>
+            <!-- Removed duplicate logout button - kept only the form -->
             <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
-    @csrf
-    <button type="submit" class="dropdown-item text-danger">Logout</button>
-</form>
+                @csrf
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt me-2"></i> Logout
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Main Content -->
+        <!-- Mobile Sidebar Toggle -->
+        <div class="d-md-none position-fixed" style="top: 20px; left: 20px; z-index: 1001;">
+            <button class="btn btn-primary" type="button" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
     <div class="main-content">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
@@ -256,7 +257,12 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5>Total Campaigns</h5>
-                                <h2>{{ $stats['total_campaigns'] ?? 0 }}</h2>
+                                <h2 id="total-campaigns">{{ $stats['total_campaigns'] ?? 0 }}</h2>
+                                <small class="text-white-50">
+                                    <a href="{{ route('admin.campaigns.index') }}" class="text-white-50 text-decoration-none">
+                                        <i class="fas fa-arrow-right me-1"></i>View All
+                                    </a>
+                                </small>
                             </div>
                             <i class="fas fa-bullhorn fa-2x opacity-50"></i>
                         </div>
@@ -269,7 +275,12 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5>Total Donations</h5>
-                                <h2>{{ $stats['total_donations'] ?? 0 }}</h2>
+                                <h2 id="total-donations">{{ $stats['total_donations'] ?? 0 }}</h2>
+                                <small class="text-white-50">
+                                    <a href="{{ route('admin.donations.index') }}" class="text-white-50 text-decoration-none">
+                                        <i class="fas fa-arrow-right me-1"></i>View All
+                                    </a>
+                                </small>
                             </div>
                             <i class="fas fa-hand-holding-heart fa-2x opacity-50"></i>
                         </div>
@@ -282,7 +293,8 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5>Total Collected</h5>
-                                <h2>Rp {{ number_format($stats['total_collected'] ?? 0, 0, ',', '.') }}</h2>
+                                <h2 id="total-collected">Rp {{ number_format($stats['total_collected'] ?? 0, 0, ',', '.') }}</h2>
+                                <small class="text-white-50">This month</small>
                             </div>
                             <i class="fas fa-money-bill fa-2x opacity-50"></i>
                         </div>
@@ -295,7 +307,8 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h5>Total Users</h5>
-                                <h2>{{ $stats['total_users'] ?? 0 }}</h2>
+                                <h2 id="total-users">{{ $stats['total_users'] ?? 0 }}</h2>
+                                <small class="text-white-50">Regular users only</small>
                             </div>
                             <i class="fas fa-users fa-2x opacity-50"></i>
                         </div>
@@ -325,7 +338,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($recent_campaigns as $campaign)
+                                    @forelse($recent_campaigns ?? [] as $campaign)
                                         @php
                                             $progress = $campaign->target_amount > 0 ? ($campaign->current_amount / $campaign->target_amount) * 100 : 0;
                                             $progress = min($progress, 100);
@@ -365,9 +378,14 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-sm btn-outline-primary">
-                                                    <i class="fas fa-eye"></i>
-                                                </a>
+                                                <div class="d-flex gap-1">
+                                                    <a href="{{ route('campaign.show', $campaign->id) }}" class="btn btn-sm btn-outline-primary" title="View Campaign">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{{ route('admin.campaigns.edit', $campaign->id) }}" class="btn btn-sm btn-outline-warning" title="Edit Campaign">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -391,7 +409,7 @@
                         <h5 class="mb-0"><i class="fas fa-clock me-2"></i>Recent Donations</h5>
                     </div>
                     <div class="card-body">
-                        @forelse($recent_donations as $donation)
+                        @forelse($recent_donations ?? [] as $donation)
                             <div class="d-flex justify-content-between align-items-center mb-3 p-3 recent-donation-item">
                                 <div>
                                     <strong>{{ $donation->donor_name ?? 'Anonymous' }}</strong>
@@ -415,5 +433,35 @@
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Mobile sidebar toggle
+        document.getElementById('sidebarToggle')?.addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Auto refresh stats every 30 seconds (optional)
+        setInterval(function() {
+            fetch('{{ route("admin.statistics") }}')
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Stats updated:', data);
+                    // You can update specific stats here if needed
+                })
+                .catch(error => console.log('Stats update error:', error));
+        }, 30000);
+
+        // Confirm deletion actions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for any delete buttons
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    if (!confirm('Are you sure you want to delete this item?')) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 </html>

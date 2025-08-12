@@ -62,9 +62,6 @@
                         </div>
                         <div class="text-end">
                             <div class="fw-bold">Rp {{ number_format($donation->amount) }}</div>
-                            <span class="badge bg-{{ $donation->status == 'success' ? 'success' : 'warning' }}">
-                                {{ ucfirst($donation->status) }}
-                            </span>
                         </div>
                     </div>
                 @empty
@@ -79,7 +76,8 @@
             <div class="card-body">
                 <h5 class="card-title">Campaign Statistics</h5>
                 @php
-                    $collected = $campaign->donations()->where('status', 'success')->sum('amount');
+                    // Use collected_amount from campaign table or sum all donations
+                    $collected = $campaign->collected_amount ?? $campaign->donations()->sum('amount');
                     $percentage = $campaign->target_amount > 0 ? ($collected/$campaign->target_amount)*100 : 0;
                 @endphp
                 <div class="progress mb-2" style="height: 10px;">

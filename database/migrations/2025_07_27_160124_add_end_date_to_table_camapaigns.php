@@ -12,7 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('campaigns', function (Blueprint $table) {
-         $table->date('end_date')->nullable();
+            // Only add end_date if it doesn't exist
+            if (!Schema::hasColumn('campaigns', 'end_date')) {
+                $table->date('end_date')->nullable();
+            }
         });
     }
 
@@ -21,8 +24,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('table_campaigns', function (Blueprint $table) {
-            //
+        Schema::table('campaigns', function (Blueprint $table) {
+            if (Schema::hasColumn('campaigns', 'end_date')) {
+                $table->dropColumn('end_date');
+            }
         });
     }
 };
