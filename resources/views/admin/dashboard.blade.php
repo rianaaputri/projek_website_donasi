@@ -446,15 +446,7 @@
         });
 
         // Auto refresh stats every 30 seconds (optional)
-        setInterval(function() {
-            fetch('{{ route("admin.statistics") }}')
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Stats updated:', data);
-                    // You can update specific stats here if needed
-                })
-                .catch(error => console.log('Stats update error:', error));
-        }, 30000);
+       
 
         // Confirm deletion actions
         document.addEventListener('DOMContentLoaded', function() {
