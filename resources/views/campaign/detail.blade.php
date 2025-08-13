@@ -311,29 +311,6 @@
                         @endif
                         
                         <!-- Enhanced Share Buttons -->
-                        <div class="border-top pt-4">
-                            <h6 class="mb-3 fw-bold text-dark">
-                                <i class="fas fa-share-alt text-blue-light me-2"></i>Bagikan Campaign:
-                            </h6>
-                            <div class="d-grid gap-2">
-                                <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode(request()->url()) }}" 
-                                   target="_blank" 
-                                   class="btn btn-outline-primary btn-sm rounded-pill py-2 fw-medium btn-animate">
-                                    <i class="fab fa-facebook-f me-2"></i>Bagikan di Facebook
-                                </a>
-                                <a href="https://twitter.com/intent/tweet?url={{ urlencode(request()->url()) }}&text={{ urlencode($campaign->title) }}" 
-                                   target="_blank" 
-                                   class="btn btn-sm rounded-pill py-2 fw-medium btn-animate text-white"
-                                   style="background: linear-gradient(135deg, var(--blue-400) 0%, var(--blue-600) 100%); border: none;">
-                                    <i class="fab fa-twitter me-2"></i>Bagikan di Twitter
-                                </a>
-                                <a href="https://wa.me/?text={{ urlencode($campaign->title . ' - ' . request()->url()) }}" 
-                                   target="_blank" 
-                                   class="btn btn-outline-success btn-sm rounded-pill py-2 fw-medium btn-animate">
-                                    <i class="fab fa-whatsapp me-2"></i>Bagikan via WhatsApp
-                                </a>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

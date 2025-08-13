@@ -3,39 +3,51 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use Illuminate\Foundation\Auth\VerifiesEmails;
+use Illuminate\Auth\Events\Verified;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class VerificationController extends Controller
 {
+    use VerifiesEmails;
+
+    protected $redirectTo = '/dashboard';
+
     public function __construct()
     {
-        $this->middleware('auth');
+        $this->middleware('auth')->only(['notice', 'resend']);
         $this->middleware('signed')->only('verify');
         $this->middleware('throttle:6,1')->only('verify', 'resend');
     }
 
-    public function show()
+    public function notice(Request $request)
     {
-        $expires_at = auth()->user()->getVerificationExpiryTime();
+        $expires_at = $request->user()->verificationLinkExpiresAt();
         return view('auth.verify-email', compact('expires_at'));
     }
 
-    public function verify(EmailVerificationRequest $request)
+    public function verify(Request $request)
     {
-        $user = $request->user();
+        $user = User::findOrFail($request->route('id'));
 
-        if ($user->isVerificationLinkExpired()) {
+        // Expired check
+        if (now()->greaterThan($user->verificationLinkExpiresAt())) {
             return redirect()->route('verification.notice')
                 ->with('error', 'expired');
         }
 
-        $request->fulfill();
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('login')->with('message', 'already-verified');
+        }
 
-        auth()->logout();
+        if ($user->markEmailAsVerified()) {
+            event(new Verified($user));
+        }
 
-        return redirect()->route('login')
-            ->with('success', 'Email berhasil diverifikasi! Silakan login.');
+        Auth::logout();
+        return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
     }
 
     public function resend(Request $request)
