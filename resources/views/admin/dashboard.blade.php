@@ -206,14 +206,14 @@
                 <i class="fas fa-user-shield"></i>
                 Add Admin
             </a>
-            <a href="#" class="menu-item">
+            <!--<a href="#" class="menu-item">
                 <i class="fas fa-chart-bar"></i>
                 Reports
             </a>
             <a href="#" class="menu-item">
                 <i class="fas fa-cog"></i>
                 Settings
-            </a>
+            </a>-->
         </nav>
         
         <div class="sidebar-logout">
@@ -222,7 +222,6 @@
             </a>
             <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
     @csrf
-    <button type="submit" class="dropdown-item text-danger">Logout</button>
 </form>
         </div>
     </div>

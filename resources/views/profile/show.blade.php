@@ -4,55 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profil Saya</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <!-- Bootstrap 5.3 -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Poppins Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         /* ===== CSS VARIABLES ===== */
         :root {
-            --primary: #2563eb;
-            --primary-light: #dbeafe;
-            --primary-dark: #1d4ed8;
-            --secondary: #64748b;
-            --success: #059669;
-            --danger: #dc2626;
-            --warning: #d97706;
-            --info: #0891b2;
-            --light: #f8fafc;
-            --dark: #0f172a;
+            --primary: #007AFF;
+            --primary-light: #E3F2FD;
+            --primary-dark: #0056CC;
+            --secondary: #8E8E93;
+            --success: #34C759;
+            --danger: #FF3B30;
+            --warning: #FF9500;
+            --info: #5AC8FA;
+            --light: #F2F2F7;
+            --dark: #1C1C1E;
             --white: #ffffff;
             
-            --gradient-primary: linear-gradient(135deg, #2563eb 0%, #3b82f6 50%, #60a5fa 100%);
-            --gradient-bg: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+            --gradient-primary: linear-gradient(135deg, #007AFF 0%, #5AC8FA 50%, #AF52DE 100%);
+            --gradient-bg: linear-gradient(135deg, #F2F2F7 0%, #ffffff 100%);
             
-            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.15);
+            --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.20);
             
-            --border-radius: 0.5rem;
-            --border-radius-lg: 0.75rem;
-            --border-radius-xl: 1rem;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --border-radius-xl: 20px;
             
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            --transition-fast: all 0.15s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
 
-        /* ===== GLOBAL STYLES ===== */
+        /* ===== GLOBAL STYLES WITH POPPINS FONT ===== */
         * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
             background: var(--gradient-bg);
             color: var(--dark);
-            line-height: 1.6;
+            line-height: 1.47059;
+            font-weight: 400;
+            letter-spacing: -0.022em;
             overflow-x: hidden;
         }
 
@@ -109,19 +114,19 @@
         }
 
         .animate-fade-in-up {
-            animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation: fadeInUp 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
 
         .animate-fade-in-down {
-            animation: fadeInDown 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation: fadeInDown 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
 
         .animate-fade-in {
-            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation: fadeIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
 
         .animate-slide-in-right {
-            animation: slideInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+            animation: slideInRight 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         }
 
         /* ===== STAGGER ANIMATIONS ===== */
@@ -142,7 +147,7 @@
             font-weight: 700;
             color: var(--dark);
             margin-bottom: 0.5rem;
-            letter-spacing: -0.025em;
+            letter-spacing: -0.04em;
         }
 
         .page-subtitle {
@@ -158,7 +163,7 @@
             background: var(--white);
             border-radius: var(--border-radius-xl);
             box-shadow: var(--shadow-lg);
-            border: 1px solid rgb(226 232 240);
+            border: 1px solid rgba(0, 0, 0, 0.04);
             overflow: hidden;
             transition: var(--transition);
         }
@@ -184,9 +189,9 @@
         .avatar {
             width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
-            border: 4px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -211,6 +216,7 @@
             margin-bottom: 0.5rem;
             position: relative;
             z-index: 1;
+            letter-spacing: -0.025em;
         }
 
         .profile-role {
@@ -228,10 +234,10 @@
             align-items: center;
             gap: 0.5rem;
             padding: 0.75rem 1.25rem;
-            border-radius: 2rem;
-            font-weight: 500;
+            border-radius: 20px;
+            font-weight: 600;
             font-size: 0.875rem;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
             position: relative;
             z-index: 1;
@@ -239,13 +245,13 @@
         }
 
         .badge-verified {
-            background: rgba(5, 150, 105, 0.2);
+            background: rgba(52, 199, 89, 0.2);
             color: var(--white);
             border-color: rgba(255, 255, 255, 0.3);
         }
 
         .badge-unverified {
-            background: rgba(217, 119, 6, 0.2);
+            background: rgba(255, 149, 0, 0.2);
             color: var(--white);
             border-color: rgba(255, 255, 255, 0.3);
         }
@@ -254,13 +260,14 @@
         .btn {
             border-radius: var(--border-radius);
             padding: 0.75rem 1.5rem;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.875rem;
             transition: var(--transition);
             border: 1px solid transparent;
             position: relative;
             overflow: hidden;
             min-width: 120px;
+            letter-spacing: -0.01em;
         }
 
         .btn::before {
@@ -318,7 +325,7 @@
             background: rgba(255, 255, 255, 0.9);
             color: var(--dark);
             border-color: rgba(255, 255, 255, 0.2);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
         }
 
         .btn-light:hover {
@@ -334,8 +341,8 @@
         }
 
         .btn-success:hover {
-            background: #047857;
-            border-color: #047857;
+            background: #28a745;
+            border-color: #28a745;
             color: var(--white);
             transform: translateY(-2px);
         }
@@ -367,7 +374,7 @@
 
         .info-card {
             background: var(--white);
-            border: 1px solid rgb(226 232 240);
+            border: 1px solid rgba(0, 0, 0, 0.04);
             border-radius: var(--border-radius-lg);
             padding: 2rem;
             box-shadow: var(--shadow);
@@ -399,13 +406,14 @@
         .card-title {
             color: var(--dark);
             font-size: 1.25rem;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 2rem;
             padding-bottom: 1rem;
-            border-bottom: 2px solid rgb(241 245 249);
+            border-bottom: 2px solid var(--light);
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            letter-spacing: -0.025em;
         }
 
         .info-item {
@@ -418,7 +426,7 @@
 
         .info-label {
             font-size: 0.875rem;
-            font-weight: 500;
+            font-weight: 600;
             color: var(--secondary);
             margin-bottom: 0.75rem;
             text-transform: uppercase;
@@ -430,7 +438,7 @@
             font-weight: 500;
             color: var(--dark);
             padding: 1rem;
-            background: rgb(248 250 252);
+            background: var(--light);
             border-radius: var(--border-radius);
             border: 2px solid transparent;
             min-height: 3rem;
@@ -441,25 +449,106 @@
 
         /* ===== FORM STYLES ===== */
         .form-control {
-            border: 2px solid rgb(226 232 240);
+            border: 2px solid rgba(0, 0, 0, 0.08);
             border-radius: var(--border-radius);
             padding: 1rem;
             font-size: 1rem;
             transition: var(--transition);
             background: var(--white);
             font-weight: 500;
+            letter-spacing: -0.01em;
         }
 
         .form-control:focus {
             border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+            box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
             background: var(--white);
             outline: none;
         }
 
         .form-control::placeholder {
-            color: rgb(148 163 184);
+            color: var(--secondary);
             font-weight: 400;
+        }
+
+        /* ===== PASSWORD POPUP MODAL ===== */
+        .password-modal .modal-content {
+            border: none;
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-xl);
+            backdrop-filter: blur(20px);
+        }
+
+        .password-modal .modal-header {
+            background: var(--gradient-primary);
+            color: var(--white);
+            border: none;
+            border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+            padding: 2rem;
+        }
+
+        .password-modal .modal-title {
+            font-weight: 700;
+            font-size: 1.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        .password-modal .btn-close {
+            filter: invert(1);
+            opacity: 0.8;
+        }
+
+        .password-modal .modal-body {
+            padding: 2rem;
+        }
+
+        .password-modal .modal-footer {
+            border: none;
+            padding: 1rem 2rem 2rem;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .password-modal .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .password-modal .form-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.75rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .password-modal .input-group {
+            position: relative;
+        }
+
+        .password-modal .toggle-password {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--secondary);
+            font-size: 1.1rem;
+            cursor: pointer;
+            z-index: 3;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: var(--transition);
+        }
+
+        .password-modal .toggle-password:hover {
+            color: var(--primary);
+            background: rgba(0, 122, 255, 0.1);
+        }
+
+        .password-modal .form-control {
+            padding-right: 3.5rem;
         }
 
         /* ===== ALERTS ===== */
@@ -470,35 +559,35 @@
             margin-bottom: 1.5rem;
             font-weight: 500;
             border-left: 4px solid;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
         }
 
         .alert-success {
-            background: rgba(5, 150, 105, 0.1);
+            background: rgba(52, 199, 89, 0.1);
             color: var(--success);
             border-left-color: var(--success);
         }
 
         .alert-danger {
-            background: rgba(220, 38, 38, 0.1);
+            background: rgba(255, 59, 48, 0.1);
             color: var(--danger);
             border-left-color: var(--danger);
         }
 
         .alert-info {
-            background: rgba(8, 145, 178, 0.1);
+            background: rgba(90, 200, 250, 0.1);
             color: var(--info);
             border-left-color: var(--info);
         }
 
         /* ===== DROPDOWN ===== */
         .dropdown-menu {
-            border: 1px solid rgb(226 232 240);
+            border: 1px solid rgba(0, 0, 0, 0.04);
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-lg);
             background: var(--white);
             padding: 0.5rem;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
         }
 
         .dropdown-item {
@@ -521,7 +610,7 @@
         }
 
         .dropdown-item.text-danger:hover {
-            background: rgba(220, 38, 38, 0.1);
+            background: rgba(255, 59, 48, 0.1);
             color: var(--danger) !important;
         }
 
@@ -599,12 +688,16 @@
             .info-card {
                 padding: 1.25rem;
             }
+
+            .password-modal .modal-body {
+                padding: 1.5rem;
+            }
         }
 
         /* ===== UTILITY CLASSES ===== */
         .glass {
             background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
@@ -694,7 +787,7 @@
                                     <div class="avatar hover-scale">
                                         <i class="fas fa-user"></i>
                                     </div>
-                                    <h2 class="profile-name">{{ Auth::user()->name }}</h2>
+                                    <h2 class="profile-name" id="displayName">{{ Auth::user()->name }}</h2>
                                     <p class="profile-role">
                                         <i class="fas fa-user-tag me-2"></i>
                                         {{ ucfirst(Auth::user()->role ?? 'User') }}
@@ -726,7 +819,7 @@
                                                 <li><a class="dropdown-item" href="/">
                                                     <i class="fas fa-home me-2 text-primary"></i>Beranda
                                                 </a></li>
-                                                <li><a class="dropdown-item" href="#" onclick="changePassword()">
+                                                <li><a class="dropdown-item" href="#" onclick="showPasswordModal()">
                                                     <i class="fas fa-key me-2 text-warning"></i>Ubah Password
                                                 </a></li>
                                                 <li><hr class="dropdown-divider"></li>
@@ -743,7 +836,9 @@
 
                     <!-- Profile Content -->
                     <div class="content-section">
-                        <form id="profileForm">
+                        <form id="profileForm" action="{{ route('profile.update') }}" method="POST">
+                            @csrf
+                            @method('PATCH')
                             <div class="row g-4">
                                 <!-- Personal Information -->
                                 <div class="col-lg-6">
@@ -757,10 +852,10 @@
                                         <div class="info-item mode-transition">
                                             <div class="info-label">Nama Lengkap</div>
                                             <div class="view-mode">
-                                                <div class="info-value">{{ Auth::user()->name }}</div>
+                                                <div class="info-value" id="displayNameValue">{{ Auth::user()->name }}</div>
                                             </div>
                                             <div class="edit-mode d-none">
-                                                <input type="text" class="form-control" name="name" value="{{ Auth::user()->name }}" required>
+                                                <input type="text" class="form-control" name="name" id="nameInput" value="{{ Auth::user()->name }}" required>
                                             </div>
                                         </div>
 
@@ -768,14 +863,12 @@
                                         <div class="info-item mode-transition">
                                             <div class="info-label">Alamat Email</div>
                                             <div class="view-mode">
-                                                <div class="info-value">{{ Auth::user()->email }}</div>
+                                                <div class="info-value" id="displayEmailValue">{{ Auth::user()->email }}</div>
                                             </div>
                                             <div class="edit-mode d-none">
-                                                <input type="email" class="form-control" name="email" value="{{ Auth::user()->email }}" required>
+                                                <input type="email" class="form-control" name="email" id="emailInput" value="{{ Auth::user()->email }}" required>
                                             </div>
                                         </div>
-
-                                        <!-- Hapus Nomor Telepon dan Alamat -->
                                     </div>
                                 </div>
                                 <!-- Account Information -->
@@ -816,24 +909,6 @@
                                                         Tidak Aktif
                                                     </span>
                                                 @endif
-                                            </div>
-                                        </div>
-
-                                        <!-- Password Section (Edit Mode Only) -->
-                                        <div class="edit-mode d-none" id="passwordSection">
-                                            <div class="mt-4 p-3 bg-light rounded-3 border">
-                                                <h6 class="fw-semibold text-secondary mb-3">
-                                                    <i class="fas fa-lock me-2 text-primary"></i>
-                                                    Keamanan Akun
-                                                </h6>
-                                                <div class="info-item">
-                                                    <div class="info-label">Password Baru</div>
-                                                    <input type="password" class="form-control" name="password" placeholder="Kosongkan jika tidak ingin mengubah">
-                                                </div>
-                                                <div class="info-item">
-                                                    <div class="info-label">Konfirmasi Password</div>
-                                                    <input type="password" class="form-control" name="password_confirmation" placeholder="Konfirmasi password baru">
-                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -887,6 +962,65 @@
         </div>
     </div>
 
+    <!-- Password Change Modal -->
+    <div class="modal fade password-modal" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="passwordModalLabel">
+                        <i class="fas fa-key me-2"></i>
+                        Ubah Password
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="passwordForm" action="{{ route('profile.password.update') }}" method="POST">
+                    @csrf
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="currentPassword" class="form-label">Password Saat Ini</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="currentPassword" name="current_password" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('currentPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="newPassword" class="form-label">Password Baru</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="newPassword" name="password" required minlength="6">
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('newPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <small class="form-text text-muted mt-1">Minimal 6 karakter</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirmPassword" class="form-label">Konfirmasi Password Baru</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="confirmPassword" name="password_confirmation" required>
+                                <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Batal
+                        </button>
+                        <button type="submit" class="btn btn-primary" id="changePasswordBtn">
+                            <i class="fas fa-save me-2"></i>
+                            <span class="btn-text">Ubah Password</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 11;">
         <div id="successToast" class="toast align-items-center text-bg-success border-0" role="alert">
@@ -926,13 +1060,18 @@
     <script>
         // ===== APPLICATION STATE =====
         let isEditMode = false;
-        let formData = {};
+        let originalFormData = {};
+        let passwordModal;
+        
+        // ===== CSRF TOKEN SETUP =====
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         
         // ===== INITIALIZATION =====
         document.addEventListener('DOMContentLoaded', function() {
             initializeApp();
             setupEventListeners();
             addAnimations();
+            initializeModal();
         });
 
         function initializeApp() {
@@ -950,25 +1089,178 @@
             document.body.classList.add('loaded');
         }
 
+        function initializeModal() {
+            passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+        }
+
         function setupEventListeners() {
-            // Form submission
-            document.getElementById('profileForm').addEventListener('submit', handleFormSubmit);
+            // Form submission with network check
+            document.getElementById('profileForm').addEventListener('submit', (e) => {
+                if (!checkNetworkStatus()) {
+                    e.preventDefault();
+                    return;
+                }
+                handleFormSubmit(e);
+            });
+
+            // Password form submission
+            document.getElementById('passwordForm').addEventListener('submit', (e) => {
+                if (!checkNetworkStatus()) {
+                    e.preventDefault();
+                    return;
+                }
+                handlePasswordFormSubmit(e);
+            });
             
             // Input validation
             document.querySelectorAll('input, textarea').forEach(input => {
-                input.addEventListener('input', handleInputValidation);
+                input.addEventListener('input', debounce(handleInputValidation, 300));
                 input.addEventListener('blur', handleInputValidation);
             });
             
             // Keyboard shortcuts
             document.addEventListener('keydown', handleKeyboardShortcuts);
             
-            // Auto-save draft (every 30 seconds in edit mode)
-            setInterval(() => {
-                if (isEditMode) {
-                    saveDraft();
+            // Form change detection
+            document.getElementById('profileForm').addEventListener('input', () => {
+                // Enable save button if form has changes
+                const saveBtn = document.getElementById('saveBtn');
+                if (saveBtn && isEditMode) {
+                    saveBtn.classList.remove('btn-secondary');
+                    saveBtn.classList.add('btn-success');
                 }
-            }, 30000);
+            });
+
+            // Password confirmation validation
+            document.getElementById('confirmPassword').addEventListener('input', validatePasswordConfirmation);
+        }
+
+        // ===== PASSWORD MODAL FUNCTIONS =====
+        function showPasswordModal() {
+            passwordModal.show();
+            setTimeout(() => {
+                document.getElementById('currentPassword').focus();
+            }, 300);
+        }
+
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = input.parentNode.querySelector('.toggle-password i');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function validatePasswordConfirmation() {
+            const newPassword = document.getElementById('newPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const confirmInput = document.getElementById('confirmPassword');
+            
+            // Clear previous validation
+            confirmInput.classList.remove('is-invalid', 'is-valid');
+            const errorDiv = confirmInput.parentNode.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) errorDiv.remove();
+            
+            if (confirmPassword && newPassword !== confirmPassword) {
+                confirmInput.classList.add('is-invalid');
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'Konfirmasi password tidak cocok';
+                confirmInput.parentNode.parentNode.appendChild(errorDiv);
+            } else if (confirmPassword) {
+                confirmInput.classList.add('is-valid');
+            }
+        }
+
+        async function handlePasswordFormSubmit(e) {
+            e.preventDefault();
+            
+            const changeBtn = document.getElementById('changePasswordBtn');
+            const btnText = changeBtn.querySelector('.btn-text');
+            const form = e.target;
+            
+            // Show loading state
+            changeBtn.disabled = true;
+            changeBtn.classList.add('btn-loading');
+            btnText.textContent = 'Mengubah...';
+            
+            try {
+                const formData = new FormData(form);
+                
+                const response = await safeFetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: formData,
+                    credentials: 'same-origin'
+                });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    result = { message: 'Password berhasil diubah!' };
+                }
+                
+                if (response.ok) {
+                    // Success
+                    passwordModal.hide();
+                    form.reset();
+                    showToast('Password berhasil diubah!', 'success');
+                } else {
+                    // Handle validation errors
+                    if (result.errors) {
+                        handlePasswordValidationErrors(result.errors);
+                        showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+                    } else {
+                        showToast(result.message || 'Terjadi kesalahan saat mengubah password.', 'error');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Password change error:', error);
+                showToast('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error');
+            } finally {
+                // Reset button state
+                changeBtn.disabled = false;
+                changeBtn.classList.remove('btn-loading');
+                btnText.textContent = 'Ubah Password';
+            }
+        }
+
+        function handlePasswordValidationErrors(errors) {
+            // Clear previous error states
+            document.querySelectorAll('#passwordForm .form-control').forEach(input => {
+                input.classList.remove('is-invalid');
+                const errorDiv = input.parentNode.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+            });
+            
+            // Display new errors
+            Object.keys(errors).forEach(field => {
+                const input = document.querySelector(`#passwordForm [name="${field}"]`);
+                if (input) {
+                    input.classList.add('is-invalid');
+                    
+                    // Create error message div
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = errors[field][0];
+                    
+                    // Insert after input group
+                    input.parentNode.parentNode.appendChild(errorDiv);
+                }
+            });
         }
 
         // ===== EDIT MODE FUNCTIONS =====
@@ -1063,51 +1355,214 @@
             showToast('Perubahan dibatalkan', 'info');
         }
 
-        // ===== FORM HANDLING =====
-        function handleFormSubmit(e) {
+        // ===== FORM HANDLING WITH MULTIPLE FALLBACK METHODS =====
+        async function handleFormSubmit(e) {
             e.preventDefault();
             
             const saveBtn = document.getElementById('saveBtn');
             const btnText = saveBtn.querySelector('.btn-text');
+            const form = e.target;
             
             // Show loading state
             saveBtn.disabled = true;
             saveBtn.classList.add('btn-loading');
             btnText.textContent = 'Menyimpan...';
             
-            // Simulate API call
-            setTimeout(() => {
+            // Try multiple approaches for better compatibility
+            let success = false;
+            
+            // Method 1: Traditional form submission with FormData
+            try {
+                success = await tryFormDataSubmission(form);
+                if (success) return;
+            } catch (error) {
+                console.warn('FormData submission failed:', error);
+            }
+            
+            // Method 2: JSON submission if FormData fails
+            try {
+                success = await tryJsonSubmission(form);
+                if (success) return;
+            } catch (error) {
+                console.warn('JSON submission failed:', error);
+            }
+            
+            // Method 3: Fallback - traditional form submission (page reload)
+            try {
+                await tryTraditionalSubmission(form);
+            } catch (error) {
+                console.error('All submission methods failed:', error);
+                showToast('Gagal menyimpan perubahan. Silakan refresh halaman dan coba lagi.', 'error');
+            } finally {
                 // Reset button state
                 saveBtn.disabled = false;
                 saveBtn.classList.remove('btn-loading');
                 btnText.textContent = 'Simpan Perubahan';
-                
-                // Update view mode with new data
-                updateViewMode();
-                
-                // Exit edit mode
-                exitEditMode();
-                
-                // Show success message
-                showToast('Profil berhasil diperbarui!', 'success');
-                
-                // Update stored data
-                storeOriginalData();
-                
-            }, 2000);
+            }
         }
 
-        function updateViewMode() {
-            const formData = new FormData(document.getElementById('profileForm'));
+        // Method 1: FormData with fetch
+        async function tryFormDataSubmission(form) {
+            const formData = new FormData(form);
             
-            // Update name
-            const nameValue = document.querySelector('.view-mode .info-value');
-            if (formData.get('name')) {
-                nameValue.textContent = formData.get('name');
-                document.querySelector('.profile-name').textContent = formData.get('name');
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Update other fields similarly...
+            let result;
+            try {
+                result = await response.json();
+            } catch (e) {
+                // If response is not JSON, assume success
+                result = { message: 'Profil berhasil diperbarui!' };
+            }
+            
+            // Success - Update UI
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email')
+            };
+            updateViewModeWithNewData(data);
+            exitEditMode();
+            showToast(result.message || 'Profil berhasil diperbarui!', 'success');
+            storeOriginalData();
+            
+            return true;
+        }
+
+        // Method 2: JSON submission
+        async function tryJsonSubmission(form) {
+            const formData = new FormData(form);
+            const data = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (key === '_method' || key === '_token') continue;
+                data[key] = value;
+            }
+            
+            const response = await fetch(form.action, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data),
+                credentials: 'same-origin'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            let result;
+            try {
+                result = await response.json();
+            } catch (e) {
+                result = { message: 'Profil berhasil diperbarui!' };
+            }
+            
+            // Handle validation errors
+            if (result.errors) {
+                handleValidationErrors(result.errors);
+                showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+                return false;
+            }
+            
+            // Success - Update UI
+            updateViewModeWithNewData(data);
+            exitEditMode();
+            showToast(result.message || 'Profil berhasil diperbarui!', 'success');
+            storeOriginalData();
+            
+            return true;
+        }
+
+        // Method 3: Traditional form submission (fallback)
+        async function tryTraditionalSubmission(form) {
+            showToast('Menggunakan metode tradisional...', 'info');
+            
+            // Add a hidden field to indicate this is an AJAX request fallback
+            const ajaxField = document.createElement('input');
+            ajaxField.type = 'hidden';
+            ajaxField.name = 'ajax_fallback';
+            ajaxField.value = '1';
+            form.appendChild(ajaxField);
+            
+            // Submit form traditionally
+            form.submit();
+        }
+
+        // Enhanced error handling for fetch requests
+        async function safeFetch(url, options = {}) {
+            // Add timeout
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                return response;
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    throw new Error('Request timeout - koneksi terlalu lama');
+                }
+                throw error;
+            }
+        }
+
+        function updateViewModeWithNewData(data) {
+            // Update name displays
+            if (data.name) {
+                document.getElementById('displayNameValue').textContent = data.name;
+                document.getElementById('displayName').textContent = data.name;
+            }
+            
+            // Update email display
+            if (data.email) {
+                document.getElementById('displayEmailValue').textContent = data.email;
+            }
+        }
+
+        function handleValidationErrors(errors) {
+            // Clear previous error states
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-invalid');
+                const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+            });
+            
+            // Display new errors
+            Object.keys(errors).forEach(field => {
+                const input = document.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.classList.add('is-invalid');
+                    
+                    // Create error message div
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = errors[field][0];
+                    
+                    // Insert after input
+                    input.parentNode.appendChild(errorDiv);
+                }
+            });
         }
 
         // ===== VALIDATION =====
@@ -1115,11 +1570,25 @@
             const input = e.target;
             const isValid = validateField(input);
             
-            if (isValid) {
-                input.classList.remove('is-invalid');
-                input.classList.add('is-valid');
-            } else {
-                input.classList.remove('is-valid');
+            // Clear previous validation states
+            input.classList.remove('is-invalid', 'is-valid');
+            
+            // Remove existing error message
+            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) errorDiv.remove();
+            
+            if (input.value.trim() && !isValid) {
+                input.classList.add('is-invalid');
+                
+                // Add error message
+                const errorMsg = getValidationMessage(input);
+                if (errorMsg) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = errorMsg;
+                    input.parentNode.appendChild(errorDiv);
+                }
+            } else if (input.value.trim() && isValid) {
                 input.classList.add('is-valid');
             }
         }
@@ -1128,8 +1597,13 @@
             const value = input.value.trim();
             const type = input.type;
             const name = input.name;
+            const minLength = input.getAttribute('minlength');
             
             if (input.hasAttribute('required') && !value) {
+                return false;
+            }
+            
+            if (minLength && value.length < parseInt(minLength)) {
                 return false;
             }
             
@@ -1147,60 +1621,140 @@
             }
         }
 
-        // ===== DATA MANAGEMENT =====
-        function storeOriginalData() {
-            const form = document.getElementById('profileForm');
-            formData = new FormData(form);
-        }
-
-        function restoreOriginalData() {
-            // Restore form values from stored data
-            for (let [key, value] of formData.entries()) {
-                const input = document.querySelector(`[name="${key}"]`);
-                if (input) {
-                    input.value = value;
-                }
+        function getValidationMessage(input) {
+            const type = input.type;
+            const name = input.name;
+            const minLength = input.getAttribute('minlength');
+            
+            if (input.hasAttribute('required') && !input.value.trim()) {
+                return 'Field ini wajib diisi';
+            }
+            
+            if (minLength && input.value.length < parseInt(minLength)) {
+                return `Minimal ${minLength} karakter`;
+            }
+            
+            switch (type) {
+                case 'email':
+                    return 'Format email tidak valid';
+                case 'tel':
+                    return 'Format nomor telepon tidak valid';
+                default:
+                    if (name === 'password_confirmation') {
+                        return 'Konfirmasi password tidak cocok';
+                    }
+                    return 'Format tidak valid';
             }
         }
 
-        function saveDraft() {
-            // Auto-save functionality (you can implement local storage here)
-            console.log('Draft saved automatically');
+        // ===== DATA MANAGEMENT =====
+        function storeOriginalData() {
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            
+            originalFormData = {
+                name: nameInput ? nameInput.value : '',
+                email: emailInput ? emailInput.value : ''
+            };
+        }
+
+        function restoreOriginalData() {
+            const nameInput = document.getElementById('nameInput');
+            const emailInput = document.getElementById('emailInput');
+            
+            if (nameInput) nameInput.value = originalFormData.name || '';
+            if (emailInput) emailInput.value = originalFormData.email || '';
+            
+            // Clear validation states
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.classList.remove('is-invalid', 'is-valid');
+                const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+                if (errorDiv) errorDiv.remove();
+            });
         }
 
         // ===== UTILITY FUNCTIONS =====
         function changePassword() {
-            if (!isEditMode) {
-                toggleEditMode();
-            }
-            
-            setTimeout(() => {
-                const passwordSection = document.getElementById('passwordSection');
-                if (passwordSection) {
-                    passwordSection.scrollIntoView({ 
-                        behavior: 'smooth', 
-                        block: 'center' 
-                    });
-                    
-                    const passwordInput = passwordSection.querySelector('input[name="password"]');
-                    if (passwordInput) {
-                        passwordInput.focus();
-                        passwordInput.classList.add('animate-pulse');
-                        setTimeout(() => passwordInput.classList.remove('animate-pulse'), 1000);
-                    }
-                }
-            }, 500);
+            showPasswordModal();
         }
 
-        function sendVerificationEmail() {
-            showToast('Email verifikasi telah dikirim!', 'success');
+        async function sendVerificationEmail() {
+            const button = event.target;
+            const originalText = button.innerHTML;
+            
+            // Show loading state
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengirim...';
+            
+            try {
+                const response = await safeFetch('/email/verification-notification', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                let result;
+                try {
+                    result = await response.json();
+                } catch (e) {
+                    result = { message: 'Email verifikasi telah dikirim!' };
+                }
+                
+                if (response.ok) {
+                    showToast('Email verifikasi telah dikirim!', 'success');
+                } else {
+                    showToast(result.message || 'Gagal mengirim email verifikasi', 'error');
+                }
+            } catch (error) {
+                console.error('Verification email error:', error);
+                showToast('Terjadi kesalahan saat mengirim email verifikasi', 'error');
+            } finally {
+                // Reset button state
+                button.disabled = false;
+                button.innerHTML = originalText;
+            }
         }
+
+        // Network status detection
+        function checkNetworkStatus() {
+            if (!navigator.onLine) {
+                showToast('Tidak ada koneksi internet. Periksa koneksi Anda.', 'error');
+                return false;
+            }
+            return true;
+        }
+
+        // Add network status listeners
+        window.addEventListener('online', () => {
+            showToast('Koneksi internet tersambung kembali', 'success');
+        });
+
+        window.addEventListener('offline', () => {
+            showToast('Koneksi internet terputus', 'error');
+        });
 
         function logout() {
             if (confirm('Apakah Anda yakin ingin keluar?')) {
                 showToast('Sedang logout...', 'info');
                 setTimeout(() => {
-                    window.location.href = '/';
+                    // Create logout form and submit
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '/logout';
+                    
+                    const csrfInput = document.createElement('input');
+                    csrfInput.type = 'hidden';
+                    csrfInput.name = '_token';
+                    csrfInput.value = csrfToken;
+                    form.appendChild(csrfInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
                 }, 1000);
             }
         }
@@ -1214,7 +1768,6 @@
             }
         }
 
-        // ===== TOAST NOTIFICATIONS =====
         function showToast(message, type = 'success') {
             const toastId = type + 'Toast';
             const toastElement = document.getElementById(toastId);
@@ -1222,28 +1775,31 @@
             
             if (toastElement && messageElement) {
                 messageElement.textContent = message;
-                const toast = new bootstrap.Toast(toastElement);
+                const toast = new bootstrap.Toast(toastElement, {
+                    autohide: true,
+                    delay: 5000
+                });
                 toast.show();
             }
         }
 
-        // ===== KEYBOARD SHORTCUTS =====
         function handleKeyboardShortcuts(e) {
-            // Ctrl/Cmd + E to toggle edit mode
             if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
                 e.preventDefault();
                 toggleEditMode();
             }
             
-            // Ctrl/Cmd + S to save (only in edit mode)
             if ((e.ctrlKey || e.metaKey) && e.key === 's' && isEditMode) {
                 e.preventDefault();
                 document.getElementById('profileForm').dispatchEvent(new Event('submit'));
             }
             
-            // Escape to cancel edit
             if (e.key === 'Escape' && isEditMode) {
                 cancelEdit();
+            }
+
+            if (e.key === 'Escape' && passwordModal._isShown) {
+                passwordModal.hide();
             }
         }
 
@@ -1255,7 +1811,6 @@
                 card.style.animationDelay = `${index * 0.1}s`;
             });
             
-            // Add scroll animations
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
@@ -1268,7 +1823,6 @@
                 observer.observe(el);
             });
             
-            // Add ripple effect to buttons
             document.querySelectorAll('.btn').forEach(button => {
                 button.addEventListener('click', createRippleEffect);
             });
@@ -1296,7 +1850,6 @@
                 z-index: 0;
             `;
             
-            // Add ripple keyframes if not exists
             if (!document.querySelector('#ripple-keyframes')) {
                 const style = document.createElement('style');
                 style.id = 'ripple-keyframes';
@@ -1315,9 +1868,6 @@
             setTimeout(() => ripple.remove(), 600);
         }
 
-        // ===== PERFORMANCE OPTIMIZATIONS =====
-        
-        // Debounce function for input validation
         function debounce(func, wait) {
             let timeout;
             return function executedFunction(...args) {
@@ -1330,59 +1880,6 @@
             };
         }
 
-        // Throttle function for scroll events
-        function throttle(func, limit) {
-            let inThrottle;
-            return function() {
-                const args = arguments;
-                const context = this;
-                if (!inThrottle) {
-                    func.apply(context, args);
-                    inThrottle = true;
-                    setTimeout(() => inThrottle = false, limit);
-                }
-            }
-        }
-
-        // Apply debounced validation
-        document.addEventListener('DOMContentLoaded', function() {
-            const debouncedValidation = debounce(handleInputValidation, 300);
-            document.querySelectorAll('input, textarea').forEach(input => {
-                input.addEventListener('input', debouncedValidation);
-            });
-        });
-
-        // ===== ACCESSIBILITY ENHANCEMENTS =====
-        
-        // Focus management
-        function manageFocus() {
-            const focusableElements = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-            const modal = document.querySelector('.modal');
-            
-            if (modal && modal.classList.contains('show')) {
-                const focusableContent = modal.querySelectorAll(focusableElements);
-                const firstFocusableElement = focusableContent[0];
-                const lastFocusableElement = focusableContent[focusableContent.length - 1];
-
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Tab') {
-                        if (e.shiftKey) {
-                            if (document.activeElement === firstFocusableElement) {
-                                lastFocusableElement.focus();
-                                e.preventDefault();
-                            }
-                        } else {
-                            if (document.activeElement === lastFocusableElement) {
-                                firstFocusableElement.focus();
-                                e.preventDefault();
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        // Announce changes to screen readers
         function announceChange(message) {
             const announcement = document.createElement('div');
             announcement.setAttribute('aria-live', 'polite');
@@ -1392,28 +1889,6 @@
             
             document.body.appendChild(announcement);
             setTimeout(() => announcement.remove(), 1000);
-        }
-
-        // Enhanced form validation with accessibility
-        function validateFormAccessibility() {
-            const form = document.getElementById('profileForm');
-            const inputs = form.querySelectorAll('input, textarea, select');
-            let isValid = true;
-            
-            inputs.forEach(input => {
-                const isFieldValid = validateField(input);
-                
-                if (!isFieldValid) {
-                    input.setAttribute('aria-invalid', 'true');
-                    input.setAttribute('aria-describedby', input.name + '-error');
-                    isValid = false;
-                } else {
-                    input.removeAttribute('aria-invalid');
-                    input.removeAttribute('aria-describedby');
-                }
-            });
-            
-            return isValid;
         }
     </script>
 </body>

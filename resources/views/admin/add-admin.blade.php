@@ -229,7 +229,7 @@
     </div>
 
     <nav class="sidebar-menu">
-      <a href="#" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="{{ route('admin.dashboard') }}" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
       <a href="#" class="menu-item"><i class="fas fa-bullhorn"></i> Campaign Management</a>
       <a href="#" class="menu-item"><i class="fas fa-users"></i> Registered Users</a>
       <a href="#" class="menu-item"><i class="fas fa-hand-holding-heart"></i> Donations</a>
