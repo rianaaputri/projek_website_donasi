@@ -8,12 +8,10 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $campaigns = Campaign::active()
-            ->with(['donations' => function ($q) {
-                $q->paid();
-            }])
-            ->latest()
-            ->get();
+      $campaigns = Campaign::active()
+    ->with(['donations.paid'])
+    ->latest()
+    ->get();
 
         return view('home', compact('campaigns'));
     }

@@ -26,6 +26,7 @@ class Campaign extends Model
         'user_id' // akan ditambahkan otomatis jika kolom ada
     ];
 
+
     protected $casts = [
     'target_amount' => 'decimal:2',
     'collected_amount' => 'decimal:2',
@@ -61,10 +62,12 @@ class Campaign extends Model
             'lainnya' => 'Lainnya'
         ];
     }
+public function scopeActive($query)
+{
+    return $query->where('is_active', true);
+}
 
-    /**
-     * Get available campaign statuses
-     */
+
     public static function getStatuses()
     {
         return [

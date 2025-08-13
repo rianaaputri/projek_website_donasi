@@ -220,17 +220,16 @@ public function store(Request $request)
     public function update(Request $request, Campaign $campaign)
     {
         $categories = array_keys(Campaign::getCategories());
-        
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'target_amount' => 'required|numeric|min:1000',
-            'category' => 'required|string|in:' . implode(',', $categories),
-            'end_date' => 'required|date|after_or_equal:today',
-            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:active,inactive,completed,cancelled'
-        ]);
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'target_amount' => 'required|numeric|min:1000',
+        'category' => 'required|string|in:' . implode(',', $categories),
+        'end_date' => 'required|date|after:today',
+        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'user_id' => 'required|exists:users,id',
+        'status' => 'sometimes|in:active,inactive,completed,cancelled'
+    ]);
 
         try {
             DB::beginTransaction();
@@ -253,7 +252,7 @@ public function store(Request $request)
             DB::commit();
 
             return redirect()
-                ->route('admin.campaigns.show', $campaign)
+                ->route('admin.campaigns.index', $campaign)
                 ->with('success', 'Campaign berhasil diperbarui!');
 
         } catch (\Exception $e) {

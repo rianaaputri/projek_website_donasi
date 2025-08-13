@@ -97,9 +97,11 @@ class Donation extends Model
         };
     }
 
-    /**
-     * Scope: Filter successful donations
-     */
+ public function scopePaid($query)
+{
+    return $query->where('status', 'paid');
+}
+
     public function scopeSuccess($query)
     {
         return $query->where('payment_status', 'success');

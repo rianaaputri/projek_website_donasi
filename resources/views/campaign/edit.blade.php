@@ -323,7 +323,7 @@
                     </div>
                 @endif
 
-                <form method="POST" action="{{ route('admin.campaigns.update', $campaign->id) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('campaign.update', $campaign->id) }}" enctype="multipart/form-data">
                     @csrf
                     @method('PUT')
                     
