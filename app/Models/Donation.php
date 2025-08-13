@@ -1,65 +1,160 @@
 <?php
 
+// File: app/Models/Donation.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Donation extends Model
 {
     use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     */
     protected $fillable = [
+        'user_id',
         'campaign_id',
-        'donor_name',
-        'donor_email',
-        'donor_phone',
         'amount',
-        'comment', // ✅ ganti dari 'message' agar sesuai controller
+        'message',
         'is_anonymous',
-        'payment_status',
-        'midtrans_order_id',
         'payment_method',
-        'transaction_id',
-        'midtrans_response',
-        'paid_at',
+        'payment_status',
+        'payment_reference'
     ];
 
+    /**
+     * The attributes that should be cast.
+     */
     protected $casts = [
+        'amount' => 'decimal:2',
         'is_anonymous' => 'boolean',
-        'amount'       => 'decimal:2',
-        'created_at'   => 'datetime',
-        'updated_at'   => 'datetime',
-        'paid_at'      => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime'
     ];
 
-    // Relasi ke campaign
-    public function campaign()
+    /**
+     * Relationship: Donation belongs to User
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Relationship: Donation belongs to Campaign
+     */
+    public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);
     }
 
-    // Scope donasi yang berhasil
-    public function scopePaid($query)
+    /**
+     * Accessor: Get donor name (considering anonymity)
+     */
+    public function getDonorNameAttribute(): string
+    {
+        if ($this->is_anonymous) {
+            return 'Hamba Allah';
+        }
+
+        return $this->user ? $this->user->name : 'Unknown';
+    }
+
+    /**
+     * Accessor: Get payment status label
+     */
+    public function getPaymentStatusLabelAttribute(): array
+    {
+        return match($this->payment_status) {
+            'pending' => [
+                'text' => 'Menunggu',
+                'class' => 'bg-warning text-dark',
+                'icon' => 'fa-clock'
+            ],
+            'success' => [
+                'text' => 'Berhasil',
+                'class' => 'bg-success text-white',
+                'icon' => 'fa-check'
+            ],
+            'failed' => [
+                'text' => 'Gagal',
+                'class' => 'bg-danger text-white',
+                'icon' => 'fa-times'
+            ],
+            'cancelled' => [
+                'text' => 'Dibatalkan',
+                'class' => 'bg-secondary text-white',
+                'icon' => 'fa-ban'
+            ],
+            default => [
+                'text' => 'Unknown',
+                'class' => 'bg-light text-dark',
+                'icon' => 'fa-question'
+            ]
+        };
+    }
+
+    /**
+     * Scope: Filter successful donations
+     */
+    public function scopeSuccess($query)
     {
         return $query->where('payment_status', 'success');
     }
 
-    // Format jumlah donasi
-    public function getFormattedAmountAttribute()
+    /**
+     * Scope: Filter by payment status
+     */
+    public function scopePaymentStatus($query, $status)
     {
-        return 'Rp ' . number_format($this->amount, 0, ',', '.');
+        return $query->where('payment_status', $status);
     }
 
-    // Nama donor ditampilkan berdasarkan status anonimitas
-    public function getDisplayNameAttribute()
+    /**
+     * Scope: Filter anonymous donations
+     */
+    public function scopeAnonymous($query)
     {
-        return $this->is_anonymous ? 'Seseorang' : $this->donor_name;
+        return $query->where('is_anonymous', true);
     }
 
-    // (Opsional) Relasi ke user, jika kamu ingin simpan user_id
-    public function user()
+    /**
+     * Scope: Filter public donations
+     */
+    public function scopePublic($query)
     {
-        return $this->belongsTo(User::class);
+        return $query->where('is_anonymous', false);
+    }
+
+    /**
+     * Boot the model
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Update campaign current_amount when donation is created/updated/deleted
+        static::created(function ($donation) {
+            if ($donation->payment_status === 'success') {
+                $donation->campaign->increment('current_amount', $donation->amount);
+            }
+        });
+
+        static::updated(function ($donation) {
+            if ($donation->wasChanged('payment_status')) {
+                $campaign = $donation->campaign;
+                $campaign->current_amount = $campaign->donations()->success()->sum('amount');
+                $campaign->save();
+            }
+        });
+
+        static::deleted(function ($donation) {
+            if ($donation->payment_status === 'success') {
+                $donation->campaign->decrement('current_amount', $donation->amount);
+            }
+        });
     }
 }
