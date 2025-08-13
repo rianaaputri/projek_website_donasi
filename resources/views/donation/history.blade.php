@@ -49,7 +49,23 @@
         </div>
 
         <div class="d-flex justify-content-center mt-4">
-            {{ $donations->links() }}
+            <div class="pagination">
+                @if ($donations->onFirstPage())
+                    <span class="btn btn-outline-secondary disabled mx-1">&lt;</span>
+                @else
+                    <a href="{{ $donations->previousPageUrl() }}" class="btn btn-outline-primary mx-1">&lt;</a>
+                @endif
+
+                <span class="btn btn-outline-secondary disabled mx-1">
+                    {{ $donations->currentPage() }}
+                </span>
+
+                @if ($donations->hasMorePages())
+                    <a href="{{ $donations->nextPageUrl() }}" class="btn btn-outline-primary mx-1">&gt;</a>
+                @else
+                    <span class="btn btn-outline-secondary disabled mx-1">&gt;</span>
+                @endif
+            </div>
         </div>
     @else
         <div class="alert alert-info">
