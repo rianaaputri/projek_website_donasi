@@ -4,99 +4,63 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Campaign extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    // app/Models/Campaign.php
     protected $fillable = [
+        'user_id',
         'title',
         'description',
-        'category',
-        'target_amount',
-        'collected_amount',
-        // 'current_amount', // HAPUS INI
-        'image',
+        'goal_amount',
+        'current_amount',
+        'deadline',
         'status',
-        'end_date',
-        'is_active',
-        'user_id' // akan ditambahkan otomatis jika kolom ada
+        'image',
+        'is_active'
     ];
-
 
     protected $casts = [
-    'target_amount' => 'decimal:2',
-    'collected_amount' => 'decimal:2',
-    // 'current_amount' => 'decimal:2', // HAPUS INI
-    'end_date' => 'datetime',
-    'is_active' => 'boolean'
+        'goal_amount' => 'decimal:2',
+        'current_amount' => 'decimal:2',
+        'deadline' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'is_active' => 'boolean'
     ];
-    public function __construct(array $attributes = [])
+
+    /**
+     * Campaign belongs to a user (creator)
+     */
+    public function user(): BelongsTo
     {
-        parent::__construct($attributes);
-        
-        // Add user_id to fillable if column exists
-        if (Schema::hasColumn('campaigns', 'user_id')) {
-            $this->fillable[] = 'user_id';
-        }
+        return $this->belongsTo(User::class);
     }
 
     /**
-     * Get available campaign categories
+     * Campaign has many donations
      */
-    public static function getCategories()
-    {
-        return [
-            'kesehatan' => 'Kesehatan',
-            'pendidikan' => 'Pendidikan',
-            'kemanusiaan' => 'Kemanusiaan',
-            'lingkungan' => 'Lingkungan',
-            'infrastruktur' => 'Infrastruktur',
-            'bencana' => 'Bencana Alam',
-            'sosial' => 'Sosial',
-            'agama' => 'Keagamaan',
-            'teknologi' => 'Teknologi',
-            'lainnya' => 'Lainnya'
-        ];
-    }
-public function scopeActive($query)
-{
-    return $query->where('is_active', true);
-}
-
-
-    public static function getStatuses()
-    {
-        return [
-            'active' => 'Active',
-            'inactive' => 'Inactive',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled'
-        ];
-    }
-
-    /**
-     * User relationship - only if user_id column exists
-     */
-    public function user()
-    {
-        if (Schema::hasColumn('campaigns', 'user_id')) {
-            return $this->belongsTo(User::class);
-        }
-        
-        return null;
-    }
-
-    /**
-     * Donations relationship
-     */
-    public function donations()
+    public function donations(): HasMany
     {
         return $this->hasMany(Donation::class);
     }
 
-    // ... rest of the methods from previous model
+    /**
+     * Scope: Active campaigns
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'active');
+    }
+
+    /**
+     * Scope: Closed campaigns
+     */
+    public function scopeClosed($query)
+    {
+        return $query->where('status', 'closed');
+    }
 }

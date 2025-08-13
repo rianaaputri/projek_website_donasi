@@ -90,4 +90,9 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.index')
             ->with('success', 'Campaign deleted successfully');
     }
+    public function donations()
+{
+    return $this->hasMany(Donation::class);
+}
+
 }

@@ -152,6 +152,12 @@ Route::prefix('donation')->name('donation.')->group(function () {
 // ==============================
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
 
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/donations/history', [DonationController::class, 'myDonations'])
+        ->name('donation.history');
+});
+
 // ==============================
 // DEBUG ROUTES (Remove in production)
 // ==============================

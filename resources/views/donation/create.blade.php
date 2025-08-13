@@ -240,40 +240,8 @@
                             @csrf
                             <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
 
-                            <div class="row">
-                                <div class="col-md-6 mb-4">
-                                    <label for="donor_name" class="form-label fw-bold text-dark">
-                                        <i class="fas fa-user text-blue-light me-2"></i>Nama Lengkap 
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" 
-                                           class="form-control form-control-lg rounded-pill input-focus-effect @error('donor_name') is-invalid @enderror" 
-                                           id="donor_name" 
-                                           name="donor_name" 
-                                           value="{{ old('donor_name') }}" 
-                                           placeholder="Masukkan nama lengkap"
-                                           required>
-                                    @error('donor_name')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                                <div class="col-md-6 mb-4">
-                                    <label for="donor_email" class="form-label fw-bold text-dark">
-                                        <i class="fas fa-envelope text-blue-light me-2"></i>Email 
-                                        <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="email" 
-                                           class="form-control form-control-lg rounded-pill input-focus-effect @error('donor_email') is-invalid @enderror" 
-                                           id="donor_email" 
-                                           name="donor_email" 
-                                           value="{{ old('donor_email') }}"
-                                           placeholder="contoh@gmail.com"
-                                           required>
-                                    @error('donor_email')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-                            </div>
+    <input type="hidden" name="donor_name" value="{{ Auth::user()->name }}">
+    <input type="hidden" name="donor_email" value="{{ Auth::user()->email }}">
 
                             <!-- Enhanced Anonymous Checkbox -->
                             <div class="mb-4 p-3 bg-blue-light rounded-3 border border-blue-light">

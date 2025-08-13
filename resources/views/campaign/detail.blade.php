@@ -288,7 +288,7 @@
                                     <div class="text-blue-light mb-2">
                                         <i class="fas fa-calendar-alt icon-bounce" style="font-size: 1.5rem;"></i>
                                     </div>
-                                    <h5 class="mb-1 fw-bold text-blue-light">{{ (int) $campaign->created_at->diffInDays(now()) }}</h5>
+                                    {{ optional($campaign->created_at)->diffInDays(now()) ?? 0 }}
                                     <small class="text-muted fw-medium">Hari berjalan</small>
                                 </div>
                             </div>
