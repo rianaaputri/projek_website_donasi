@@ -29,6 +29,7 @@ class Campaign extends Model
     protected $casts = [
         'goal_amount' => 'decimal:2',
         'current_amount' => 'decimal:2',
+        'collected_amount' => 'integer',
         'deadline' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
@@ -78,31 +79,22 @@ class Campaign extends Model
         ];
     }
 
-    public function updateCollectedAmount()
+    public function getDaysElapsedAttribute()
     {
-        $totalSuccess = $this->donations()
+        if (!$this->created_at) {
+            return 0;
+        }
+        return $this->created_at->startOfDay()->diffInDays(now()->startOfDay());
+    }
+    
+    // Hapus 'collected_amount' dari $fillable dan $casts jika ada di migration/database
+
+    // Getter untuk jumlah terkumpul, selalu hitung real-time
+    public function getCollectedAmountAttribute()
+    {
+        return $this->donations()
             ->where('payment_status', 'success')
             ->sum('amount');
-
-        $this->collected_amount = $totalSuccess;
-        $this->progress_percentage = $this->target_amount > 0 
-            ? min(100, ($totalSuccess / $this->target_amount) * 100) 
-            : 0;
-
-        $this->save();
-
-        Log::info("Campaign {$this->id} stats updated", [
-            'collected' => $this->collected_amount,
-            'target' => $this->target_amount,
-            'progress' => $this->progress_percentage
-        ]);
-    }
-
-    public function getProgressPercentageAttribute()
-    {
-        if ($this->target_amount <= 0) return 0;
-        $percentage = ($this->collected_amount / $this->target_amount) * 100;
-        return number_format($percentage, 1);
     }
 
     public function getFormattedCollectedAttribute()
@@ -113,5 +105,21 @@ class Campaign extends Model
     public function getFormattedTargetAttribute()
     {
         return 'Rp ' . number_format($this->target_amount, 0, ',', '.');
+    }
+
+    public function getProgressPercentageAttribute()
+    {
+        if (!$this->target_amount || $this->target_amount <= 0) {
+            return 0;
+        }
+        $collected = $this->collected_amount;
+        return min(100, ($collected / $this->target_amount) * 100);
+    }
+
+    // recalculateCollectedAmount tidak perlu update/simpan ke database
+    public function recalculateCollectedAmount()
+    {
+        // Tidak perlu update field, cukup return nilai
+        return $this->collected_amount;
     }
 }
