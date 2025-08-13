@@ -202,6 +202,13 @@
       border-color: #667eea;
     }
 
+    .email-hint {
+      font-size: 12px;
+      color: #6c757d;
+      margin-top: 5px;
+      font-style: italic;
+    }
+
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
@@ -227,42 +234,40 @@
       <p>Admin Panel</p>
       @auth
         <small class="text-white-50">Welcome, {{ auth()->user()->name }}</small>
-      @else
-        <small class="text-white-50">Welcome, Admin</small>
       @endauth
     </div>
-
+    
     <nav class="sidebar-menu">
-      <a href="{{ route('admin.dashboard') }}" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
-      <a href="#" class="menu-item"><i class="fas fa-bullhorn"></i> Campaign Management</a>
-      <a href="#" class="menu-item"><i class="fas fa-users"></i> Registered Users</a>
-      <a href="#" class="menu-item"><i class="fas fa-hand-holding-heart"></i> Donations</a>
-      <a href="#" class="menu-item active"><i class="fas fa-user-shield"></i> Add Admin</a>
-      <a href="#" class="menu-item"><i class="fas fa-chart-bar"></i> Reports</a>
-      <a href="#" class="menu-item"><i class="fas fa-cog"></i> Settings</a>
       <a href="{{ route('admin.dashboard') }}" class="menu-item">
-        <i class="fas fa-tachometer-alt"></i> Dashboard
+        <i class="fas fa-tachometer-alt"></i>
+        Dashboard
       </a>
       <a href="{{ route('admin.campaigns.index') }}" class="menu-item">
-        <i class="fas fa-bullhorn"></i> Campaign Management
+        <i class="fas fa-bullhorn"></i>
+        Campaign Management
       </a>
       <!--<a href="#" class="menu-item">
-        <i class="fas fa-users"></i> Registered Users
+        <i class="fas fa-users"></i>
+        Registered Users
       </a>-->
       <a href="{{ route('admin.donations.index') }}" class="menu-item">
-        <i class="fas fa-hand-holding-heart"></i> Donations
+        <i class="fas fa-hand-holding-heart"></i>
+        Donations
       </a>
       <a href="{{ route('admin.add-admin') }}" class="menu-item active">
-        <i class="fas fa-user-shield"></i> Add Admin
+        <i class="fas fa-user-shield"></i>
+        Add Admin
+      </a>
+      <!--<a href="#" class="menu-item">
+        <i class="fas fa-chart-bar"></i>
+        Reports
       </a>
       <a href="#" class="menu-item">
-        <i class="fas fa-chart-bar"></i> Reports
-      </a>
-      <a href="#" class="menu-item">
-        <i class="fas fa-cog"></i> Settings
-      </a>
+        <i class="fas fa-cog"></i>
+        Settings
+      </a>-->
     </nav>
-
+    
     <div class="sidebar-logout">
       <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
         @csrf
@@ -380,9 +385,7 @@
                 <div class="password-requirements">
                   <h6><i class="fas fa-info-circle me-2"></i>Password Requirements:</h6>
                   <ul>
-                    <li>At least 8 characters long</li>
-                    <li>Contains at least one uppercase letter</li>
-                    <li>Contains at least one lowercase letter</li>
+                    <li>At least 6 characters long</li>
                     <li>Contains at least one number</li>
                   </ul>
                 </div>
@@ -407,6 +410,7 @@
               </div>
 
               <input type="hidden" name="role" value="admin">
+              <input type="hidden" name="email_verified_at" value="{{ now() }}">
 
               <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                 <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary me-md-2">
@@ -445,6 +449,8 @@
       }
     }
 
+    // Auto-generate full email address - REMOVED since we're back to normal email input
+    
     // Show alert function
     function showAlert(type, message) {
       const alertHTML = `
@@ -490,11 +496,11 @@
         email.classList.add('is-valid');
       }
 
-      // Password validation (Laravel default: min 8 characters)
-      const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      // Password validation (minimum 6 characters with at least one number)
+      const passwordRegex = /^(?=.*\d).{6,}$/;
       if (!passwordRegex.test(password.value)) {
         password.classList.add('is-invalid');
-        errors.push('Password must be at least 8 characters with uppercase, lowercase, and number');
+        errors.push('Password must be at least 6 characters with at least one number');
         isValid = false;
       } else {
         password.classList.add('is-valid');
