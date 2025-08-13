@@ -8,27 +8,29 @@ class HomeController extends Controller
 {
     public function index()
     {
-      $campaigns = Campaign::active()
-    ->with(['donations.paid'])
+        $campaigns = Campaign::active()
+    ->with(['donations' => function ($q) {
+        $q->success();
+    }])
     ->latest()
     ->get();
+
 
         return view('home', compact('campaigns'));
     }
 
-    public function showCampaign($id)
+    public function showCampaign(Campaign $campaign)
     {
-        $campaign = Campaign::with(['donations' => function ($q) {
-            $q->paid()->latest();
-        }])->findOrFail($id);
+        // Ambil campaign beserta donasi terakhir
+        $campaign->load([
+            'donations' => function ($query) {
+                $query->paid()->latest();
+            }
+        ]);
 
-        $recentDonors = $campaign->donations()
-            ->paid()
-            ->latest()
-            ->limit(10)
-            ->get();
+        // Ambil 10 donatur terbaru
+        $recentDonors = $campaign->donations->take(10);
 
         return view('campaign.detail', compact('campaign', 'recentDonors'));
     }
-    
 }

@@ -1,6 +1,5 @@
 <?php
 
-// File: app/Models/Donation.php
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +10,6 @@ class Donation extends Model
 {
     use HasFactory;
 
-    /**
-     * The attributes that are mass assignable.
-     */
     protected $fillable = [
         'user_id',
         'campaign_id',
@@ -25,9 +21,6 @@ class Donation extends Model
         'payment_reference'
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
     protected $casts = [
         'amount' => 'decimal:2',
         'is_anonymous' => 'boolean',
@@ -56,11 +49,9 @@ class Donation extends Model
      */
     public function getDonorNameAttribute(): string
     {
-        if ($this->is_anonymous) {
-            return 'Hamba Allah';
-        }
-
-        return $this->user ? $this->user->name : 'Unknown';
+        return $this->is_anonymous
+            ? 'Hamba Allah'
+            : ($this->user ? $this->user->name : 'Unknown');
     }
 
     /**
@@ -97,11 +88,18 @@ class Donation extends Model
         };
     }
 
- public function scopePaid($query)
+    /**
+     * Scope: Paid donations (kalau ada kolom 'status' = paid)
+     */
+    public function scopePaid($query)
 {
-    return $query->where('status', 'paid');
+    return $query->where('payment_status', 'success');
 }
 
+
+    /**
+     * Scope: Successful payments
+     */
     public function scopeSuccess($query)
     {
         return $query->where('payment_status', 'success');
@@ -116,7 +114,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter anonymous donations
+     * Scope: Anonymous donations
      */
     public function scopeAnonymous($query)
     {
@@ -124,7 +122,7 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Filter public donations
+     * Scope: Public donations
      */
     public function scopePublic($query)
     {
@@ -132,19 +130,20 @@ class Donation extends Model
     }
 
     /**
-     * Boot the model
+     * Boot events to update campaign amount automatically
      */
     protected static function boot()
     {
         parent::boot();
 
-        // Update campaign current_amount when donation is created/updated/deleted
+        // Saat donasi dibuat
         static::created(function ($donation) {
             if ($donation->payment_status === 'success') {
                 $donation->campaign->increment('current_amount', $donation->amount);
             }
         });
 
+        // Saat donasi diupdate
         static::updated(function ($donation) {
             if ($donation->wasChanged('payment_status')) {
                 $campaign = $donation->campaign;
@@ -153,6 +152,7 @@ class Donation extends Model
             }
         });
 
+        // Saat donasi dihapus
         static::deleted(function ($donation) {
             if ($donation->payment_status === 'success') {
                 $donation->campaign->decrement('current_amount', $donation->amount);

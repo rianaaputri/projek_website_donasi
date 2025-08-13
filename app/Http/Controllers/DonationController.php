@@ -62,54 +62,34 @@ public function index()
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'campaign_id' => 'required|exists:campaigns,id',
-            'donor_name' => 'required|string|max:255',
-            'donor_email' => 'required|email',
-            'donor_phone' => 'nullable|string|max:20',
-            'amount' => 'required|numeric|min:10000',
-            'comment' => 'nullable|string|max:1000',
-            'is_anonymous' => 'nullable|boolean', // Validasi untuk checkbox
-        ]);
+{
+    $request->validate([
+        'campaign_id' => 'required|exists:campaigns,id',
+        'donor_phone' => 'nullable|string|max:20',
+        'amount' => 'required|numeric|min:10000',
+        'comment' => 'nullable|string|max:1000',
+        'is_anonymous' => 'nullable|boolean',
+    ]);
 
-       $donation = Donation::create([
-    'campaign_id' => $request->campaign_id,
-    'donor_name' => $request->donor_name,
-    'donor_email' => $request->donor_email,
-    'donor_phone' => $request->donor_phone,
-    'amount' => $request->amount,
-    'message' => $request->comment, // ✅ GUNAKAN KOLOM YANG ADA
-    'is_anonymous' => $request->has('is_anonymous') ? true : false,
-    'payment_status' => 'pending',
-    'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
-]);
+    $user = auth()->user();
+    $isAnonymous = $request->boolean('is_anonymous');
 
-        $isAnonymous = $request->has('is_anonymous');
+    $donation = Donation::create([
+        'user_id'           => $user->id,
+        'campaign_id'       => $request->campaign_id,
+        'donor_name'        => $isAnonymous ? 'Seseorang' : $user->name,
+        'donor_email'       => $user->email,
+        'donor_phone'       => $request->donor_phone,
+        'amount'            => $request->amount,
+        'comment'           => $request->comment,
+        'is_anonymous'      => $isAnonymous,
+        'payment_status'    => 'pending',
+        'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
+    ]);
 
-        $donation = Donation::create([
-            'campaign_id'       => $request->campaign_id,
-            'donor_name'        => $isAnonymous ? 'Seseorang' : $request->donor_name,
-            'donor_email'       => $request->donor_email,
-            'donor_phone'       => $request->donor_phone,
-            'amount'            => $request->amount,
-            'comment'           => $request->comment,
-            'is_anonymous'      => $isAnonymous,
-            'payment_status'    => 'pending',
-            'midtrans_order_id' => 'DONATE-' . strtoupper(Str::random(10)),
-        ]);
+    return redirect()->route('donation.payment', $donation->id);
+}
 
-        // Simpan ID donasi di session untuk redirect setelah login
-        session(['pending_donation_id' => $donation->id]);
-
-        // Jika belum login, redirect ke login
-        if (!auth()->check()) {
-            return redirect()->route('login')->with('message', 'Silakan login untuk melanjutkan pembayaran.');
-        }
-
-        // Jika sudah login, redirect langsung ke payment
-        return redirect()->route('donation.payment', $donation->id);
-    }
 
     public function payment($id)
     {
@@ -178,5 +158,15 @@ public function index()
             'donors' => $donation->campaign->donations()->count()
         ]);
     }
+    public function myDonations()
+{
+    $donations = Donation::with('campaign')
+        ->where('user_id', auth()->id())
+        ->orderBy('created_at', 'desc')
+        ->paginate(10);
+
+    return view('donation.history', compact('donations'));
+}
+
 
 }
