@@ -190,6 +190,10 @@
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
+            <a href="{{ route('admin.campaigns.verify') }}" class="menu-item">
+                <i class="fas fa-check-double"></i>
+                Verify Campaign
+            </a>
             <a href="{{ route('admin.campaigns.index') }}" class="menu-item">
                 <i class="fas fa-bullhorn"></i>
                 Campaign Management
