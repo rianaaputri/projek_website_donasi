@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Campaign extends Model
 {
@@ -22,7 +23,7 @@ class Campaign extends Model
         'image',
         'is_active',
         'target_amount',
-          'category', // <--- ini belum ada, tambahkan
+        'category', // <--- ini belum ada, tambahkan
     ];
 
     protected $casts = [
@@ -31,7 +32,7 @@ class Campaign extends Model
         'deadline' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-       'is_active' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -66,7 +67,7 @@ class Campaign extends Model
         return $query->where('status', 'closed');
     }
 
-      public static function getCategories()
+    public static function getCategories()
     {
         return [
             'education' => 'Pendidikan',
@@ -75,5 +76,42 @@ class Campaign extends Model
             'environment' => 'Lingkungan',
             // tambahin sesuai kebutuhan
         ];
+    }
+
+    public function updateCollectedAmount()
+    {
+        $totalSuccess = $this->donations()
+            ->where('payment_status', 'success')
+            ->sum('amount');
+
+        $this->collected_amount = $totalSuccess;
+        $this->progress_percentage = $this->target_amount > 0 
+            ? min(100, ($totalSuccess / $this->target_amount) * 100) 
+            : 0;
+
+        $this->save();
+
+        Log::info("Campaign {$this->id} stats updated", [
+            'collected' => $this->collected_amount,
+            'target' => $this->target_amount,
+            'progress' => $this->progress_percentage
+        ]);
+    }
+
+    public function getProgressPercentageAttribute()
+    {
+        if ($this->target_amount <= 0) return 0;
+        $percentage = ($this->collected_amount / $this->target_amount) * 100;
+        return number_format($percentage, 1);
+    }
+
+    public function getFormattedCollectedAttribute()
+    {
+        return 'Rp ' . number_format($this->collected_amount, 0, ',', '.');
+    }
+
+    public function getFormattedTargetAttribute()
+    {
+        return 'Rp ' . number_format($this->target_amount, 0, ',', '.');
     }
 }

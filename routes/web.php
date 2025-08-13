@@ -145,89 +145,10 @@ Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/payment/{donation}', [DonationController::class, 'payment'])->name('payment');
     Route::get('/success/{donation}', [DonationController::class, 'success'])->name('success');
     Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status');
+    Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
 });
 
 // ==============================
 // MIDTRANS CALLBACK
 // ==============================
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
-
-
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/donations/history', [DonationController::class, 'myDonations'])
-        ->name('donation.history');
-});
-
-// ==============================
-// DEBUG ROUTES (Remove in production)
-// ==============================
-Route::get('/debug-auth', function () {
-    dd([
-        'authenticated' => auth()->check(),
-        'current_user' => auth()->user(),
-        'user_role' => auth()->user()->role ?? 'not logged in',
-        'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
-    ]);
-});
-
-Route::get('/debug-role', function () {
-    $user = auth()->user();
-
-    if (!$user) {
-        return 'Belum login.';
-    }
-
-    return response()->json([
-        'ID' => $user->id,
-        'Nama' => $user->name,
-        'Email' => $user->email,
-        'Role' => $user->role,
-        'Email Verified' => $user->hasVerifiedEmail(),
-        'Email Verified At' => $user->email_verified_at,
-    ]);
-})->middleware(['auth']);
-
-Route::get('/debug-user-only', function () {
-    return 'HALAMAN INI HANYA BISA DIAKSES USER';
-})->middleware(['auth', 'role.check:user']);
-
-Route::get('/debug-admin-only', function () {
-    return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
-})->middleware(['auth', 'role.check:admin']);
-
-// ==============================
-// DEBUG EMAIL VERIFICATION (Remove in production)
-// ==============================
-Route::get('/debug-verification', function () {
-    $user = auth()->user();
-    
-    if (!$user) {
-        return 'Not authenticated';
-    }
-
-    return response()->json([
-        'user_id' => $user->id,
-        'email' => $user->email,
-        'email_verified_at' => $user->email_verified_at,
-        'has_verified_email' => $user->hasVerifiedEmail(),
-        'email_verified_at_raw' => $user->getRawOriginal('email_verified_at'),
-    ]);
-})->middleware('auth');
-
-Route::get('/debug-manual-verify', function () {
-    $user = auth()->user();
-    
-    if (!$user) {
-        return 'Not authenticated';
-    }
-
-    $user->markEmailAsVerified();
-    
-    return response()->json([
-        'message' => 'Manual verification completed',
-        'user_id' => $user->id,
-        'email' => $user->email,
-        'email_verified_at' => $user->fresh()->email_verified_at,
-        'has_verified_email' => $user->fresh()->hasVerifiedEmail(),
-    ]);
-})->middleware('auth');

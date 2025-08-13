@@ -407,6 +407,11 @@
             <i class="fas fa-user me-2"></i>Profil Saya
         </a>
     </li>
+    <li>
+        <a class="dropdown-item" href="{{ route('donation.history') }}">
+            <i class="fas fa-history me-2"></i>Riwayat Donasi
+        </a>
+    </li>
 @endif
 
                                 <li><hr class="dropdown-divider"></li>

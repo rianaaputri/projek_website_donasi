@@ -18,7 +18,9 @@ class Donation extends Model
         'is_anonymous',
         'payment_method',
         'payment_status',
-        'payment_reference'
+        'payment_reference',
+        'donor_name',
+    'donor_email'
     ];
 
     protected $casts = [
