@@ -40,14 +40,15 @@ Route::middleware('guest')->group(function () {
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::get('/reset-password/{token}', [NewPasswordController::class, 'create'])->name('password.reset');
-    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
+    Route::post('/password/update', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 });
 
 // Logout (authenticated) — satu route global untuk semua users
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 // ==============================
-// EMAIL VERIFICATION
+// EMAIL VERIFICATION (fixed)
 // ==============================
 
 // Halaman notice — butuh login
@@ -77,11 +78,15 @@ Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) 
 })->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
 
 // Kirim ulang email — hanya bisa saat login
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
-    return back()->with('message', 'Link verifikasi sudah dikirim ulang!');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
-
+Route::middleware('auth')->group(function () {
+    Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+        ->middleware(['signed', 'throttle:6,1'])
+        ->name('verification.verify');
+    Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
+        ->middleware(['throttle:6,1'])
+        ->name('verification.send');
+});
 // ==============================
 // DASHBOARD REDIRECT
 // ==============================
@@ -100,6 +105,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
+
     Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
@@ -107,36 +113,22 @@ Route::middleware(['auth'])->group(function () {
 // ADMIN ROUTES
 // ==============================
 Route::prefix('admin')->middleware(['auth', 'role.check:admin'])->name('admin.')->group(function () {
-    // Dashboard
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/statistics', [AdminDashboardController::class, 'getStatistics'])->name('statistics');
-    
-    // Admin logout - FIXED: menggunakan POST method dan controller method yang benar
-    Route::post('/logout', [AdminDashboardController::class, 'logout'])->name('logout');
-    
-    // Admin Management
+
+    Route::get('/logout', function () {
+        return view('admin.logout');
+    })->name('logout');
+
     Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
     Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
     Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
     Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
-    // Campaign Management
-   Route::resource('campaigns', AdminCampaignController::class)->names([
-    'index' => 'campaigns.index',
-    'create' => 'campaigns.create',     // ← INI YANG MISSING!
-    'store' => 'campaigns.store',
-    'show' => 'campaigns.show',
-    'edit' => 'campaigns.edit',
-    'update' => 'campaigns.update',
-    'destroy' => 'campaigns.destroy',
-]);
+    Route::resource('campaigns', AdminCampaignController::class);
 
-    // Donation Management
-    Route::prefix('donations')->name('donations.')->group(function () {
-        Route::get('/', [AdminDonationController::class, 'index'])->name('index');
-        Route::get('/{donation}', [AdminDonationController::class, 'show'])->name('show');
-        Route::patch('/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('update-status');
-    });
+    Route::get('/donations', [AdminDonationController::class, 'index'])->name('donations.index');
+    Route::get('/donations/{donation}', [AdminDonationController::class, 'show'])->name('donations.show');
+    Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');
 });
 
 // ==============================
@@ -160,73 +152,73 @@ Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])
 // ==============================
 // DEBUG ROUTES (Remove in production)
 // ==============================
-if (app()->environment('local')) {
-    Route::get('/debug-auth', function () {
-        dd([
-            'authenticated' => auth()->check(),
-            'current_user' => auth()->user(),
-            'user_role' => auth()->user()->role ?? 'not logged in',
-            'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
-        ]);
-    });
+Route::get('/debug-auth', function () {
+    dd([
+        'authenticated' => auth()->check(),
+        'current_user' => auth()->user(),
+        'user_role' => auth()->user()->role ?? 'not logged in',
+        'email_verified' => auth()->check() ? auth()->user()->hasVerifiedEmail() : false,
+    ]);
+});
 
-    Route::get('/debug-role', function () {
-        $user = auth()->user();
+Route::get('/debug-role', function () {
+    $user = auth()->user();
 
-        if (!$user) {
-            return 'Belum login.';
-        }
+    if (!$user) {
+        return 'Belum login.';
+    }
 
-        return response()->json([
-            'ID' => $user->id,
-            'Nama' => $user->name,
-            'Email' => $user->email,
-            'Role' => $user->role,
-            'Email Verified' => $user->hasVerifiedEmail(),
-            'Email Verified At' => $user->email_verified_at,
-        ]);
-    })->middleware(['auth']);
+    return response()->json([
+        'ID' => $user->id,
+        'Nama' => $user->name,
+        'Email' => $user->email,
+        'Role' => $user->role,
+        'Email Verified' => $user->hasVerifiedEmail(),
+        'Email Verified At' => $user->email_verified_at,
+    ]);
+})->middleware(['auth']);
 
-    Route::get('/debug-user-only', function () {
-        return 'HALAMAN INI HANYA BISA DIAKSES USER';
-    })->middleware(['auth', 'role.check:user']);
+Route::get('/debug-user-only', function () {
+    return 'HALAMAN INI HANYA BISA DIAKSES USER';
+})->middleware(['auth', 'role.check:user']);
 
-    Route::get('/debug-admin-only', function () {
-        return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
-    })->middleware(['auth', 'role.check:admin']);
+Route::get('/debug-admin-only', function () {
+    return 'HALAMAN INI HANYA BISA DIAKSES ADMIN';
+})->middleware(['auth', 'role.check:admin']);
 
-    // DEBUG EMAIL VERIFICATION
-    Route::get('/debug-verification', function () {
-        $user = auth()->user();
-        
-        if (!$user) {
-            return 'Not authenticated';
-        }
+// ==============================
+// DEBUG EMAIL VERIFICATION (Remove in production)
+// ==============================
+Route::get('/debug-verification', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return 'Not authenticated';
+    }
 
-        return response()->json([
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'email_verified_at' => $user->email_verified_at,
-            'has_verified_email' => $user->hasVerifiedEmail(),
-            'email_verified_at_raw' => $user->getRawOriginal('email_verified_at'),
-        ]);
-    })->middleware('auth');
+    return response()->json([
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'email_verified_at' => $user->email_verified_at,
+        'has_verified_email' => $user->hasVerifiedEmail(),
+        'email_verified_at_raw' => $user->getRawOriginal('email_verified_at'),
+    ]);
+})->middleware('auth');
 
-    Route::get('/debug-manual-verify', function () {
-        $user = auth()->user();
-        
-        if (!$user) {
-            return 'Not authenticated';
-        }
+Route::get('/debug-manual-verify', function () {
+    $user = auth()->user();
+    
+    if (!$user) {
+        return 'Not authenticated';
+    }
 
-        $user->markEmailAsVerified();
-        
-        return response()->json([
-            'message' => 'Manual verification completed',
-            'user_id' => $user->id,
-            'email' => $user->email,
-            'email_verified_at' => $user->fresh()->email_verified_at,
-            'has_verified_email' => $user->fresh()->hasVerifiedEmail(),
-        ]);
-    })->middleware('auth');
-}
+    $user->markEmailAsVerified();
+    
+    return response()->json([
+        'message' => 'Manual verification completed',
+        'user_id' => $user->id,
+        'email' => $user->email,
+        'email_verified_at' => $user->fresh()->email_verified_at,
+        'has_verified_email' => $user->fresh()->hasVerifiedEmail(),
+    ]);
+})->middleware('auth');

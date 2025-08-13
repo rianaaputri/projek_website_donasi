@@ -247,6 +247,74 @@
         footer {
             background: linear-gradient(135deg, var(--dark-blue) 0%, var(--primary-blue) 100%);
             color: white;
+            padding: 60px 0 30px 0;
+        }
+
+        .footer-brand {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .footer-description {
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+            color: #e3f2fd;
+        }
+
+        .social-icons a {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            margin-right: 15px;
+            color: white;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+
+        .social-icons a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 40px;
+            padding-top: 30px;
+            text-align: center;
+        }
+
+        .footer-bottom p {
+            margin: 0;
+            opacity: 0.8;
+            font-size: 0.9rem;
         }
 
         /* Alert Styling */
@@ -278,6 +346,15 @@
 
             .stat-number {
                 font-size: 2rem;
+            }
+
+            .footer-brand {
+                font-size: 1.5rem;
+            }
+
+            .social-icons {
+                text-align: center;
+                margin-top: 30px;
             }
         }
     </style>
@@ -373,28 +450,6 @@
     <main>
         @yield('content')
     </main>
-
-    <!-- Footer -->
-    <footer class="py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5><i class="fas fa-heart me-2"></i>kindify.id</h5>
-                    <p>Platform donasi online yang terpercaya untuk membantu sesama dan berbagi kebaikan.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <div class="mb-3">
-                        <a href="#" class="text-white me-3"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-twitter"></i></a>
-                        <a href="#" class="text-white me-3"><i class="fab fa-instagram"></i></a>
-                        <a href="#" class="text-white"><i class="fab fa-whatsapp"></i></a>
-                    </div>
-                    <p>&copy; {{ date('Y') }} kindify.id. All rights reserved.</p>
-                </div>
-            </div>
-        </div>
-    </footer>
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     @stack('scripts')
 </body>
