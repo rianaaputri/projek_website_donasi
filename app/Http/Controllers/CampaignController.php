@@ -90,6 +90,34 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.index')
             ->with('success', 'Campaign deleted successfully');
     }
-  
+  public function verifyIndex()
+{
+    $pendingCampaigns = Campaign::with('user')
+        ->where('status', 'pending')
+        ->latest()
+        ->get();
+
+    return view('admin.campaigns.verify', compact('pendingCampaigns'));
+}
+
+public function verifyApprove($id)
+{
+    $campaign = Campaign::findOrFail($id);
+    $campaign->status = 'active';
+    $campaign->is_active = true;
+    $campaign->save();
+
+    return redirect()->route('admin.campaigns.verify')->with('success', 'Campaign berhasil diverifikasi.');
+}
+
+public function verifyReject($id)
+{
+    $campaign = Campaign::findOrFail($id);
+    $campaign->status = 'rejected';
+    $campaign->is_active = false;
+    $campaign->save();
+
+    return redirect()->route('admin.campaigns.verify')->with('success', 'Campaign ditolak.');
+}
 
 }

@@ -199,18 +199,310 @@
                     <a href="{{ route('admin.campaigns.create') }}" class="btn-custom btn-primary-custom">
                         <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
                     </a>
-                @else
-                    <p>Anda sudah login, tetapi hanya admin yang dapat membuat campaign.</p>
-                @endauth
+            @else
+                <a href="{{ route('user.campaigns.create') }}" class="btn-custom btn-primary-custom">
+                    <i class="fas fa-plus me-2"></i> Buat Campaign
+                </a>
+            @endauth
             @endguest
         </div>
     </div>
 </section>
 
+<!-- Footer Section -->
+<footer class="footer-section">
+    <div class="container">
+        <!-- Main Footer Content -->
+        <div class="row py-5 justify-content-center">
+            <div class="col-lg-5 col-md-6 mb-4 text-center">
+                <div class="footer-brand">
+                    <h4 class="footer-logo">
+                        <i class="fas fa-heart me-2"></i>
+                        Kindify.id
+                    </h4>
+                    <p class="footer-description">
+                        Platform donasi terpercaya untuk berbagi kebaikan dan membantu sesama yang membutuhkan di Indonesia.
+                    </p>
+                    <div class="social-links">
+                        <a href="#" class="social-link" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="social-link" aria-label="WhatsApp">
+                            <i class="fab fa-whatsapp"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4 text-center">
+                <h5 class="footer-title">Bantuan & Dukungan</h5>
+                <ul class="footer-links">
+                    <li><a href="#">FAQ</a></li>
+                    <li><a href="#">Cara Berdonasi</a></li>
+                    <li><a href="#">Hubungi Kami</a></li>
+                    <li><a href="#">Pusat Bantuan</a></li>
+                </ul>
+            </div>
+            
+            <div class="col-lg-3 col-md-6 mb-4 text-center">
+                <h5 class="footer-title">Kontak Kami</h5>
+                <div class="footer-contact">
+                    <div class="contact-item">
+                        <i class="fas fa-envelope me-2"></i>
+                        <span>info@kindify.id</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-phone me-2"></i>
+                        <span>+62 812 3456 7890</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        <span>Jakarta, Indonesia</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer Bottom / Copyright -->
+        <div class="footer-bottom">
+            <div class="row align-items-center">
+                <div class="col-12 text-center">
+                    <p class="copyright-text mb-2">
+                        &copy; {{ date('Y') }} <strong>Kindify.id</strong> - Platform Donasi Terpercaya
+                    </p>
+                    <p class="powered-by">
+                        Made with <i class="fas fa-heart"></i> for Indonesia
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
 <style>
 /* Import Poppins Font */
 * {
     font-family: 'Poppins', sans-serif;
+}
+
+/* Footer Styles */
+.footer-section {
+    background: linear-gradient(135deg, #e8f4f8 0%, #d6eaf8 50%, #aed6f1 100%);
+    color: #2c3e50;
+    position: relative;
+    overflow: hidden;
+    margin-top: 3rem;
+}
+
+.footer-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(52, 152, 219, 0.3), transparent);
+}
+
+.footer-brand {
+    margin-bottom: 2rem;
+}
+
+.footer-logo {
+    color: #2980b9;
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer-logo i {
+    color: #e74c3c;
+    animation: heartbeat 2s ease-in-out infinite;
+}
+
+.footer-description {
+    color: #34495e;
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.footer-title {
+    color: #2980b9;
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.footer-title::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, #3498db, #5dade2);
+    border-radius: 2px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-links li {
+    margin-bottom: 0.8rem;
+}
+
+.footer-links a {
+    color: #5a6c7d;
+    text-decoration: none;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+}
+
+.footer-links a:hover {
+    color: #2980b9;
+    background: rgba(52, 152, 219, 0.1);
+    transform: translateY(-2px);
+}
+
+.social-links {
+    display: flex;
+    gap: 15px;
+    margin-top: 1.5rem;
+    justify-content: center;
+}
+
+.social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #5a6c7d;
+    border-radius: 50%;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid rgba(52, 152, 219, 0.2);
+}
+
+.social-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, #3498db, #5dade2);
+    border-radius: 50%;
+    transform: scale(0);
+    transition: transform 0.3s ease;
+}
+
+.social-link i {
+    position: relative;
+    z-index: 1;
+    transition: color 0.3s ease;
+}
+
+.social-link:hover {
+    color: #ffffff;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+    border-color: #3498db;
+}
+
+.social-link:hover::before {
+    transform: scale(1);
+}
+
+.footer-contact {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #5a6c7d;
+    font-size: 0.95rem;
+    padding: 8px 15px;
+    border-radius: 25px;
+    background: rgba(255, 255, 255, 0.6);
+    transition: all 0.3s ease;
+}
+
+.contact-item:hover {
+    background: rgba(52, 152, 219, 0.1);
+    transform: translateY(-2px);
+}
+
+.contact-item i {
+    color: #3498db;
+    width: 18px;
+    flex-shrink: 0;
+    margin-right: 8px;
+}
+
+.footer-bottom {
+    border-top: 1px solid rgba(52, 152, 219, 0.2);
+    padding: 2rem 0;
+    margin-top: 2rem;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.copyright-text {
+    margin: 0;
+    font-size: 1rem;
+    color: #34495e;
+    font-weight: 500;
+}
+
+.copyright-text strong {
+    color: #2980b9;
+    font-weight: 700;
+}
+
+.powered-by {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #5a6c7d;
+    margin-top: 0.5rem;
+}
+
+.powered-by i {
+    color: #e74c3c;
+    animation: heartbeat 2s ease-in-out infinite;
+    margin: 0 5px;
 }
 
 /* Search Container Styles */
@@ -430,9 +722,9 @@
 
 /* Heartbeat Animation */
 @keyframes heartbeat {
-    0%   { transform: translate(-50%, -50%) scale(1); }
-    50%  { transform: translate(-50%, -50%) scale(1.1); }
-    100% { transform: translate(-50%, -50%) scale(1); }
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.1); }
+    100% { transform: scale(1); }
 }
 
 /* Fade In Up Animation */
@@ -468,6 +760,17 @@
 }
 
 /* Responsive Design */
+@media (max-width: 991.98px) {
+    .footer-section .col-lg-5,
+    .footer-section .col-lg-3 {
+        margin-bottom: 2.5rem;
+    }
+    
+    .footer-brand {
+        margin-bottom: 2.5rem;
+    }
+}
+
 @media (max-width: 767.98px) {
     .search-container {
         padding: 20px 15px;
@@ -493,6 +796,71 @@
         max-width: 280px;
         margin: 0;
     }
+    
+    .footer-section {
+        margin-top: 2rem;
+    }
+    
+    .footer-logo {
+        font-size: 1.8rem;
+    }
+    
+    .footer-description {
+        font-size: 0.95rem;
+    }
+    
+    .social-links {
+        gap: 12px;
+    }
+    
+    .social-link {
+        width: 42px;
+        height: 42px;
+        font-size: 1rem;
+    }
+    
+    .footer-bottom {
+        padding: 1.5rem 0;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .search-container {
+        padding: 20px 15px;
+    }
+    
+    .search-input {
+        font-size: 14px;
+        padding: 10px 40px 10px 40px;
+    }
+    
+    .filter-btn {
+        font-size: 12px;
+        padding: 5px 12px;
+    }
+    
+    .button-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .btn-custom {
+        width: 100%;
+        max-width: 280px;
+        margin: 0;
+    }
+    
+    .footer-bottom {
+        text-align: center;
+    }
+    
+    .footer-bottom .col-md-6 {
+        margin-bottom: 1rem;
+    }
+    
+    .footer-bottom .col-md-6:last-child {
+        margin-bottom: 0;
+    }
 }
 
 @media (max-width: 575.98px) {
@@ -500,6 +868,38 @@
         padding: 10px 24px;
         font-size: 14px;
         min-width: 140px;
+    }
+    
+    .footer-logo {
+        font-size: 1.6rem;
+    }
+    
+    .footer-description {
+        font-size: 0.9rem;
+        padding: 0 15px;
+    }
+    
+    .social-link {
+        width: 40px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+    
+    .footer-title {
+        font-size: 1.1rem;
+    }
+    
+    .contact-item {
+        font-size: 0.9rem;
+        padding: 6px 12px;
+    }
+    
+    .copyright-text {
+        font-size: 0.95rem;
+    }
+    
+    .powered-by {
+        font-size: 0.85rem;
     }
 }
 </style>
@@ -650,6 +1050,34 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize search if there's a value (from URL parameter)
     if (searchInput.value) {
         performSearch();
+    }
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+    
+    // Footer animation on scroll
+    const footer = document.querySelector('.footer-section');
+    const footerObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                footer.style.animation = 'fadeInUp 0.8s ease-out';
+            }
+        });
+    }, { threshold: 0.1 });
+    
+    if (footer) {
+        footerObserver.observe(footer);
     }
 });
 </script>
