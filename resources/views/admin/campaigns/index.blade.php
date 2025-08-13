@@ -31,7 +31,7 @@
                         <td>
                             <div class="d-flex align-items-center">
                                 @if($campaign->image)
-                                    <img src="{{ asset('storage/campaigns/' . $campaign->image) }}" class="rounded me-3" width="60" height="60" style="object-fit: cover;">
+                                    <img src="{{ asset('storage/' . $campaign->image) }} class="rounded me-3" width="60" height="60" style="object-fit: cover;">
                                 @else
                                     <div class="bg-secondary rounded me-3 d-flex align-items-center justify-content-center" style="width:60px;height:60px;">
                                         <i class="fas fa-image text-white"></i>

@@ -8,12 +8,10 @@ class HomeController extends Controller
 {
     public function index()
     {
-        $campaigns = Campaign::active()
-            ->with(['donations' => function ($q) {
-                $q->success(); // ganti paid() jadi success()
-            }])
-            ->latest()
-            ->get();
+      $campaigns = Campaign::active()
+    ->with(['donations.paid'])
+    ->latest()
+    ->get();
 
         return view('home', compact('campaigns'));
     }
@@ -21,15 +19,16 @@ class HomeController extends Controller
     public function showCampaign($id)
     {
         $campaign = Campaign::with(['donations' => function ($q) {
-            $q->success()->latest(); // ganti paid() jadi success()
+            $q->paid()->latest();
         }])->findOrFail($id);
 
         $recentDonors = $campaign->donations()
-            ->success() // ganti paid() jadi success()
+            ->paid()
             ->latest()
             ->limit(10)
             ->get();
 
         return view('campaign.detail', compact('campaign', 'recentDonors'));
     }
+    
 }

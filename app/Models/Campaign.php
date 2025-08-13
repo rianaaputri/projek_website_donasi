@@ -4,33 +4,48 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Schema;
 
 class Campaign extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
+    // app/Models/Campaign.php
     protected $fillable = [
         'title',
         'description',
         'category',
         'target_amount',
         'collected_amount',
+        // 'current_amount', // HAPUS INI
         'image',
         'status',
         'end_date',
         'is_active',
-        'user_id'
+        'user_id' // akan ditambahkan otomatis jika kolom ada
     ];
+
 
     protected $casts = [
-        'target_amount' => 'decimal:2',
-        'collected_amount' => 'decimal:2',
-        'end_date' => 'datetime',
-        'is_active' => 'boolean'
+    'target_amount' => 'decimal:2',
+    'collected_amount' => 'decimal:2',
+    // 'current_amount' => 'decimal:2', // HAPUS INI
+    'end_date' => 'datetime',
+    'is_active' => 'boolean'
     ];
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        
+        // Add user_id to fillable if column exists
+        if (Schema::hasColumn('campaigns', 'user_id')) {
+            $this->fillable[] = 'user_id';
+        }
+    }
 
     /**
-     * List kategori yang tersedia.
+     * Get available campaign categories
      */
     public static function getCategories()
     {
@@ -47,10 +62,12 @@ class Campaign extends Model
             'lainnya' => 'Lainnya'
         ];
     }
+public function scopeActive($query)
+{
+    return $query->where('is_active', true);
+}
 
-    /**
-     * Status yang tersedia.
-     */
+
     public static function getStatuses()
     {
         return [
@@ -62,31 +79,24 @@ class Campaign extends Model
     }
 
     /**
-     * Relasi ke user pembuat campaign.
+     * User relationship - only if user_id column exists
      */
     public function user()
     {
-        return $this->belongsTo(User::class);
+        if (Schema::hasColumn('campaigns', 'user_id')) {
+            return $this->belongsTo(User::class);
+        }
+        
+        return null;
     }
 
     /**
-     * Relasi ke donasi-donasi pada campaign ini.
+     * Donations relationship
      */
     public function donations()
     {
         return $this->hasMany(Donation::class);
     }
 
-    /**
-     * Scope campaign yang aktif.
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('status', 'active')
-            ->where('is_active', true)
-            ->where(function ($q) {
-                $q->whereNull('end_date')
-                  ->orWhere('end_date', '>', now());
-            });
-    }
+    // ... rest of the methods from previous model
 }

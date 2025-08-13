@@ -218,57 +218,57 @@ public function store(Request $request)
      * Update the specified campaign.
      */
     public function update(Request $request, Campaign $campaign)
-    {
-        $categories = array_keys(Campaign::getCategories());
-        
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'target_amount' => 'required|numeric|min:1000',
-            'category' => 'required|string|in:' . implode(',', $categories),
-            'end_date' => 'required|date|after_or_equal:today',
-            'image' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:active,inactive,completed,cancelled'
-        ]);
+{
+    $categories = array_keys(Campaign::getCategories() ?? []);
 
-        try {
-            DB::beginTransaction();
+    $validated = $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'required|string',
+        'target_amount' => 'required|numeric|min:1000',
+        'category' => 'required|string|in:' . implode(',', $categories),
+        'end_date' => 'required|date|after_or_equal:today',
+        'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'user_id' => 'required|exists:users,id',
+        'status' => 'required|in:active,inactive,completed,cancelled'
+    ]);
 
-            $oldImage = $campaign->image;
+    try {
+        DB::beginTransaction();
 
-            // Handle image upload
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('campaigns', 'public');
-                $validated['image'] = $imagePath;
-            }
+        $oldImage = $campaign->image;
 
-            $campaign->update($validated);
-
-            // Delete old image if new one was uploaded
-            if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
-            }
-
-            DB::commit();
-
-            return redirect()
-                ->route('admin.campaigns.show', $campaign)
-                ->with('success', 'Campaign berhasil diperbarui!');
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            
-            // Delete new uploaded image if exists
-            if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-                Storage::disk('public')->delete($validated['image']);
-            }
-
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan saat memperbarui campaign: ' . $e->getMessage());
+        // Upload gambar baru kalau ada
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('campaigns', 'public');
+            $validated['image'] = $imagePath;
         }
+
+        $campaign->update($validated);
+
+        // Hapus gambar lama kalau ada gambar baru
+        if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
+            Storage::disk('public')->delete($oldImage);
+        }
+
+        DB::commit();
+
+        return redirect()
+            ->route('admin.campaigns.index')
+            ->with('success', 'Campaign berhasil diperbarui!');
+
+    } catch (\Exception $e) {
+        DB::rollback();
+
+        if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
+            Storage::disk('public')->delete($validated['image']);
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
+
 
     /**
      * Remove the specified campaign.

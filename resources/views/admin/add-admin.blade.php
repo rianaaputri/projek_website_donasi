@@ -233,6 +233,13 @@
     </div>
 
     <nav class="sidebar-menu">
+      <a href="{{ route('admin.dashboard') }}" class="menu-item"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+      <a href="#" class="menu-item"><i class="fas fa-bullhorn"></i> Campaign Management</a>
+      <a href="#" class="menu-item"><i class="fas fa-users"></i> Registered Users</a>
+      <a href="#" class="menu-item"><i class="fas fa-hand-holding-heart"></i> Donations</a>
+      <a href="#" class="menu-item active"><i class="fas fa-user-shield"></i> Add Admin</a>
+      <a href="#" class="menu-item"><i class="fas fa-chart-bar"></i> Reports</a>
+      <a href="#" class="menu-item"><i class="fas fa-cog"></i> Settings</a>
       <a href="{{ route('admin.dashboard') }}" class="menu-item">
         <i class="fas fa-tachometer-alt"></i> Dashboard
       </a>

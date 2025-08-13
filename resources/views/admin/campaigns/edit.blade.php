@@ -127,7 +127,8 @@
                         @enderror
                     </div>
                     @else
-                    <!-- Show current owner info if exists but field is not editable -->
+                 <input type="hidden" name="user_id" value="{{ $campaign->user_id }}">
+
                     @if(isset($campaign->user))
                     <div class="mb-3">
                         <label class="form-label">Campaign Owner</label>

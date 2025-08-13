@@ -206,15 +206,21 @@
                 <i class="fas fa-user-shield"></i>
                 Add Admin
             </a>
-            <a href="#" class="menu-item">
+            <!--<a href="#" class="menu-item">
                 <i class="fas fa-chart-bar"></i>
                 Reports
             </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Settings
+            </a>-->
         </nav>
         
         <div class="sidebar-logout">
             <!-- Removed duplicate logout button - kept only the form -->
             <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
+    @csrf
+</form>
                 @csrf
                 <button type="submit" class="logout-btn">
                     <i class="fas fa-sign-out-alt me-2"></i> Logout

@@ -9,6 +9,8 @@ use App\Models\Admins;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -17,11 +19,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Seeder bawaan User
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+      DB::table('users')->insert([
+
+            'name' => 'fatma',
+            'email' => 'fatma@gmail.com',
             'role' => 'admin',
+            'password' => Hash::make('123456'), 
+
+            'name' => 'Silva',
+            'email' => 'silva@gmail.com',
+            'role' => 'admin',
+            'password' => Hash::make('123456'), // bcrypt otomatis
+
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
         // Panggil AdminSeeder
