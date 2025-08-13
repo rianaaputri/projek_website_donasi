@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Campaign extends Model
 {
@@ -22,16 +23,17 @@ class Campaign extends Model
         'image',
         'is_active',
         'target_amount',
-          'category', // <--- ini belum ada, tambahkan
+        'category', // <--- ini belum ada, tambahkan
     ];
 
     protected $casts = [
         'goal_amount' => 'decimal:2',
         'current_amount' => 'decimal:2',
+        'collected_amount' => 'integer',
         'deadline' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-       'is_active' => 'boolean',
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -66,7 +68,7 @@ class Campaign extends Model
         return $query->where('status', 'closed');
     }
 
-      public static function getCategories()
+    public static function getCategories()
     {
         return [
             'education' => 'Pendidikan',
@@ -75,5 +77,49 @@ class Campaign extends Model
             'environment' => 'Lingkungan',
             // tambahin sesuai kebutuhan
         ];
+    }
+
+    public function getDaysElapsedAttribute()
+    {
+        if (!$this->created_at) {
+            return 0;
+        }
+        return $this->created_at->startOfDay()->diffInDays(now()->startOfDay());
+    }
+    
+    // Hapus 'collected_amount' dari $fillable dan $casts jika ada di migration/database
+
+    // Getter untuk jumlah terkumpul, selalu hitung real-time
+    public function getCollectedAmountAttribute()
+    {
+        return $this->donations()
+            ->where('payment_status', 'success')
+            ->sum('amount');
+    }
+
+    public function getFormattedCollectedAttribute()
+    {
+        return 'Rp ' . number_format($this->collected_amount, 0, ',', '.');
+    }
+
+    public function getFormattedTargetAttribute()
+    {
+        return 'Rp ' . number_format($this->target_amount, 0, ',', '.');
+    }
+
+    public function getProgressPercentageAttribute()
+    {
+        if (!$this->target_amount || $this->target_amount <= 0) {
+            return 0;
+        }
+        $collected = $this->collected_amount;
+        return min(100, ($collected / $this->target_amount) * 100);
+    }
+
+    // recalculateCollectedAmount tidak perlu update/simpan ke database
+    public function recalculateCollectedAmount()
+    {
+        // Tidak perlu update field, cukup return nilai
+        return $this->collected_amount;
     }
 }

@@ -42,7 +42,9 @@
                             
                             <div class="row text-start">
                                 <div class="col-sm-4 fw-bold">Nominal:</div>
-                                <div class="col-sm-8 text-success fw-bold fs-5">{{ $donation->formatted_amount }}</div>
+                                <div class="col-sm-8 text-success fw-bold fs-5">
+                                    Rp {{ number_format($donation->amount, 0, ',', '.') }}
+                                </div>
                             </div>
                             <hr>
                             
@@ -58,11 +60,11 @@
     <div class="col-sm-4 fw-bold">Status:</div>
     <div class="col-sm-8">
         @if($donation->payment_status === 'success')
-            <span class="badge bg-success">Berhasil</span>
+            <span class="badge bg-success">Pembayaran Berhasil</span>
         @elseif($donation->payment_status === 'pending')
             <span class="badge bg-warning">Menunggu Pembayaran</span>
         @else
-            <span class="badge bg-danger">Gagal</span>
+            <span class="badge bg-danger">Pembayaran Gagal</span>
         @endif
     </div>
 </div>
@@ -131,28 +133,34 @@
             
             <!-- Campaign Progress Update -->
             <div class="card mt-4">
-                <div class="card-body">
-                    <h5 class="card-title">Progress Campaign</h5>
-                    <div class="progress mb-3" style="height: 12px;">
-                        <div class="progress-bar bg-success" 
-                             style="width: {{ $donation->campaign->progress_percentage }}%"></div>
-                    </div>
-                    <div class="row text-center">
-                        <div class="col-4">
-                            <h6 class="text-success">{{ $donation->campaign-> formatted_collected}}</h6>
-                            <small class="text-muted">Terkumpul</small>
-                        </div>
-                        <div class="col-4">
-                            <h6 class="text-primary">{{ $donation->campaign->formatted_target }}</h6>
-                            <small class="text-muted">Target</small>
-                        </div>
-                        <div class="col-4">
-                            <h6 class="text-warning">{{ $donation->campaign->donations->count() }}</h6>
-                            <small class="text-muted">Donatur</small>
-                        </div>
-                    </div>
-                </div>
+    <div class="card-body">
+        <h5 class="card-title">Progress Campaign</h5>
+        <div class="progress mb-3" style="height: 12px;">
+            <div class="progress-bar bg-success" 
+                 role="progressbar"
+                 style="width: {{ $donation->campaign->progress_percentage }}%"
+                 aria-valuenow="{{ $donation->campaign->progress_percentage }}"
+                 aria-valuemin="0" 
+                 aria-valuemax="100">
+                {{ $donation->campaign->progress_percentage }}%
             </div>
+        </div>
+        <div class="row text-center">
+            <div class="col-4">
+                <h6 class="text-success" id="collected-amount">{{ $donation->campaign->formatted_collected }}</h6>
+                <small class="text-muted">Terkumpul</small>
+            </div>
+            <div class="col-4">
+                <h6 class="text-primary">{{ $donation->campaign->formatted_target }}</h6>
+                <small class="text-muted">Target</small>
+            </div>
+            <div class="col-4">
+                <h6 class="text-warning" id="donor-count">{{ $donation->campaign->donations()->where('payment_status', 'success')->count() }}</h6>
+                <small class="text-muted">Donatur</small>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
     </div>
 </div>

@@ -169,6 +169,22 @@
         25% { transform: translateX(-5px); }
         75% { transform: translateX(5px); }
     }
+    
+.ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-effect 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple-effect {
+    to {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
 </style>
 
 <div class="bg-blue-light min-vh-100 py-5">
@@ -234,14 +250,10 @@
                         </div>
 
                         <hr class="border-blue-light">
-
                         <!-- Enhanced Donation Form -->
                         <form action="{{ route('donation.store') }}" method="POST" id="donationForm">
                             @csrf
                             <input type="hidden" name="campaign_id" value="{{ $campaign->id }}">
-
-    <input type="hidden" name="donor_name" value="{{ Auth::user()->name }}">
-    <input type="hidden" name="donor_email" value="{{ Auth::user()->email }}">
 
                             <!-- Enhanced Anonymous Checkbox -->
                             <div class="mb-4 p-3 bg-blue-light rounded-3 border border-blue-light">
@@ -337,10 +349,11 @@
                                    class="btn btn-outline-secondary btn-lg rounded-pill me-md-2 btn-animate">
                                     <i class="fas fa-arrow-left me-2"></i>Kembali
                                 </a>
-                                <button type="submit" 
-                                        class="btn btn-success btn-lg rounded-pill px-5 py-3 fw-bold btn-animate pulse-animation">
-                                    <i class="fas fa-heart me-2"></i>Lanjut ke Pembayaran
-                                </button>
+                            <button type="submit" id="pay-button" 
+                             class="btn btn-success btn-lg rounded-pill px-5 py-3 fw-bold btn-animate pulse-animation">
+                            <i class="fas fa-heart me-2"></i>Lanjut ke Pembayaran
+                            </button>
+
                             </div>
                         </form>
                     </div>
@@ -399,7 +412,7 @@
         </div>
     </div>
 </div>
-
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const quickAmountButtons = document.querySelectorAll('.quick-amount');
@@ -524,26 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<style>
-.ripple {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.6);
-    transform: scale(0);
-    animation: ripple-effect 0.6s linear;
-    pointer-events: none;
-}
-
-@keyframes ripple-effect {
-    to {
-        transform: scale(2);
-        opacity: 0;
-    }
-}
-</style>
-
 @endsection
-
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endpush

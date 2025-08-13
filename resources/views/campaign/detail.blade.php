@@ -284,14 +284,15 @@
                                 </div>
                             </div>
                             <div class="col-6">
-                                <div class="p-3 rounded-3 border btn-animate" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.25) !important;">
-                                    <div class="text-blue-light mb-2">
-                                        <i class="fas fa-calendar-alt icon-bounce" style="font-size: 1.5rem;"></i>
-                                    </div>
-                                    {{ optional($campaign->created_at)->diffInDays(now()) ?? 0 }}
-                                    <small class="text-muted fw-medium">Hari berjalan</small>
-                                </div>
-                            </div>
+    <div class="p-3 rounded-3 border btn-animate" style="background: rgba(14, 165, 233, 0.1); border-color: rgba(14, 165, 233, 0.25) !important;">
+        <div class="text-blue-light mb-2">
+            <i class="fas fa-calendar-alt icon-bounce" style="font-size: 1.5rem;"></i>
+        </div>
+        <h5 class="mb-1 fw-bold text-blue-light">{{ $campaign->days_elapsed }}</h5>
+        <small class="text-muted fw-medium">Hari berjalan</small>
+    </div>
+</div>
+
                         </div>
                         
                        @if($isActive)

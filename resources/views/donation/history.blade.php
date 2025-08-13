@@ -1,42 +1,75 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container">
-    <h2>Riwayat Donasi Saya</h2>
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-history me-2"></i>Riwayat Donasi Saya</h2>
 
     @if($donations->count() > 0)
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th>Tanggal</th>
-                    <th>Campaign</th>
-                    <th>Nominal</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($donations as $donation)
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
                     <tr>
-                        <td>{{ $donation->created_at->format('d M Y H:i') }}</td>
-                        <td>{{ $donation->campaign->title }}</td>
-                        <td>Rp {{ number_format($donation->amount, 0, ',', '.') }}</td>
-                        <td>
-                            @if($donation->payment_status === 'success')
-                                <span class="badge bg-success">Berhasil</span>
-                            @elseif($donation->payment_status === 'pending')
-                                <span class="badge bg-warning">Menunggu</span>
-                            @else
-                                <span class="badge bg-danger">Gagal</span>
-                            @endif
-                        </td>
+                        <th>Tanggal</th>
+                        <th>Campaign</th>
+                        <th>Nominal</th>
+                        <th>Komentar</th>
+                        <th>Status</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach($donations as $donation)
+                        <tr>
+                            <td>{{ $donation->created_at->format('d M Y H:i') }}</td>
+                            <td>
+                                <a href="{{ route('campaign.show', $donation->campaign->id) }}" class="text-decoration-none">
+                                    {{ $donation->campaign->title }}
+                                </a>
+                            </td>
+                            <td>Rp {{ number_format($donation->amount, 0, ',', '.') }}</td>
+                            <td>
+                                @if($donation->comment)
+                                    <span class="text-muted">{{ $donation->comment }}</span>
+                                @else
+                                    <span class="text-muted fst-italic">-</span>
+                                @endif
+                            </td>
+                            <td>
+                                @if($donation->payment_status === 'success')
+                                    <span class="badge bg-success">Berhasil</span>
+                                @elseif($donation->payment_status === 'pending')
+                                    <span class="badge bg-warning">Menunggu</span>
+                                @else
+                                    <span class="badge bg-danger">Gagal</span>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
 
-        {{ $donations->links() }}
+        <div class="d-flex justify-content-center mt-4">
+            <div class="pagination">
+                @if ($donations->onFirstPage())
+                    <span class="btn btn-outline-secondary disabled mx-1">&lt;</span>
+                @else
+                    <a href="{{ $donations->previousPageUrl() }}" class="btn btn-outline-primary mx-1">&lt;</a>
+                @endif
+
+                <span class="btn btn-outline-secondary disabled mx-1">
+                    {{ $donations->currentPage() }}
+                </span>
+
+                @if ($donations->hasMorePages())
+                    <a href="{{ $donations->nextPageUrl() }}" class="btn btn-outline-primary mx-1">&gt;</a>
+                @else
+                    <span class="btn btn-outline-secondary disabled mx-1">&gt;</span>
+                @endif
+            </div>
+        </div>
     @else
         <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
             Belum ada donasi yang kamu lakukan.
         </div>
     @endif
