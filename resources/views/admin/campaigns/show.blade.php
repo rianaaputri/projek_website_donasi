@@ -20,8 +20,10 @@
         <div class="card mb-4">
             <div class="card-body">
                 @if($campaign->image)
-                    <img src="{{ Storage::url($campaign->image) }}" alt="{{ $campaign->title }}" 
-                         class="img-fluid rounded mb-4" style="max-height: 400px; width: 100%; object-fit: cover;">
+                      <img src="{{ asset('storage/' . $campaign->image) }}" 
+                                                             class="rounded me-2" 
+                                                             style="width:40px;height:40px;object-fit:cover;" 
+                                                             alt="{{ $campaign->title }}">
                 @endif
 
                 <h2>{{ $campaign->title }}</h2>
