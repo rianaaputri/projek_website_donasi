@@ -294,21 +294,21 @@
                             </div>
                         </div>
                         
-                        <!-- Enhanced Donation Button -->
-                        @if($campaign->status === 'active' && $campaign->is_active)
-                            <div class="d-grid mb-4">
-                                <a href="{{ route('donation.create', $campaign->id) }}" 
-                                   class="btn btn-success btn-lg rounded-pill py-3 fw-bold shadow-sm btn-animate pulse-animation">
-                                    <i class="fas fa-heart me-2"></i>Donasi Sekarang
-                                </a>
-                            </div>
-                        @else
-                            <div class="d-grid mb-4">
-                                <button class="btn btn-secondary btn-lg rounded-pill py-3 fw-bold" disabled>
-                                    <i class="fas fa-times me-2"></i>Campaign Tidak Aktif
-                                </button>
-                            </div>
-                        @endif
+                       @if($isActive)
+    <div class="d-grid mb-4">
+        <a href="{{ route('donation.create', $campaign->id) }}" 
+           class="btn btn-success btn-lg rounded-pill py-3 fw-bold shadow-sm btn-animate pulse-animation">
+            <i class="fas fa-heart me-2"></i>Donasi Sekarang
+        </a>
+    </div>
+@else
+    <div class="d-grid mb-4">
+        <button class="btn btn-secondary btn-lg rounded-pill py-3 fw-bold" disabled>
+            <i class="fas fa-times me-2"></i>Campaign Tidak Aktif
+        </button>
+    </div>
+@endif
+
                         
                         <!-- Enhanced Share Buttons -->
                     </div>

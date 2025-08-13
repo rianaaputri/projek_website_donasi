@@ -132,19 +132,13 @@
 
 
                     <!-- Button Donasi -->
-                    @if($campaign->status === 'active' && $campaign->is_active)
+                    @if($campaign->status === 'active' )
                         <div class="d-grid">
                             <a href="{{ route('donation.create', $campaign->id) }}" class="btn btn-success btn-lg">
                                 <i class="fas fa-heart me-2"></i>Donasi Sekarang
                             </a>
                         </div>
-                    @else
-                        <div class="d-grid">
-                            <button class="btn btn-secondary btn-lg" disabled>
-                                <i class="fas fa-times me-2"></i>Campaign Tidak Aktif
-                            </button>
-                        </div>
-                    @endif
+              
 
                     <!-- Share Buttons -->
                     

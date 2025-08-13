@@ -18,19 +18,31 @@ class HomeController extends Controller
 
         return view('home', compact('campaigns'));
     }
+public function showCampaign($id)
+{
+    $campaign = Campaign::find($id);
 
-    public function showCampaign(Campaign $campaign)
-    {
-        // Ambil campaign beserta donasi terakhir
-        $campaign->load([
-            'donations' => function ($query) {
-                $query->paid()->latest();
-            }
-        ]);
-
-        // Ambil 10 donatur terbaru
-        $recentDonors = $campaign->donations->take(10);
-
-        return view('campaign.detail', compact('campaign', 'recentDonors'));
+    if (!$campaign) {
+        dd('Campaign not found', $id);
     }
+
+  
+
+    $isActive = $campaign->status === 'active' && $campaign->is_active;
+ 
+
+
+    // Ambil donasi terakhir (misal cuma yg paid)
+    $campaign->load([
+        'donations' => function ($query) {
+            $query->paid()->latest();
+        }
+    ]);
+
+    // Ambil 10 donatur terbaru
+    $recentDonors = $campaign->donations->take(10);
+
+    return view('campaign.detail', compact('campaign', 'recentDonors', 'isActive'));
+}
+
 }

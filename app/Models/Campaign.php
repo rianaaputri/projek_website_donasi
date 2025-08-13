@@ -20,7 +20,9 @@ class Campaign extends Model
         'deadline',
         'status',
         'image',
-        'is_active'
+        'is_active',
+        'target_amount',
+          'category', // <--- ini belum ada, tambahkan
     ];
 
     protected $casts = [
@@ -29,7 +31,7 @@ class Campaign extends Model
         'deadline' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
-        'is_active' => 'boolean'
+       'is_active' => 'boolean',
     ];
 
     /**
@@ -62,5 +64,16 @@ class Campaign extends Model
     public function scopeClosed($query)
     {
         return $query->where('status', 'closed');
+    }
+
+      public static function getCategories()
+    {
+        return [
+            'education' => 'Pendidikan',
+            'health'    => 'Kesehatan',
+            'charity'   => 'Amal',
+            'environment' => 'Lingkungan',
+            // tambahin sesuai kebutuhan
+        ];
     }
 }

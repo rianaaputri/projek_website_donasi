@@ -139,7 +139,7 @@ Route::prefix('admin')->middleware(['auth', 'role.check:admin'])->name('admin.')
 // ==============================
 Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/', [DonationController::class, 'index'])->name('index');
-    Route::get('/create/{campaign}', [DonationController::class, 'create'])->name('create');
+      Route::get('create/{campaign}', [DonationController::class, 'create'])->name('create');
     Route::post('/', [DonationController::class, 'store'])->name('store');
 
     Route::get('/payment/{donation}', [DonationController::class, 'payment'])->name('payment');

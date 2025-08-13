@@ -21,16 +21,20 @@ class DatabaseSeeder extends Seeder
     {
       DB::table('users')->insert([
 
-            'name' => 'fatma',
-            'email' => 'fatma@gmail.com',
-            'role' => 'admin',
-            'password' => Hash::make('123456'), 
+          
 
             'name' => 'Silva',
             'email' => 'silva@gmail.com',
             'role' => 'admin',
             'password' => Hash::make('123456'), // bcrypt otomatis
+            'email_verified_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
 
+            'name' => 'haerin',
+            'email' => 'haerin@gmail.com',
+            'role' => 'user',
+            'password' => Hash::make('123456'), // bcrypt otomatis
             'email_verified_at' => now(),
             'created_at' => now(),
             'updated_at' => now(),

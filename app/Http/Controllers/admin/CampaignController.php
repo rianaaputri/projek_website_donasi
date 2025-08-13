@@ -101,56 +101,52 @@ class CampaignController extends Controller
 public function store(Request $request)
 {
     $categories = array_keys(Campaign::getCategories());
-    
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'target_amount' => 'required|numeric|min:1000',
-        'category' => 'required|string|in:' . implode(',', $categories),
-        'end_date' => 'required|date|after:today',
-        'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'user_id' => 'required|exists:users,id',
-        'status' => 'sometimes|in:active,inactive,completed,cancelled'
-    ]);
 
-    try {
-        DB::beginTransaction();
+    // Validasi
+   $validated = $request->validate([
+    'title' => 'required|string|max:255',
+    'description' => 'required|string',
+    'target_amount' => 'required|numeric|min:1000',
+    'category' => 'required|string|in:' . implode(',', $categories),
+    'end_date' => 'required|date|after:today',
+    'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+    'user_id' => 'required|exists:users,id',
+    'status' => 'sometimes|in:active,inactive,completed,cancelled'
+]);
 
-        // Handle image upload
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('campaigns', 'public');
-            $validated['image'] = $imagePath;
-        }
+try {
+    DB::beginTransaction();
 
-        // Set default status if not provided
-        $validated['status'] = $validated['status'] ?? 'active';
-        
-        // HAPUS BARIS INI yang menyebabkan error:
-        // $validated['current_amount'] = 0;
-        
-        // Set collected_amount to 0 instead (if column exists)
-        $validated['collected_amount'] = 0;
-
-        $campaign = Campaign::create($validated);
-
-        DB::commit();
-
-        return redirect()
-            ->route('admin.campaigns.index')
-            ->with('success', 'Campaign berhasil dibuat!');
-
-    } catch (\Exception $e) {
-        DB::rollback();
-        
-        // Delete uploaded image if exists
-        if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-            Storage::disk('public')->delete($validated['image']);
-        }
-
-        return back()
-            ->withInput()
-            ->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
+    // Upload image
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('campaigns', 'public');
+        $validated['image'] = $imagePath;
     }
+
+    // Set default status
+    $validated['status'] = $validated['status'] ?? 'active';
+
+    // Set collected_amount ke 0
+    $validated['collected_amount'] = 0;
+
+    // Jangan bikin 'goal_amount', cukup pakai 'target_amount' sesuai DB
+    // Pastikan kolom ini ada di migration
+
+    $campaign = Campaign::create($validated);
+
+    DB::commit();
+
+    return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dibuat!');
+} catch (\Exception $e) {
+    DB::rollback();
+
+    if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
+        Storage::disk('public')->delete($validated['image']);
+    }
+
+    return back()->withInput()->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
+}
+
 }
 
     /**
