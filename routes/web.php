@@ -36,6 +36,9 @@ Route::middleware('guest')->group(function () {
     Route::get('/register', [UserController::class, 'showRegister'])->name('register');
     Route::post('/register', [UserController::class, 'register']);
 
+    Route::get('/admin/statistics', [StatisticsController::class, 'index'])
+    ->name('admin.statistics');
+
     // Password Reset
     Route::get('/forgot-password', [PasswordResetLinkController::class, 'create'])->name('password.request');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
