@@ -28,23 +28,27 @@ class LoginController extends Controller
         if (Auth::attempt($credentials, $request->filled('remember'))) {
             $user = Auth::user();
 
+            // Cek email terverifikasi
             if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
                 Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
                 return redirect()->route('verification.notice')
-                    ->with('warning', 'Silakan verifikasi email terlebih dahulu sebelum login.');
+                    ->with('warning', 'Silakan verifikasi email Anda terlebih dahulu sebelum login.');
             }
 
+            // Regenerate session untuk keamanan
             $request->session()->regenerate();
 
-            if ($user->role === 'admin') {
-                return redirect()->intended(route('admin.dashboard'));
-            }
-
-            return redirect()->intended(RouteServiceProvider::HOME);
+            // Redirect sesuai role
+            return $user->role === 'admin'
+                ? redirect()->intended(route('admin.dashboard'))
+                : redirect()->intended(RouteServiceProvider::HOME);
         }
 
         return back()->withErrors([
-            'email' => 'Email atau password salah.',
+            'email' => 'Kredensial tidak valid. Periksa email dan password Anda.',
         ])->withInput();
     }
 
@@ -57,11 +61,9 @@ class LoginController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        if ($role === 'admin') {
-            return redirect()->route('login')->with('success', 'Berhasil logout.');
-        }
-
-        return redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
+        return $role === 'admin'
+            ? redirect()->route('login')->with('success', 'Berhasil logout.')
+            : redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
     }
 
     // Forgot Password Methods
@@ -76,18 +78,13 @@ class LoginController extends Controller
             'email' => ['required', 'email'],
         ]);
 
-        // Cek apakah email ada di database
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        if ($status === Password::RESET_LINK_SENT) {
-            return back()->with('success', 'Link reset password telah dikirim ke email Anda.');
-        }
-
-        return back()->withErrors([
-            'email' => 'Email tidak ditemukan dalam sistem kami.',
-        ]);
+        return $status === Password::RESET_LINK_SENT
+            ? back()->with('success', 'Link reset password telah dikirim ke email Anda.')
+            : back()->withErrors(['email' => 'Email tidak ditemukan dalam sistem kami.']);
     }
 
     public function showResetPasswordForm(Request $request, $token = null)
@@ -115,17 +112,13 @@ class LoginController extends Controller
 
                 $user->save();
 
-                // Logout dari semua device
+                // Trigger event reset password
                 event(new \Illuminate\Auth\Events\PasswordReset($user));
             }
         );
 
-        if ($status === Password::PASSWORD_RESET) {
-            return redirect()->route('login')->with('success', 'Password berhasil direset. Silakan login dengan password baru.');
-        }
-
-        return back()->withErrors([
-            'email' => 'Token reset password tidak valid atau sudah expired.',
-        ]);
+        return $status === Password::PASSWORD_RESET
+            ? redirect()->route('login')->with('success', 'Password berhasil direset. Silakan login dengan password baru.')
+            : back()->withErrors(['email' => 'Token reset password tidak valid atau sudah expired.']);
     }
 }
