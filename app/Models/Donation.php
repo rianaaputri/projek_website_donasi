@@ -14,7 +14,7 @@ class Donation extends Model
         'user_id',
         'campaign_id',
         'amount',
-        'message',
+        'comment',
         'is_anonymous',
         'payment_method',
         'payment_status',
