@@ -13,22 +13,27 @@ use App\Http\Controllers\{
     Auth\LoginController,
     Auth\PasswordResetLinkController,
     Auth\NewPasswordController,
-    AdminDashboardController
+    AdminDashboardController,
+    CampaignController // ✅ Tambahkan import ini untuk route publik & admin
 };
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
-use App\Http\Controllers\User\CampaignController as UserCampaignController; // ✅ Controller user buat campaign
+use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Models\User;
 
-// ==============================
-// PUBLIC ROUTES
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
 
-// ==============================
-// AUTH ROUTES (guest only)
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Auth (Guest Only)
+|--------------------------------------------------------------------------
+*/
 Route::middleware('guest')->group(function () {
     Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [LoginController::class, 'login']);
@@ -42,14 +47,14 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.update');
 });
 
-// Logout (global)
+// Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-Route::get('/campaigns/{id}', [CampaignController::class, 'detail'])->name('campaign.detail');
-
-// ==============================
-// EMAIL VERIFICATION
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Email Verification
+|--------------------------------------------------------------------------
+*/
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->middleware('auth')->name('verification.notice');
@@ -75,9 +80,11 @@ Route::middleware('auth')->group(function () {
         ->name('verification.send');
 });
 
-// ==============================
-// DASHBOARD REDIRECT
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Dashboard Redirect
+|--------------------------------------------------------------------------
+*/
 Route::get('/dashboard', function () {
     $user = auth()->user();
     return $user->role === 'admin'
@@ -85,9 +92,11 @@ Route::get('/dashboard', function () {
         : redirect('/');
 })->middleware(['auth'])->name('dashboard');
 
-// ==============================
-// USER PROTECTED ROUTES
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Profile Routes (User)
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -96,24 +105,26 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
-// ==============================
-// USER CAMPAIGN ROUTES (User buat & lihat campaign)
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| User Campaign Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'role.check:user'])->group(function () {
-    // Form & submit campaign
     Route::get('/campaigns/create', [UserCampaignController::class, 'create'])->name('user.campaigns.create');
     Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('user.campaigns.store');
-
-    // 🔽 history campaign milik user
     Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaign.history');
-
-    // 🔽 Detail campaign milik user
     Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('user.campaigns.detail');
 });
-Route::get('/campaigns/{id}', [CampaignController::class, 'detail'])->name('campaign.detail');
-// ==============================
-// ADMIN ROUTES
-// ==============================
+
+// Route publik untuk detail campaign (hindari bentrok dengan milik user)
+Route::get('/campaign-detail/{id}', [CampaignController::class, 'detail'])->name('campaign.detail');
+
+/*
+|--------------------------------------------------------------------------
+| Admin Routes
+|--------------------------------------------------------------------------
+*/
 Route::prefix('admin')
     ->middleware(['auth', 'role.check:admin'])
     ->name('admin.')
@@ -129,12 +140,12 @@ Route::prefix('admin')
         Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
-        // 🔽 1. Verifikasi campaign (admin)
+        // Verifikasi campaign
         Route::get('/campaigns/verify', [CampaignController::class, 'verifyIndex'])->name('campaigns.verify');
         Route::patch('/campaigns/{id}/verify', [CampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
         Route::patch('/campaigns/{id}/reject', [CampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
 
-        // 🔽 2. Resource controller untuk admin (CRUD full)
+        // CRUD Campaign
         Route::resource('campaigns', CampaignController::class);
 
         // Donations
@@ -143,9 +154,11 @@ Route::prefix('admin')
         Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');
     });
 
-// ==============================
-// DONATION PUBLIC ROUTES
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Donation Public Routes
+|--------------------------------------------------------------------------
+*/
 Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/', [DonationController::class, 'index'])->name('index');
     Route::get('/create/{campaign}', [DonationController::class, 'create'])->name('create');
@@ -156,15 +169,18 @@ Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
 });
 
-// ==============================
-// MIDTRANS CALLBACK
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Midtrans Callback
+|--------------------------------------------------------------------------
+*/
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
 
-// ==============================
-// VERIFIED USER ROUTES
-// ==============================
+/*
+|--------------------------------------------------------------------------
+| Verified User Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/donations/history', [DonationController::class, 'myDonations'])
-        ->name('donation.history');
+    Route::get('/donations/history', [DonationController::class, 'myDonations'])->name('donation.history');
 });

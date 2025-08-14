@@ -390,47 +390,55 @@
                             <a class="btn btn-light btn-sm" href="{{ route('register') }}">Daftar</a>
                         </li>
                     @else
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
-                                <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
-                            </a>
-                            <ul class="dropdown-menu">
-                               @if (Auth::user()->role === 'admin')
-    <li>
-        <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
-            <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
-        </a>
-    </li>
-@elseif (Auth::user()->role === 'user')
-    <li>
-        <a class="dropdown-item" href="{{ route('profile.show') }}">
-            <i class="fas fa-user me-2"></i>Profil Saya
-        </a>
-    </li>
-    <li>
-        <a class="dropdown-item" href="{{ route('donation.history') }}">
-            <i class="fas fa-history me-2"></i>Riwayat Donasi
-        </a>
-    </li>
-        <li>
-        <a class="dropdown-item" href="{{ route('campaign.history') }}">
-            <i class="fas fa-list-alt me-2"></i>history Campaign
-        </a>
-    </li>
-@endif
+                        @if(Auth::user()->hasVerifiedEmail())
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle me-1"></i> {{ Auth::user()->name }}
+                                </a>
+                                <ul class="dropdown-menu">
+                                    @if (Auth::user()->role === 'admin')
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
+                                                <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
+                                            </a>
+                                        </li>
+                                    @elseif (Auth::user()->role === 'user')
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('profile.show') }}">
+                                                <i class="fas fa-user me-2"></i>Profil Saya
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('donation.history') }}">
+                                                <i class="fas fa-history me-2"></i>Riwayat Donasi
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('campaign.history') }}">
+                                                <i class="fas fa-list-alt me-2"></i>History Campaign
+                                            </a>
+                                        </li>
+                                    @endif
 
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('logout') }}" 
-                                       onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                                    </a>
-                                    <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                        @csrf
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('logout') }}" 
+                                        onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                        </a>
+                                        <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                            @csrf
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        @else
+                            <li class="nav-item">
+                                <a class="btn btn-warning btn-sm" href="{{ route('verification.notice') }}">
+                                    <i class="fas fa-envelope me-1"></i> Verifikasi Email
+                                </a>
+                            </li>
+                        @endif
                     @endguest
                 </ul>
             </div>

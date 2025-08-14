@@ -25,9 +25,20 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-        $request->session()->regenerate();
 
         $user = Auth::user();
+
+        // Cek apakah email sudah diverifikasi
+        if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('verification.notice')
+                ->with('warning', 'Silakan verifikasi email Anda terlebih dahulu sebelum login.');
+        }
+
+        $request->session()->regenerate();
 
         // Redirect berdasarkan role
         if ($user->role === 'admin') {

@@ -48,7 +48,7 @@ class Kernel extends HttpKernel
     /**
      * The application's middleware aliases.
      *
-     * Aliases may be used individually or within groups.
+     * Aliases may be us ed individually or within groups.
      *
      * @var array<string, class-string|string>
      */
