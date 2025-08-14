@@ -412,6 +412,11 @@
             <i class="fas fa-history me-2"></i>Riwayat Donasi
         </a>
     </li>
+        <li>
+        <a class="dropdown-item" href="{{ route('campaign.history') }}">
+            <i class="fas fa-list-alt me-2"></i>history Campaign
+        </a>
+    </li>
 @endif
 
                                 <li><hr class="dropdown-divider"></li>
