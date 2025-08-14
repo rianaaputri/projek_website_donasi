@@ -295,20 +295,24 @@
 
                         </div>
                         
-                       @if($isActive)
-    <div class="d-grid mb-4">
-        <a href="{{ route('donation.create', $campaign->id) }}" 
-           class="btn btn-success btn-lg rounded-pill py-3 fw-bold shadow-sm btn-animate pulse-animation">
-            <i class="fas fa-heart me-2"></i>Donasi Sekarang
-        </a>
-    </div>
-@else
-    <div class="d-grid mb-4">
+                      <div class="d-grid mb-4">
+    @if($isActive)
+        @auth
+            <a href="{{ route('donation.create', $campaign->id) }}" 
+               class="btn btn-success btn-lg rounded-pill py-3 fw-bold shadow-sm btn-animate pulse-animation">
+                <i class="fas fa-heart me-2"></i>Donasi Sekarang
+            </a>
+        @else
+            <button id="donate-btn" class="btn btn-success btn-lg rounded-pill py-3 fw-bold shadow-sm btn-animate pulse-animation">
+                <i class="fas fa-heart me-2"></i>Donasi Sekarang
+            </button>
+        @endauth
+    @else
         <button class="btn btn-secondary btn-lg rounded-pill py-3 fw-bold" disabled>
             <i class="fas fa-times me-2"></i>Campaign Tidak Aktif
         </button>
-    </div>
-@endif
+    @endif
+</div>
 
                         
                         <!-- Enhanced Share Buttons -->
@@ -318,8 +322,33 @@
         </div>
     </div>
 </div>
-
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const donateBtn = document.getElementById('donate-btn');
+        if(donateBtn){
+            donateBtn.addEventListener('click', function() {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Login Dulu!',
+                    text: 'Kamu harus login sebelum berdonasi.',
+                    confirmButtonText: 'Login',
+                    showCancelButton: true,
+                    cancelButtonText: 'Batal'
+                }).then((result) => {
+                    if(result.isConfirmed){
+                        window.location.href = "{{ route('login') }}";
+                    }
+                });
+            });
+        }
+    });
+</script>
+@endpush
+<script>
+
+    
 document.addEventListener('DOMContentLoaded', function() {
     // Add smooth scrolling for anchor links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
