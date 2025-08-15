@@ -414,7 +414,7 @@
                                             </a>
                                         </li>
                                         <li>
-                                            <a class="dropdown-item" href="{{ route('campaign.history') }}">
+                                            <a class="dropdown-item" href="{{ route('user.campaigns.history') }}">
                                                 <i class="fas fa-list-alt me-2"></i>History Campaign
                                             </a>
                                         </li>

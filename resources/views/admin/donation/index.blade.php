@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Kelola Donasi')
+@section('title', 'Laporan Donasi')
 
 @section('content')
 <div class="container-fluid">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">Kelola Donasi</h1>
+        <h1 class="h3 mb-0 text-gray-800">Laporan Donasi</h1>
         <div class="d-flex gap-2">
             <a href="" class="btn btn-info btn-sm">
                 <i class="fas fa-chart-bar"></i> Analytics
@@ -174,40 +174,14 @@
 
     <!-- Donations Table -->
     <div class="card shadow mb-4">
-        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+        <div class="card-header py-3">
             <h6 class="m-0 font-weight-bold text-primary">Daftar Donasi</h6>
-            <div>
-                <button type="button" class="btn btn-sm btn-warning" onclick="showBulkUpdateModal()">
-                    <i class="fas fa-edit"></i> Bulk Update
-                </button>
-            </div>
         </div>
         <div class="card-body">
-            @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span>&times;</span>
-                    </button>
-                </div>
-            @endif
-
-            @if(session('error'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('error') }}
-                    <button type="button" class="close" data-dismiss="alert">
-                        <span>&times;</span>
-                    </button>
-                </div>
-            @endif
-
             <div class="table-responsive">
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th width="30">
-                                <input type="checkbox" id="selectAll">
-                            </th>
                             <th>ID</th>
                             <th>Campaign</th>
                             <th>Donatur</th>
@@ -215,16 +189,11 @@
                             <th>Jumlah</th>
                             <th>Status</th>
                             <th>Tanggal</th>
-                            <th>Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse($donations as $donation)
                             <tr>
-                                <td>
-                                    <input type="checkbox" class="donation-checkbox" 
-                                           value="{{ $donation->id }}">
-                                </td>
                                 <td>{{ $donation->id }}</td>
                                 <td>
                                     <a href="{{ route('campaign.show', $donation->campaign->id) }}" 
@@ -239,68 +208,30 @@
                                 </td>
                                 <td>
                                     @if($donation->status == 'success')
-                                        <span class="badge badge-success">Success</span>
+                                        <span class="badge badge-success">
+                                            <i class="fas fa-check-circle"></i> Success
+                                        </span>
                                     @elseif($donation->status == 'pending')
-                                        <span class="badge badge-warning">Pending</span>
+                                        <span class="badge badge-warning">
+                                            <i class="fas fa-clock"></i> Pending
+                                        </span>
                                     @else
-                                        <span class="badge badge-danger">Failed</span>
+                                        <span class="badge badge-danger">
+                                            <i class="fas fa-times-circle"></i> Failed
+                                        </span>
                                     @endif
                                 </td>
                                 <td>{{ $donation->created_at->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        <a href="" 
-                                           class="btn btn-sm btn-info" title="Detail">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-warning dropdown-toggle" 
-                                                    type="button" data-toggle="dropdown">
-                                                Status
-                                            </button>
-                                            <div class="dropdown-menu">
-                                                <form method="POST" 
-                                                      action=""
-                                                      style="display: inline;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="pending">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-clock text-warning"></i> Pending
-                                                    </button>
-                                                </form>
-                                                <form method="POST" 
-                                                      action=""
-                                                      style="display: inline;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="success">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-check text-success"></i> Success
-                                                    </button>
-                                                </form>
-                                                <form method="POST" 
-                                                      action=""
-                                                      style="display: inline;">
-                                                    @csrf
-                                                    @method('PATCH')
-                                                    <input type="hidden" name="status" value="failed">
-                                                    <button type="submit" class="dropdown-item">
-                                                        <i class="fas fa-times text-danger"></i> Failed
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-danger" 
-                                                onclick="confirmDelete({{ $donation->id }})" title="Hapus">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </div>
-                                </td>
+                            
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="9" class="text-center">Tidak ada data donasi</td>
+                                <td colspan="8" class="text-center">
+                                    <div class="py-4">
+                                        <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
+                                        <p class="text-gray-500">Tidak ada data donasi</p>
+                                    </div>
+                                </td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -309,7 +240,7 @@
 
             <!-- Pagination -->
             <div class="d-flex justify-content-between align-items-center mt-3">
-                <div>
+                <div class="text-muted">
                     Menampilkan {{ $donations->firstItem() ?? 0 }} sampai {{ $donations->lastItem() ?? 0 }} 
                     dari {{ $donations->total() }} hasil
                 </div>
@@ -319,116 +250,29 @@
     </div>
 </div>
 
-<!-- Bulk Update Modal -->
-<div class="modal fade" id="bulkUpdateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Bulk Update Status</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <form id="bulkUpdateForm" method="POST" action="">
-                @csrf
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="bulk_status">Status Baru</label>
-                        <select name="bulk_status" id="bulk_status" class="form-control" required>
-                            <option value="">Pilih Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="success">Success</option>
-                            <option value="failed">Failed</option>
-                        </select>
-                    </div>
-                    <div id="selected-donations"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Konfirmasi Hapus</h5>
-                <button type="button" class="close" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                Apakah Anda yakin ingin menghapus donasi ini? Tindakan ini tidak dapat dibatalkan.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Hapus</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 @endsection
 
 @push('scripts')
 <script>
-// Select all checkbox functionality
-document.getElementById('selectAll').addEventListener('change', function() {
-    const checkboxes = document.querySelectorAll('.donation-checkbox');
-    checkboxes.forEach(checkbox => {
-        checkbox.checked = this.checked;
-    });
-});
-
-// Show bulk update modal
-function showBulkUpdateModal() {
-    const selectedCheckboxes = document.querySelectorAll('.donation-checkbox:checked');
-    
-    if (selectedCheckboxes.length === 0) {
-        alert('Pilih minimal satu donasi untuk di-update');
-        return;
-    }
-    
-    const selectedDonations = document.getElementById('selected-donations');
-    selectedDonations.innerHTML = '';
-    
-    selectedCheckboxes.forEach(checkbox => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = 'donation_ids[]';
-        input.value = checkbox.value;
-        selectedDonations.appendChild(input);
-    });
-    
-    $('#bulkUpdateModal').modal('show');
-}
-
 // Export donations
 function exportDonations() {
     const params = new URLSearchParams(window.location.search);
-    const exportUrl = '?' + params.toString();
+    const exportUrl = '/admin/donations/export?' + params.toString();
     window.location.href = exportUrl;
 }
 
-// Confirm delete
-function confirmDelete(donationId) {
-    const deleteForm = document.getElementById('deleteForm');
-    deleteForm.action = '/admin/donations/' + donationId;
-    $('#deleteModal').modal('show');
-}
-
-// Auto-hide alerts
-setTimeout(function() {
-    $('.alert').fadeOut('slow');
-}, 5000);
+// Initialize DataTable if needed
+$(document).ready(function() {
+    $('#dataTable').DataTable({
+        "paging": false,
+        "searching": false,
+        "info": false,
+        "ordering": true,
+        "order": [[ 0, "desc" ]],
+        "columnDefs": [
+            { "orderable": false, "targets": [7] }
+        ]
+    });
+});
 </script>
 @endpush

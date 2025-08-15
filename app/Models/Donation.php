@@ -19,8 +19,6 @@ class Donation extends Model
         'payment_method',
         'payment_status',
         'payment_reference',
-        'donor_name',
-    'donor_email'
     ];
 
     protected $casts = [

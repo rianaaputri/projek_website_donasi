@@ -21,7 +21,6 @@ class CampaignController extends Controller
     public function index(Request $request)
     {
         try {
-            // Use raw query builder to avoid relationship issues
             $query = Campaign::select('*');
 
             // Search functionality
@@ -70,7 +69,6 @@ class CampaignController extends Controller
         } catch (\Exception $e) {
             Log::error('Campaign index error: ' . $e->getMessage());
             
-            // Ultimate fallback
             $campaigns = Campaign::paginate(10);
             $categories = [];
             $statuses = [];
@@ -85,9 +83,8 @@ class CampaignController extends Controller
      */
     public function create()
     {
-        // Fix: Check if is_active column exists, if not just get users with role 'user'
         $users = $this->getActiveUsers();
-        $categories = Campaign::getCategories();
+        $categories = $this->getCategoryOptions();
         
         return view('admin.campaigns.create', compact('users', 'categories'));
     }
@@ -95,59 +92,58 @@ class CampaignController extends Controller
     /**
      * Store a newly created campaign.
      */
-   /**
- * Store a newly created campaign.
- */
-public function store(Request $request)
-{
-    $categories = array_keys(Campaign::getCategories());
+    public function store(Request $request)
+    {
+        $categories = array_keys($this->getCategoryOptions());
 
-    // Validasi
-   $validated = $request->validate([
-    'title' => 'required|string|max:255',
-    'description' => 'required|string',
-    'target_amount' => 'required|numeric|min:1000',
-    'category' => 'required|string|in:' . implode(',', $categories),
-    'end_date' => 'required|date|after:today',
-    'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-    'user_id' => 'required|exists:users,id',
-    'status' => 'sometimes|in:active,inactive,completed,cancelled'
-]);
+        // Validasi
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'target_amount' => 'required|numeric|min:1000',
+            'category' => 'required|string|in:' . implode(',', $categories),
+            'end_date' => 'required|date|after:today',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'user_id' => 'required|exists:users,id',
+            'status' => 'sometimes|in:active,inactive,completed,cancelled'
+        ]);
 
-try {
-    DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-    // Upload image
-    if ($request->hasFile('image')) {
-        $imagePath = $request->file('image')->store('campaigns', 'public');
-        $validated['image'] = $imagePath;
+            // Upload image
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('campaigns', 'public');
+                $validated['image'] = $imagePath;
+            }
+
+            // Set default status
+            $validated['status'] = $validated['status'] ?? 'active';
+
+            // Set collected_amount ke 0
+            $validated['collected_amount'] = 0;
+
+            $campaign = Campaign::create($validated);
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.campaigns.index')
+                ->with('success', 'Campaign berhasil dibuat!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
+                Storage::disk('public')->delete($validated['image']);
+            }
+
+            Log::error('Campaign store error: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
+        }
     }
-
-    // Set default status
-    $validated['status'] = $validated['status'] ?? 'active';
-
-    // Set collected_amount ke 0
-    $validated['collected_amount'] = 0;
-
-    // Jangan bikin 'goal_amount', cukup pakai 'target_amount' sesuai DB
-    // Pastikan kolom ini ada di migration
-
-    $campaign = Campaign::create($validated);
-
-    DB::commit();
-
-    return redirect()->route('admin.campaigns.index')->with('success', 'Campaign berhasil dibuat!');
-} catch (\Exception $e) {
-    DB::rollback();
-
-    if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-        Storage::disk('public')->delete($validated['image']);
-    }
-
-    return back()->withInput()->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
-}
-
-}
 
     /**
      * Display the specified campaign.
@@ -170,7 +166,7 @@ try {
                     ->where('campaign_id', $campaign->id)
                     ->sum('amount') ?? 0;
                 
-                // Get recent donations with raw query to avoid relationship issues
+                // Get recent donations with raw query
                 $recentDonationsData = DB::table('donations')
                     ->where('campaign_id', $campaign->id)
                     ->orderBy('created_at', 'desc')
@@ -182,7 +178,6 @@ try {
             
         } catch (\Exception $e) {
             Log::error('Campaign donations calculation error: ' . $e->getMessage());
-            // Keep default values
         }
         
         $progressPercentage = $campaign->target_amount > 0 
@@ -203,68 +198,68 @@ try {
      */
     public function edit(Campaign $campaign)
     {
-        // Fix: Use helper method to get active users
         $users = $this->getActiveUsers();
-        $categories = Campaign::getCategories();
+        $categories = $this->getCategoryOptions();
         
         return view('admin.campaigns.edit', compact('campaign', 'users', 'categories'));
     }
+    
 
     /**
      * Update the specified campaign.
      */
     public function update(Request $request, Campaign $campaign)
-{
-    $categories = array_keys(Campaign::getCategories() ?? []);
+    {
+        $categories = array_keys($this->getCategoryOptions());
 
-    $validated = $request->validate([
-        'title' => 'required|string|max:255',
-        'description' => 'required|string',
-        'target_amount' => 'required|numeric|min:1000',
-        'category' => 'required|string|in:' . implode(',', $categories),
-        'end_date' => 'required|date|after_or_equal:today',
-        'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'user_id' => 'required|exists:users,id',
-        'status' => 'required|in:active,inactive,completed,cancelled'
-    ]);
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string',
+            'target_amount' => 'required|numeric|min:1000',
+            'category' => 'required|string|in:' . implode(',', $categories),
+            'end_date' => 'required|date|after_or_equal:today',
+            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'user_id' => 'required|exists:users,id',
+            'status' => 'required|in:active,inactive,completed,cancelled'
+        ]);
 
-    try {
-        DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-        $oldImage = $campaign->image;
+            $oldImage = $campaign->image;
 
-        // Upload gambar baru kalau ada
-        if ($request->hasFile('image')) {
-            $imagePath = $request->file('image')->store('campaigns', 'public');
-            $validated['image'] = $imagePath;
+            // Upload gambar baru kalau ada
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('campaigns', 'public');
+                $validated['image'] = $imagePath;
+            }
+
+            $campaign->update($validated);
+
+            // Hapus gambar lama kalau ada gambar baru
+            if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
+                Storage::disk('public')->delete($oldImage);
+            }
+
+            DB::commit();
+
+            return redirect()
+                ->route('admin.campaigns.index')
+                ->with('success', 'Campaign berhasil diperbarui!');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+
+            if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
+                Storage::disk('public')->delete($validated['image']);
+            }
+
+            Log::error('Campaign update error: ' . $e->getMessage());
+            return back()
+                ->withInput()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
-
-        $campaign->update($validated);
-
-        // Hapus gambar lama kalau ada gambar baru
-        if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
-            Storage::disk('public')->delete($oldImage);
-        }
-
-        DB::commit();
-
-        return redirect()
-            ->route('admin.campaigns.index')
-            ->with('success', 'Campaign berhasil diperbarui!');
-
-    } catch (\Exception $e) {
-        DB::rollback();
-
-        if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-            Storage::disk('public')->delete($validated['image']);
-        }
-
-        return back()
-            ->withInput()
-            ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
-}
-
 
     /**
      * Remove the specified campaign.
@@ -274,7 +269,7 @@ try {
         try {
             DB::beginTransaction();
 
-            // Check if campaign has donations using raw query
+            // Check if campaign has donations
             $donationCount = 0;
             if (Schema::hasTable('donations')) {
                 $donationCount = DB::table('donations')
@@ -303,6 +298,7 @@ try {
 
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Campaign destroy error: ' . $e->getMessage());
 
             return back()->with('error', 'Terjadi kesalahan saat menghapus campaign: ' . $e->getMessage());
         }
@@ -333,6 +329,7 @@ try {
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Campaign status update error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah status: ' . $e->getMessage()
@@ -352,7 +349,7 @@ try {
                     ->with('error', 'Tabel donasi tidak ditemukan.');
             }
 
-            // Get donations using raw query to avoid relationship issues
+            // Get donations using raw query
             $donationsData = DB::table('donations')
                 ->where('campaign_id', $campaign->id)
                 ->orderBy('created_at', 'desc')
@@ -367,40 +364,6 @@ try {
                 ->route('admin.campaigns.show', $campaign)
                 ->with('error', 'Terjadi kesalahan saat memuat data donasi.');
         }
-    }
-
-    /**
-     * Debug method to check campaign relationships
-     */
-    public function debug(Campaign $campaign)
-    {
-        if (!app()->environment('local')) {
-            abort(404);
-        }
-
-        $debug = [
-            'campaign_id' => $campaign->id,
-            'campaign_methods' => get_class_methods($campaign),
-            'donations_table_exists' => Schema::hasTable('donations'),
-            'users_table_exists' => Schema::hasTable('users'),
-            'donation_model_exists' => class_exists('App\Models\Donation'),
-        ];
-
-        if (Schema::hasTable('donations')) {
-            $debug['donations_columns'] = Schema::getColumnListing('donations');
-            $debug['donations_count'] = DB::table('donations')->where('campaign_id', $campaign->id)->count();
-        }
-
-        return response()->json($debug);
-    }
-
-    /**
-     * Get available campaign categories.
-     * @deprecated Use Campaign::getCategories() instead
-     */
-    private function getCampaignCategories()
-    {
-        return Campaign::getCategories();
     }
 
     /**
@@ -458,41 +421,34 @@ try {
 
         } catch (\Exception $e) {
             DB::rollback();
+            Log::error('Campaign bulk action error: ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
     /**
-     * Helper method to get active users based on available columns
+     * Helper method to get active users
      */
     private function getActiveUsers()
     {
-        $query = User::select('id', 'name', 'email');
-        
-        // Check if we have role functionality
-        if (method_exists(User::class, 'role')) {
-            $query->role('user');
-        } else {
-            // If no role method, check if role column exists
+        try {
+            $query = User::select('id', 'name', 'email');
+            
+            // Check if we have role functionality
             if (Schema::hasColumn('users', 'role')) {
                 $query->where('role', 'user');
             }
-        }
-        
-        // Check if is_active column exists
-        if (Schema::hasColumn('users', 'is_active')) {
-            $query->where('is_active', true);
-        } else if (method_exists(User::class, 'active')) {
-            // If there's an active scope but no is_active column, 
-            // it might be using a different column name
-            try {
-                $query->active();
-            } catch (\Exception $e) {
-                // If active scope fails, just continue without it
+            
+            // Check if is_active column exists
+            if (Schema::hasColumn('users', 'is_active')) {
+                $query->where('is_active', true);
             }
+            
+            return $query->get();
+        } catch (\Exception $e) {
+            Log::error('Get active users error: ' . $e->getMessage());
+            return User::select('id', 'name', 'email')->get();
         }
-        
-        return $query->get();
     }
 
     /**
@@ -501,6 +457,7 @@ try {
     private function getCategoryOptions()
     {
         try {
+            // Check if Campaign model has getCategories method
             if (method_exists(Campaign::class, 'getCategories')) {
                 return Campaign::getCategories();
             }
@@ -515,7 +472,15 @@ try {
                 'lingkungan' => 'Lingkungan'
             ];
         } catch (\Exception $e) {
-            return [];
+            Log::error('Get category options error: ' . $e->getMessage());
+            return [
+                'kesehatan' => 'Kesehatan',
+                'pendidikan' => 'Pendidikan', 
+                'infrastruktur' => 'Infrastruktur',
+                'bencana_alam' => 'Bencana Alam',
+                'kemanusiaan' => 'Kemanusiaan',
+                'lingkungan' => 'Lingkungan'
+            ];
         }
     }
 
@@ -525,6 +490,7 @@ try {
     private function getStatusOptions()
     {
         try {
+            // Check if Campaign model has getStatuses method
             if (method_exists(Campaign::class, 'getStatuses')) {
                 return Campaign::getStatuses();
             }
@@ -537,7 +503,14 @@ try {
                 'cancelled' => 'Dibatalkan'
             ];
         } catch (\Exception $e) {
-            return [];
+            Log::error('Get status options error: ' . $e->getMessage());
+            return [
+                'active' => 'Aktif',
+                'inactive' => 'Tidak Aktif',
+                'completed' => 'Selesai',
+                'cancelled' => 'Dibatalkan'
+            ];
         }
     }
+    
 }
