@@ -19,6 +19,7 @@ use App\Http\Controllers\{
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
+use App\Http\Controllers\Auth\VerificationController; // ✅ Tambah import
 use App\Models\User;
 
 /*
@@ -55,31 +56,27 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 | Email Verification
 |--------------------------------------------------------------------------
 */
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
-
-Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
-    $user = User::findOrFail($id);
-
-    if (!hash_equals((string)$hash, sha1($user->getEmailForVerification()))) {
-        abort(403, 'Link verifikasi tidak valid.');
-    }
-
-    if ($user->hasVerifiedEmail()) {
-        return redirect()->route('login')->with('success', 'Email sudah terverifikasi, silakan login.');
-    }
-
-    $user->markEmailAsVerified();
-    return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
-})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
-
 Route::middleware('auth')->group(function () {
-    Route::post('/email/verification-notification', [\App\Http\Controllers\VerificationController::class, 'resend'])
+    // Verification notice - gunakan controller
+    Route::get('/email/verify', [VerificationController::class, 'notice'])
+        ->name('verification.notice');
+    
+    // Resend verification
+    Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
         ->middleware(['throttle:6,1'])
         ->name('verification.send');
 });
 
+// Verification verify - TANPA middleware signed dan auth
+// Karena kita handle manual di controller
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->middleware(['throttle:6,1'])
+    ->name('verification.verify');
+
+// Optional: Route untuk expired link (jika mau bikin halaman khusus)
+Route::get('/email/verify/expired', function () {
+    return view('auth.verification-link-expired');
+})->name('verification.expired');
 /*
 |--------------------------------------------------------------------------
 | Dashboard Redirect
