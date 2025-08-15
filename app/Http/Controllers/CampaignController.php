@@ -21,37 +21,34 @@ class CampaignController extends Controller
         return view('admin.campaigns.create');
     }
 
-  public function store(Request $request)
-{
-    $validatedData = $request->validate([
-        'title' => 'required|max:255',
-        'description' => 'required',
-        'target_amount' => 'required|numeric',
-        'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
-        'category' => 'required'
-    ]);
+    public function store(Request $request)
+    {
+        $validatedData = $request->validate([
+            'title' => 'required|max:255',
+            'description' => 'required',
+            'target_amount' => 'required|numeric',
+            'image' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+            'category' => 'required'
+        ]);
 
-    if ($request->file('image')) {
-        $image = $request->file('image')->store('campaign-images', 'public');
-        $validatedData['image'] = $image;
+        if ($request->file('image')) {
+            $image = $request->file('image')->store('campaign-images', 'public');
+            $validatedData['image'] = $image;
+        }
+
+        $validatedData['collected_amount'] = 0;
+        $validatedData['status'] = 'active';
+        $validatedData['verification_status'] = 'accepted'; // Admin buat langsung diterima
+
+        Campaign::create($validatedData);
+
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign berhasil dibuat.');
     }
-
-    // Tambahan default
-    $validatedData['collected_amount'] = 0;
-    $validatedData['status'] = 'active';
-    $validatedData['is_active'] = true;
-
-    Campaign::create($validatedData);
-
-    return redirect()->route('admin.campaigns.index')
-        ->with('success', 'Campaign created successfully');
-}
-
-
 
     public function edit(Campaign $campaign)
     {
-        return view('campaign.edit', compact('campaign'));
+        return view('admin.campaigns.edit', compact('campaign'));
     }
 
     public function update(Request $request, Campaign $campaign)
@@ -77,7 +74,7 @@ class CampaignController extends Controller
         $campaign->update($validatedData);
 
         return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign updated successfully');
+            ->with('success', 'Campaign berhasil diperbarui.');
     }
 
     public function destroy(Campaign $campaign)
@@ -86,38 +83,40 @@ class CampaignController extends Controller
             Storage::disk('public')->delete($campaign->image);
         }
         $campaign->delete();
-
         return redirect()->route('admin.campaigns.index')
-            ->with('success', 'Campaign deleted successfully');
+            ->with('success', 'Campaign berhasil dihapus.');
     }
-  public function verifyIndex()
-{
-    $pendingCampaigns = Campaign::with('user')
-        ->where('status', 'pending')
-        ->latest()
-        ->get();
 
-    return view('admin.campaigns.verify', compact('pendingCampaigns'));
-}
+    // Verifikasi: pending → accepted / rejected
+    public function verifyIndex()
+    {
+        $pendingCampaigns = Campaign::with('user')
+            ->where('verification_status', 'pending')
+            ->latest()
+            ->get();
 
-public function verifyApprove($id)
-{
-    $campaign = Campaign::findOrFail($id);
-    $campaign->status = 'active';
-    $campaign->is_active = true;
-    $campaign->save();
+        return view('admin.campaigns.verify', compact('pendingCampaigns'));
+    }
 
-    return redirect()->route('admin.campaigns.verify')->with('success', 'Campaign berhasil diverifikasi.');
-}
+    public function verifyApprove($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        $campaign->verification_status = 'accepted';
+        $campaign->status = 'active'; // bisa juga tetap 'draft' sampai user publish
+        $campaign->save();
 
-public function verifyReject($id)
-{
-    $campaign = Campaign::findOrFail($id);
-    $campaign->status = 'rejected';
-    $campaign->is_active = false;
-    $campaign->save();
+        return redirect()->route('admin.campaigns.verify')
+            ->with('success', 'Campaign berhasil diterima dan akan muncul di halaman utama.');
+    }
 
-    return redirect()->route('admin.campaigns.verify')->with('success', 'Campaign ditolak.');
-}
+    public function verifyReject($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        $campaign->verification_status = 'rejected';
+        $campaign->status = 'draft';
+        $campaign->save();
 
+        return redirect()->route('admin.campaigns.verify')
+            ->with('info', 'Campaign ditolak dan tidak akan muncul di halaman utama.');
+    }
 }
