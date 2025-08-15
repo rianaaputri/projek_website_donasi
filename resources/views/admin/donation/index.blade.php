@@ -201,32 +201,44 @@
                                         {{ Str::limit($donation->campaign->title, 30) }}
                                     </a>
                                 </td>
-                                <td>{{ $donation->donor_name }}</td>
-                                <td>{{ $donation->donor_email }}</td>
+                                <td>
+                                    @if($donation->user)
+                                        {{ $donation->user->name }}
+                                    @else
+                                        {{ $donation->donor_name ?? 'Guest' }}
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($donation->user)
+                                        {{ $donation->user->email }}
+                                    @else
+                                        {{ $donation->donor_email ?? '-' }}
+                                    @endif
+                                </td>
                                 <td>
                                     <strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong>
                                 </td>
+
                                 <td>
-                                    @if($donation->status == 'success')
-                                        <span class="badge badge-success">
+                                    @if($donation->payment_status == 'success')
+                                        <span class="badge bg-success text-white">
                                             <i class="fas fa-check-circle"></i> Success
                                         </span>
-                                    @elseif($donation->status == 'pending')
-                                        <span class="badge badge-warning">
+                                    @elseif($donation->payment_status == 'pending')
+                                        <span class="badge bg-warning text-dark">
                                             <i class="fas fa-clock"></i> Pending
                                         </span>
                                     @else
-                                        <span class="badge badge-danger">
+                                        <span class="badge bg-danger text-white">
                                             <i class="fas fa-times-circle"></i> Failed
                                         </span>
                                     @endif
                                 </td>
                                 <td>{{ $donation->created_at->format('d/m/Y H:i') }}</td>
-                            
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">
+                                <td colspan="7" class="text-center">
                                     <div class="py-4">
                                         <i class="fas fa-inbox fa-3x text-gray-300 mb-3"></i>
                                         <p class="text-gray-500">Tidak ada data donasi</p>
@@ -249,19 +261,16 @@
         </div>
     </div>
 </div>
-
 @endsection
 
 @push('scripts')
 <script>
-// Export donations
 function exportDonations() {
     const params = new URLSearchParams(window.location.search);
     const exportUrl = '/admin/donations/export?' + params.toString();
     window.location.href = exportUrl;
 }
 
-// Initialize DataTable if needed
 $(document).ready(function() {
     $('#dataTable').DataTable({
         "paging": false,
@@ -270,7 +279,7 @@ $(document).ready(function() {
         "ordering": true,
         "order": [[ 0, "desc" ]],
         "columnDefs": [
-            { "orderable": false, "targets": [7] }
+            { "orderable": false, "targets": [6] }
         ]
     });
 });
