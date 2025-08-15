@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Models\User;
+use App\Http\Controllers\Auth\VerificationController; // ✅ Tambah ini di bagian import
 
 /*
 |--------------------------------------------------------------------------
@@ -56,30 +57,27 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 | Email Verification
 |--------------------------------------------------------------------------
 */
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
-
-Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
-    $user = User::findOrFail($id);
-
-    if (!hash_equals((string)$hash, sha1($user->getEmailForVerification()))) {
-        abort(403, 'Link verifikasi tidak valid.');
-    }
-
-    if ($user->hasVerifiedEmail()) {
-        return redirect()->route('login')->with('success', 'Email sudah terverifikasi, silakan login.');
-    }
-
-    $user->markEmailAsVerified();
-    return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
-})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+/*
+|--------------------------------------------------------------------------
+| Email Verification - FIXED VERSION
+|--------------------------------------------------------------------------
+*/
 
 Route::middleware('auth')->group(function () {
-    Route::post('/email/verification-notification', [\App\Http\Controllers\VerificationController::class, 'resend'])
+    // Verification notice - gunakan controller
+    Route::get('/email/verify', [VerificationController::class, 'notice'])
+        ->name('verification.notice');
+    
+    // Resend verification
+    Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
         ->middleware(['throttle:6,1'])
         ->name('verification.send');
 });
+
+// Verification verify - TANPA middleware signed dan auth
+Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
+    ->middleware(['throttle:6,1'])
+    ->name('verification.verify');
 
 /*
 |--------------------------------------------------------------------------
