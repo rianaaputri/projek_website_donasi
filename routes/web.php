@@ -1,5 +1,4 @@
 <?php
-
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -14,12 +13,12 @@ use App\Http\Controllers\{
     Auth\PasswordResetLinkController,
     Auth\NewPasswordController,
     AdminDashboardController,
-    CampaignController // ✅ Tambahkan import ini untuk route publik & admin
+    CampaignController
 };
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
+use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
-use App\Http\Controllers\Auth\VerificationController; // ✅ Tambah import
 use App\Models\User;
 
 /*
@@ -29,6 +28,7 @@ use App\Models\User;
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/campaign/{id}', [HomeController::class, 'showCampaign'])->name('campaign.show');
+Route::get('/campaign-detail/{id}', [CampaignController::class, 'detail'])->name('campaign.detail');
 
 /*
 |--------------------------------------------------------------------------
@@ -56,27 +56,31 @@ Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 | Email Verification
 |--------------------------------------------------------------------------
 */
+Route::get('/email/verify', function () {
+    return view('auth.verify-email');
+})->middleware('auth')->name('verification.notice');
+
+Route::get('/email/verify/{id}/{hash}', function (Request $request, $id, $hash) {
+    $user = User::findOrFail($id);
+
+    if (!hash_equals((string)$hash, sha1($user->getEmailForVerification()))) {
+        abort(403, 'Link verifikasi tidak valid.');
+    }
+
+    if ($user->hasVerifiedEmail()) {
+        return redirect()->route('login')->with('success', 'Email sudah terverifikasi, silakan login.');
+    }
+
+    $user->markEmailAsVerified();
+    return redirect()->route('login')->with('success', 'Email berhasil diverifikasi! Silakan login.');
+})->middleware(['signed', 'throttle:6,1'])->name('verification.verify');
+
 Route::middleware('auth')->group(function () {
-    // Verification notice - gunakan controller
-    Route::get('/email/verify', [VerificationController::class, 'notice'])
-        ->name('verification.notice');
-    
-    // Resend verification
-    Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
+    Route::post('/email/verification-notification', [\App\Http\Controllers\VerificationController::class, 'resend'])
         ->middleware(['throttle:6,1'])
         ->name('verification.send');
 });
 
-// Verification verify - TANPA middleware signed dan auth
-// Karena kita handle manual di controller
-Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-    ->middleware(['throttle:6,1'])
-    ->name('verification.verify');
-
-// Optional: Route untuk expired link (jika mau bikin halaman khusus)
-Route::get('/email/verify/expired', function () {
-    return view('auth.verification-link-expired');
-})->name('verification.expired');
 /*
 |--------------------------------------------------------------------------
 | Dashboard Redirect
@@ -107,15 +111,12 @@ Route::middleware(['auth'])->group(function () {
 | User Campaign Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role.check:user'])->group(function () {
+Route::middleware(['auth', 'role.check:user'])->prefix('user')->group(function () {
     Route::get('/campaigns/create', [UserCampaignController::class, 'create'])->name('user.campaigns.create');
     Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('user.campaigns.store');
-    Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaign.history');
+    Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('user.campaigns.history');
     Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('user.campaigns.detail');
 });
-
-// Route publik untuk detail campaign (hindari bentrok dengan milik user)
-Route::get('/campaign-detail/{id}', [CampaignController::class, 'detail'])->name('campaign.detail');
 
 /*
 |--------------------------------------------------------------------------
@@ -128,22 +129,32 @@ Route::prefix('admin')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
-        Route::get('/logout', function () {
-            return view('admin.logout');
-        })->name('logout');
-
+        // Admin Management
         Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
         Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
         Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
-        // Verifikasi campaign
-        Route::get('/campaigns/verify', [CampaignController::class, 'verifyIndex'])->name('campaigns.verify');
-        Route::patch('/campaigns/{id}/verify', [CampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
-        Route::patch('/campaigns/{id}/reject', [CampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
+        // Campaign Verification
+        Route::get('/campaigns/verify', [AdminCampaignController::class, 'verifyIndex'])->name('campaigns.verify');
+        Route::patch('/campaigns/{id}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
+        Route::patch('/campaigns/{id}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
 
-        // CRUD Campaign
-        Route::resource('campaigns', CampaignController::class);
+        // CRUD Campaign (Admin Only) - Using AdminCampaignController
+        Route::prefix('campaigns')->name('campaigns.')->group(function () {
+            Route::get('/', [AdminCampaignController::class, 'index'])->name('index');
+            Route::get('/create', [AdminCampaignController::class, 'create'])->name('create');
+            Route::post('/', [AdminCampaignController::class, 'store'])->name('store');
+            Route::get('/{campaign}', [AdminCampaignController::class, 'show'])->name('show');
+            Route::get('/{campaign}/edit', [AdminCampaignController::class, 'edit'])->name('edit');
+            Route::put('/{campaign}', [AdminCampaignController::class, 'update'])->name('update');
+            Route::delete('/{campaign}', [AdminCampaignController::class, 'destroy'])->name('destroy');
+            
+            // Additional campaign routes
+            Route::patch('/{campaign}/status', [AdminCampaignController::class, 'updateStatus'])->name('update-status');
+            Route::get('/{campaign}/donations', [AdminCampaignController::class, 'donations'])->name('donations');
+            Route::post('/bulk-action', [AdminCampaignController::class, 'bulkAction'])->name('bulk-action');
+        });
 
         // Donations
         Route::get('/donations', [AdminDonationController::class, 'index'])->name('donations.index');

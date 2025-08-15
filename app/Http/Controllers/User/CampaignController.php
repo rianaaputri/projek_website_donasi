@@ -62,23 +62,11 @@ class CampaignController extends Controller
      */
     public function history()
     {
-        $campaigns = Campaign::where('user_id', Auth::id())
-            ->with(['donations' => function($query) {
-                $query->selectRaw('campaign_id, COUNT(DISTINCT user_id) as donors_count')
-                      ->groupBy('campaign_id');
-            }])
-            ->orderBy('created_at', 'desc')
-            ->get()
-            ->map(function ($campaign) {
-                // Add computed attributes
-                $campaign->donors_count = $campaign->donations->first()->donors_count ?? 0;
-                $campaign->days_remaining = $campaign->end_date 
-                    ? max(0, now()->diffInDays($campaign->end_date, false)) 
-                    : null;
-                return $campaign;
-            });
-
-        return view('campaign-history', compact('campaigns'));
+        $campaigns = Campaign::where('user_id', auth()->id())
+            ->latest()
+            ->paginate(10);
+            
+        return view('user.campaigns.history', compact('campaigns'));
     }
 
     /**

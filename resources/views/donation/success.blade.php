@@ -34,11 +34,6 @@
                             </div>
                             <hr>
                             
-                            <div class="row text-start">
-                                <div class="col-sm-4 fw-bold">Email:</div>
-                                <div class="col-sm-8">{{ $donation->donor_email }}</div>
-                            </div>
-                            <hr>
                             
                             <div class="row text-start">
                                 <div class="col-sm-4 fw-bold">Nominal:</div>

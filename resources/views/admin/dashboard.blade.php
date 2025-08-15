@@ -220,11 +220,14 @@
             </a>-->
         </nav>
         
-        <div class="sidebar-logout">
-            <!-- Removed duplicate logout button - kept only the form -->
-            <form action="{{ route('admin.logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
-    @csrf
-</form>
+       <div class="sidebar-logout">
+    <form action="{{ route('logout') }}" method="POST" onsubmit="return confirm('Yakin ingin logout?')">
+        @csrf
+        <button type="submit" class="logout-btn">
+            <i class="fas fa-sign-out-alt me-2"></i> Logout
+        </button>
+    </form>
+</div>
                 @csrf
                 <button type="submit" class="logout-btn">
                     <i class="fas fa-sign-out-alt me-2"></i> Logout

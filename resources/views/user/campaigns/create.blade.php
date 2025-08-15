@@ -75,7 +75,7 @@
                         <div class="mb-3">
                             <label class="form-label">Gambar Campaign <span class="text-danger">*</span></label>
                             <input type="file" name="image" class="form-control @error('image') is-invalid @enderror"
-                                   accept="image/jpeg,image/png,image/jpg,image/gif" onchange="previewImage(this)" required>
+                                   accept="image/jpeg,image/png,image/jpg,image/gif" id="imageInput" required>
                             @error('image')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -110,10 +110,23 @@
         border-top-left-radius: 12px;
         border-top-right-radius: 12px;
     }
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0a58ca;
+    }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Character counter untuk description
     const descriptionInput = document.querySelector('[name="description"]');
     const charCounter = document.getElementById('charCount');
 
@@ -121,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateCharCount() {
             const currentLength = descriptionInput.value.length;
             charCounter.textContent = currentLength;
+            
             if (currentLength > 5000) {
                 charCounter.style.color = '#dc3545';
                 descriptionInput.classList.add('is-invalid');
@@ -129,53 +143,77 @@ document.addEventListener('DOMContentLoaded', function() {
                 descriptionInput.classList.remove('is-invalid');
             }
         }
+        
+        // Event listener untuk input
         descriptionInput.addEventListener('input', updateCharCount);
-        updateCharCount();
+        updateCharCount(); // Initial count
     }
 
-    function previewImage(input) {
-        const preview = document.getElementById('preview');
-        const previewContainer = document.getElementById('imagePreview');
-        if (input.files && input.files[0]) {
-            const file = input.files[0];
-            const maxSize = 2 * 1024 * 1024;
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-
-            if (file.size > maxSize) {
-                alert('Ukuran file maksimal 2MB.');
-                input.value = '';
-                previewContainer.style.display = 'none';
-                return;
-            }
-            if (!allowedTypes.includes(file.type)) {
-                alert('Format tidak didukung. Gunakan JPG, PNG, atau GIF.');
-                input.value = '';
-                previewContainer.style.display = 'none';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                previewContainer.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewContainer.style.display = 'none';
-        }
+    // Image preview functionality
+    const imageInput = document.getElementById('imageInput');
+    if (imageInput) {
+        imageInput.addEventListener('change', function() {
+            previewImage(this);
+        });
     }
 
-    document.getElementById('campaignForm').addEventListener('submit', function(e) {
-        const submitBtn = document.getElementById('submitBtn');
-        const submitText = document.getElementById('submitText');
-        if (submitBtn.disabled) {
-            e.preventDefault();
-            return false;
-        }
-        submitBtn.disabled = true;
-        submitText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
-    });
+    // Form submission handler
+    const campaignForm = document.getElementById('campaignForm');
+    if (campaignForm) {
+        campaignForm.addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            
+            // Prevent double submission
+            if (submitBtn.disabled) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
+        });
+    }
 });
+
+// Function untuk preview image
+function previewImage(input) {
+    const preview = document.getElementById('preview');
+    const previewContainer = document.getElementById('imagePreview');
+    
+    if (input.files && input.files[0]) {
+        const file = input.files[0];
+        const maxSize = 2 * 1024 * 1024; // 2MB
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+
+        // Validate file size
+        if (file.size > maxSize) {
+            alert('Ukuran file maksimal 2MB.');
+            input.value = '';
+            previewContainer.style.display = 'none';
+            return;
+        }
+
+        // Validate file type
+        if (!allowedTypes.includes(file.type)) {
+            alert('Format tidak didukung. Gunakan JPG, PNG, atau GIF.');
+            input.value = '';
+            previewContainer.style.display = 'none';
+            return;
+        }
+
+        // Show preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        previewContainer.style.display = 'none';
+    }
+}
 </script>
 
 @endsection

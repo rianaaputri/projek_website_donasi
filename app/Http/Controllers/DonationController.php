@@ -111,8 +111,6 @@ class DonationController extends Controller
             'amount' => $request->amount,
             'comment' => $request->comment,
             'is_anonymous' => $request->is_anonymous ?? false,
-            'donor_name' => $user->name,
-            'donor_email' => $user->email,
             'payment_status' => 'pending',
             'midtrans_order_id' => $orderId
         ]);
