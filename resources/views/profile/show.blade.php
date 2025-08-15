@@ -869,6 +869,43 @@
                                                 <input type="email" class="form-control" name="email" id="emailInput" value="{{ Auth::user()->email }}" required>
                                             </div>
                                         </div>
+                                    <!-- Phone Field -->
+                                    <div class="info-item mode-transition">
+                                        <div class="info-label">Nomor Telepon</div>
+                                        <div class="view-mode">
+                                            <div class="info-value" id="phoneDisplayValue">{{ Auth::user()->phone ?? 'Belum diisi' }}</div>
+                                        </div>
+                                        <div class="edit-mode d-none">
+                                            <input 
+                                                type="tel" 
+                                                class="form-control" 
+                                                name="phone" 
+                                                id="phoneInput" 
+                                                value="{{ Auth::user()->phone }}" 
+                                                placeholder="Contoh: 081234567890"
+                                                inputmode="numeric"
+                                                pattern="[0-9]*"
+                                                oninput="this.value = this.value.replace(/[^0-9]/g, '')"
+                                                required>
+                                        </div>
+                                    </div>
+
+                                    <!-- Address Field -->
+                                    <div class="info-item mode-transition">
+                                        <div class="info-label">Alamat</div>
+                                        <div class="view-mode">
+                                            <div class="info-value" id="addressDisplayValue">{{ Auth::user()->address ?? 'Belum diisi' }}</div>
+                                        </div>
+                                        <div class="edit-mode d-none">
+                                            <textarea 
+                                                class="form-control" 
+                                                name="address" 
+                                                id="addressInput" 
+                                                rows="3" 
+                                                placeholder="Masukkan alamat lengkap" 
+                                                required>{{ Auth::user()->address }}</textarea>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
                                 <!-- Account Information -->
@@ -1058,354 +1095,142 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // ===== APPLICATION STATE =====
-        let isEditMode = false;
-        let originalFormData = {};
-        let passwordModal;
+    // ===== APPLICATION STATE =====
+    let isEditMode = false;
+    let originalFormData = {};
+    let passwordModal;
+    
+    // ===== CSRF TOKEN SETUP =====
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
+    // ===== INITIALIZATION =====
+    document.addEventListener('DOMContentLoaded', function() {
+        initializeApp();
+        setupEventListeners();
+        addAnimations();
+        initializeModal();
+    });
+
+    function initializeApp() {
+        // Store original form data
+        storeOriginalData();
         
-        // ===== CSRF TOKEN SETUP =====
-        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        // Setup smooth scrolling
+        document.documentElement.style.scrollBehavior = 'smooth';
         
-        // ===== INITIALIZATION =====
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeApp();
-            setupEventListeners();
-            addAnimations();
-            initializeModal();
+        // Initialize Bootstrap tooltips
+        const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
+        
+        // Show loading complete animation
+        document.body.classList.add('loaded');
+    }
+
+    function initializeModal() {
+        passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
+    }
+
+    function setupEventListeners() {
+        // Form submission with network check
+        document.getElementById('profileForm').addEventListener('submit', (e) => {
+            if (!checkNetworkStatus()) {
+                e.preventDefault();
+                return;
+            }
+            handleFormSubmit(e);
         });
 
-        function initializeApp() {
-            // Store original form data
-            storeOriginalData();
-            
-            // Setup smooth scrolling
-            document.documentElement.style.scrollBehavior = 'smooth';
-            
-            // Initialize Bootstrap tooltips
-            const tooltips = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            tooltips.forEach(tooltip => new bootstrap.Tooltip(tooltip));
-            
-            // Show loading complete animation
-            document.body.classList.add('loaded');
-        }
-
-        function initializeModal() {
-            passwordModal = new bootstrap.Modal(document.getElementById('passwordModal'));
-        }
-
-        function setupEventListeners() {
-            // Form submission with network check
-            document.getElementById('profileForm').addEventListener('submit', (e) => {
-                if (!checkNetworkStatus()) {
-                    e.preventDefault();
-                    return;
-                }
-                handleFormSubmit(e);
-            });
-
-            // Password form submission
-            document.getElementById('passwordForm').addEventListener('submit', (e) => {
-                if (!checkNetworkStatus()) {
-                    e.preventDefault();
-                    return;
-                }
-                handlePasswordFormSubmit(e);
-            });
-            
-            // Input validation
-            document.querySelectorAll('input, textarea').forEach(input => {
-                input.addEventListener('input', debounce(handleInputValidation, 300));
-                input.addEventListener('blur', handleInputValidation);
-            });
-            
-            // Keyboard shortcuts
-            document.addEventListener('keydown', handleKeyboardShortcuts);
-            
-            // Form change detection
-            document.getElementById('profileForm').addEventListener('input', () => {
-                // Enable save button if form has changes
-                const saveBtn = document.getElementById('saveBtn');
-                if (saveBtn && isEditMode) {
-                    saveBtn.classList.remove('btn-secondary');
-                    saveBtn.classList.add('btn-success');
-                }
-            });
-
-            // Password confirmation validation
-            document.getElementById('confirmPassword').addEventListener('input', validatePasswordConfirmation);
-        }
-
-        // ===== PASSWORD MODAL FUNCTIONS =====
-        function showPasswordModal() {
-            passwordModal.show();
-            setTimeout(() => {
-                document.getElementById('currentPassword').focus();
-            }, 300);
-        }
-
-        function togglePasswordVisibility(inputId) {
-            const input = document.getElementById(inputId);
-            const icon = input.parentNode.querySelector('.toggle-password i');
-            
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.remove('fa-eye');
-                icon.classList.add('fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.remove('fa-eye-slash');
-                icon.classList.add('fa-eye');
+        // Password form submission
+        document.getElementById('passwordForm').addEventListener('submit', (e) => {
+            if (!checkNetworkStatus()) {
+                e.preventDefault();
+                return;
             }
-        }
-
-        function validatePasswordConfirmation() {
-            const newPassword = document.getElementById('newPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const confirmInput = document.getElementById('confirmPassword');
-            
-            // Clear previous validation
-            confirmInput.classList.remove('is-invalid', 'is-valid');
-            const errorDiv = confirmInput.parentNode.parentNode.querySelector('.invalid-feedback');
-            if (errorDiv) errorDiv.remove();
-            
-            if (confirmPassword && newPassword !== confirmPassword) {
-                confirmInput.classList.add('is-invalid');
-                const errorDiv = document.createElement('div');
-                errorDiv.className = 'invalid-feedback';
-                errorDiv.textContent = 'Konfirmasi password tidak cocok';
-                confirmInput.parentNode.parentNode.appendChild(errorDiv);
-            } else if (confirmPassword) {
-                confirmInput.classList.add('is-valid');
-            }
-        }
-
-        async function handlePasswordFormSubmit(e) {
-            e.preventDefault();
-            
-            const changeBtn = document.getElementById('changePasswordBtn');
-            const btnText = changeBtn.querySelector('.btn-text');
-            const form = e.target;
-            
-            // Show loading state
-            changeBtn.disabled = true;
-            changeBtn.classList.add('btn-loading');
-            btnText.textContent = 'Mengubah...';
-            
-            try {
-                const formData = new FormData(form);
-                
-                const response = await safeFetch(form.action, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: formData,
-                    credentials: 'same-origin'
-                });
-                
-                let result;
-                try {
-                    result = await response.json();
-                } catch (e) {
-                    result = { message: 'Password berhasil diubah!' };
-                }
-                
-                if (response.ok) {
-                    // Success
-                    passwordModal.hide();
-                    form.reset();
-                    showToast('Password berhasil diubah!', 'success');
-                } else {
-                    // Handle validation errors
-                    if (result.errors) {
-                        handlePasswordValidationErrors(result.errors);
-                        showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
-                    } else {
-                        showToast(result.message || 'Terjadi kesalahan saat mengubah password.', 'error');
-                    }
-                }
-                
-            } catch (error) {
-                console.error('Password change error:', error);
-                showToast('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error');
-            } finally {
-                // Reset button state
-                changeBtn.disabled = false;
-                changeBtn.classList.remove('btn-loading');
-                btnText.textContent = 'Ubah Password';
-            }
-        }
-
-        function handlePasswordValidationErrors(errors) {
-            // Clear previous error states
-            document.querySelectorAll('#passwordForm .form-control').forEach(input => {
-                input.classList.remove('is-invalid');
-                const errorDiv = input.parentNode.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) errorDiv.remove();
-            });
-            
-            // Display new errors
-            Object.keys(errors).forEach(field => {
-                const input = document.querySelector(`#passwordForm [name="${field}"]`);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    
-                    // Create error message div
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = errors[field][0];
-                    
-                    // Insert after input group
-                    input.parentNode.parentNode.appendChild(errorDiv);
-                }
-            });
-        }
-
-        // ===== EDIT MODE FUNCTIONS =====
-        function toggleEditMode() {
-            isEditMode = !isEditMode;
-            
-            const viewModes = document.querySelectorAll('.view-mode');
-            const editModes = document.querySelectorAll('.edit-mode');
-            const editBtn = document.getElementById('editBtn');
-            
-            if (isEditMode) {
-                // Enter edit mode with smooth transition
-                viewModes.forEach((element, index) => {
-                    setTimeout(() => {
-                        element.style.opacity = '0';
-                        element.style.transform = 'translateY(-10px)';
-                        setTimeout(() => {
-                            element.classList.add('d-none');
-                        }, 150);
-                    }, index * 50);
-                });
-                
-                setTimeout(() => {
-                    editModes.forEach((element, index) => {
-                        element.classList.remove('d-none');
-                        element.style.opacity = '0';
-                        element.style.transform = 'translateY(10px)';
-                        setTimeout(() => {
-                            element.style.opacity = '1';
-                            element.style.transform = 'translateY(0)';
-                        }, index * 50 + 50);
-                    });
-                }, 200);
-                
-                // Update button
-                editBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Lihat Profil';
-                editBtn.className = 'btn btn-primary hover-lift';
-                
-                // Focus first input
-                setTimeout(() => {
-                    const firstInput = document.querySelector('.edit-mode input:not([type="hidden"])');
-                    if (firstInput) firstInput.focus();
-                }, 400);
-                
-                showToast('Mode edit diaktifkan', 'info');
-                
-            } else {
-                // Exit edit mode
-                exitEditMode();
-            }
-        }
-
-        function exitEditMode() {
-            const viewModes = document.querySelectorAll('.view-mode');
-            const editModes = document.querySelectorAll('.edit-mode');
-            const editBtn = document.getElementById('editBtn');
-            
-            // Smooth transition back to view mode
-            editModes.forEach((element, index) => {
-                setTimeout(() => {
-                    element.style.opacity = '0';
-                    element.style.transform = 'translateY(10px)';
-                    setTimeout(() => {
-                        element.classList.add('d-none');
-                    }, 150);
-                }, index * 50);
-            });
-            
-            setTimeout(() => {
-                viewModes.forEach((element, index) => {
-                    element.classList.remove('d-none');
-                    element.style.opacity = '0';
-                    element.style.transform = 'translateY(-10px)';
-                    setTimeout(() => {
-                        element.style.opacity = '1';
-                        element.style.transform = 'translateY(0)';
-                    }, index * 50 + 50);
-                });
-            }, 200);
-            
-            // Update button
-            editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Edit Profil';
-            editBtn.className = 'btn btn-light hover-lift';
-            
-            isEditMode = false;
-        }
-
-        function cancelEdit() {
-            // Restore original data
-            restoreOriginalData();
-            exitEditMode();
-            showToast('Perubahan dibatalkan', 'info');
-        }
-
-        // ===== FORM HANDLING WITH MULTIPLE FALLBACK METHODS =====
-        async function handleFormSubmit(e) {
-            e.preventDefault();
-            
+            handlePasswordFormSubmit(e);
+        });
+        
+        // Input validation
+        document.querySelectorAll('input, textarea').forEach(input => {
+            input.addEventListener('input', debounce(handleInputValidation, 300));
+            input.addEventListener('blur', handleInputValidation);
+        });
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', handleKeyboardShortcuts);
+        
+        // Form change detection
+        document.getElementById('profileForm').addEventListener('input', () => {
             const saveBtn = document.getElementById('saveBtn');
-            const btnText = saveBtn.querySelector('.btn-text');
-            const form = e.target;
-            
-            // Show loading state
-            saveBtn.disabled = true;
-            saveBtn.classList.add('btn-loading');
-            btnText.textContent = 'Menyimpan...';
-            
-            // Try multiple approaches for better compatibility
-            let success = false;
-            
-            // Method 1: Traditional form submission with FormData
-            try {
-                success = await tryFormDataSubmission(form);
-                if (success) return;
-            } catch (error) {
-                console.warn('FormData submission failed:', error);
+            if (saveBtn && isEditMode) {
+                saveBtn.classList.remove('btn-secondary');
+                saveBtn.classList.add('btn-success');
             }
-            
-            // Method 2: JSON submission if FormData fails
-            try {
-                success = await tryJsonSubmission(form);
-                if (success) return;
-            } catch (error) {
-                console.warn('JSON submission failed:', error);
-            }
-            
-            // Method 3: Fallback - traditional form submission (page reload)
-            try {
-                await tryTraditionalSubmission(form);
-            } catch (error) {
-                console.error('All submission methods failed:', error);
-                showToast('Gagal menyimpan perubahan. Silakan refresh halaman dan coba lagi.', 'error');
-            } finally {
-                // Reset button state
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('btn-loading');
-                btnText.textContent = 'Simpan Perubahan';
-            }
-        }
+        });
 
-        // Method 1: FormData with fetch
-        async function tryFormDataSubmission(form) {
+        // Password confirmation validation
+        document.getElementById('confirmPassword').addEventListener('input', validatePasswordConfirmation);
+    }
+
+    // ===== PASSWORD MODAL FUNCTIONS =====
+    function showPasswordModal() {
+        passwordModal.show();
+        setTimeout(() => {
+            document.getElementById('currentPassword').focus();
+        }, 300);
+    }
+
+    function togglePasswordVisibility(inputId) {
+        const input = document.getElementById(inputId);
+        const icon = input.parentNode.querySelector('.toggle-password i');
+        
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    function validatePasswordConfirmation() {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        const confirmInput = document.getElementById('confirmPassword');
+        
+        // Clear previous validation
+        confirmInput.classList.remove('is-invalid', 'is-valid');
+        const errorDiv = confirmInput.parentNode.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) errorDiv.remove();
+        
+        if (confirmPassword && newPassword !== confirmPassword) {
+            confirmInput.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'invalid-feedback';
+            errorDiv.textContent = 'Konfirmasi password tidak cocok';
+            confirmInput.parentNode.parentNode.appendChild(errorDiv);
+        } else if (confirmPassword) {
+            confirmInput.classList.add('is-valid');
+        }
+    }
+
+    async function handlePasswordFormSubmit(e) {
+        e.preventDefault();
+        
+        const changeBtn = document.getElementById('changePasswordBtn');
+        const btnText = changeBtn.querySelector('.btn-text');
+        const form = e.target;
+        
+        // Show loading state
+        changeBtn.disabled = true;
+        changeBtn.classList.add('btn-loading');
+        btnText.textContent = 'Mengubah...';
+        
+        try {
             const formData = new FormData(form);
             
-            const response = await fetch(form.action, {
+            const response = await safeFetch(form.action, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
@@ -1416,480 +1241,701 @@
                 credentials: 'same-origin'
             });
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
             let result;
             try {
                 result = await response.json();
             } catch (e) {
-                // If response is not JSON, assume success
-                result = { message: 'Profil berhasil diperbarui!' };
+                result = { message: 'Password berhasil diubah!' };
             }
             
-            // Success - Update UI
-            const data = {
-                name: formData.get('name'),
-                email: formData.get('email')
-            };
-            updateViewModeWithNewData(data);
-            exitEditMode();
-            showToast(result.message || 'Profil berhasil diperbarui!', 'success');
-            storeOriginalData();
+            if (response.ok) {
+                // Success
+                passwordModal.hide();
+                form.reset();
+                showToast('Password berhasil diubah!', 'success');
+            } else {
+                if (result.errors) {
+                    handlePasswordValidationErrors(result.errors);
+                    showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+                } else {
+                    showToast(result.message || 'Terjadi kesalahan saat mengubah password.', 'error');
+                }
+            }
             
-            return true;
+        } catch (error) {
+            console.error('Password change error:', error);
+            showToast('Terjadi kesalahan koneksi. Silakan coba lagi.', 'error');
+        } finally {
+            // Reset button state
+            changeBtn.disabled = false;
+            changeBtn.classList.remove('btn-loading');
+            btnText.textContent = 'Ubah Password';
+        }
+    }
+
+    function handlePasswordValidationErrors(errors) {
+        // Clear previous error states
+        document.querySelectorAll('#passwordForm .form-control').forEach(input => {
+            input.classList.remove('is-invalid');
+            const errorDiv = input.parentNode.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) errorDiv.remove();
+        });
+        
+        // Display new errors
+        Object.keys(errors).forEach(field => {
+            const input = document.querySelector(`#passwordForm [name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = errors[field][0];
+                input.parentNode.parentNode.appendChild(errorDiv);
+            }
+        });
+    }
+
+    // ===== EDIT MODE FUNCTIONS =====
+    function toggleEditMode() {
+        isEditMode = !isEditMode;
+        
+        const viewModes = document.querySelectorAll('.view-mode');
+        const editModes = document.querySelectorAll('.edit-mode');
+        const editBtn = document.getElementById('editBtn');
+        
+        if (isEditMode) {
+            // Enter edit mode with smooth transition
+            viewModes.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        element.classList.add('d-none');
+                    }, 150);
+                }, index * 50);
+            });
+            
+            setTimeout(() => {
+                editModes.forEach((element, index) => {
+                    element.classList.remove('d-none');
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, index * 50 + 50);
+                });
+            }, 200);
+            
+            // Update button
+            editBtn.innerHTML = '<i class="fas fa-eye me-2"></i>Lihat Profil';
+            editBtn.className = 'btn btn-primary hover-lift';
+            
+            // Focus first input
+            setTimeout(() => {
+                const firstInput = document.querySelector('.edit-mode input:not([type="hidden"])');
+                if (firstInput) firstInput.focus();
+            }, 400);
+            
+            showToast('Mode edit diaktifkan', 'info');
+            
+        } else {
+            exitEditMode();
+        }
+    }
+
+    function exitEditMode() {
+        const viewModes = document.querySelectorAll('.view-mode');
+        const editModes = document.querySelectorAll('.edit-mode');
+        const editBtn = document.getElementById('editBtn');
+        
+        // Smooth transition back to view mode
+        editModes.forEach((element, index) => {
+            setTimeout(() => {
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(10px)';
+                setTimeout(() => {
+                    element.classList.add('d-none');
+                }, 150);
+            }, index * 50);
+        });
+        
+        setTimeout(() => {
+            viewModes.forEach((element, index) => {
+                element.classList.remove('d-none');
+                element.style.opacity = '0';
+                element.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }, index * 50 + 50);
+            });
+        }, 200);
+        
+        // Update button
+        editBtn.innerHTML = '<i class="fas fa-edit me-2"></i>Edit Profil';
+        editBtn.className = 'btn btn-light hover-lift';
+        
+        isEditMode = false;
+    }
+
+    function cancelEdit() {
+        restoreOriginalData();
+        exitEditMode();
+        showToast('Perubahan dibatalkan', 'info');
+    }
+
+    // ===== FORM HANDLING WITH MULTIPLE FALLBACK METHODS =====
+    async function handleFormSubmit(e) {
+        e.preventDefault();
+        
+        const saveBtn = document.getElementById('saveBtn');
+        const btnText = saveBtn.querySelector('.btn-text');
+        const form = e.target;
+        
+        // Show loading state
+        saveBtn.disabled = true;
+        saveBtn.classList.add('btn-loading');
+        btnText.textContent = 'Menyimpan...';
+        
+        let success = false;
+        
+        try {
+            success = await tryFormDataSubmission(form);
+            if (success) return;
+        } catch (error) {
+            console.warn('FormData submission failed:', error);
+        }
+        
+        try {
+            success = await tryJsonSubmission(form);
+            if (success) return;
+        } catch (error) {
+            console.warn('JSON submission failed:', error);
+        }
+        
+        try {
+            await tryTraditionalSubmission(form);
+        } catch (error) {
+            console.error('All submission methods failed:', error);
+            showToast('Gagal menyimpan perubahan. Silakan refresh halaman dan coba lagi.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('btn-loading');
+            btnText.textContent = 'Simpan Perubahan';
+        }
+    }
+
+    // Method 1: FormData with fetch
+    async function tryFormDataSubmission(form) {
+        const formData = new FormData(form);
+        
+        // Debug: Cek data yang dikirim
+        console.log('FormData:', {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            address: formData.get('address')
+        });
+
+        const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: formData,
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            result = { message: 'Profil berhasil diperbarui!' };
+        }
+        
+        // Handle validation errors
+        if (result.errors) {
+            handleValidationErrors(result.errors);
+            showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+            return false;
+        }
+        
+        // Success - Update UI
+        const data = {
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            address: formData.get('address')
+        };
+        updateViewModeWithNewData(data);
+        exitEditMode();
+        showToast(result.message || 'Profil berhasil diperbarui!', 'success');
+        storeOriginalData();
+        
+        return true;
+    }
+
+    // Method 2: JSON submission
+    async function tryJsonSubmission(form) {
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            if (key === '_method' || key === '_token') continue;
+            data[key] = value;
+        }
+        
+        const response = await fetch(form.action, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(data),
+            credentials: 'same-origin'
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            result = { message: 'Profil berhasil diperbarui!' };
+        }
+        
+        if (result.errors) {
+            handleValidationErrors(result.errors);
+            showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+            return false;
+        }
+        
+        updateViewModeWithNewData(data);
+        exitEditMode();
+        showToast(result.message || 'Profil berhasil diperbarui!', 'success');
+        storeOriginalData();
+        
+        return true;
+    }
+
+    // Method 3: Traditional form submission (fallback)
+    async function tryTraditionalSubmission(form) {
+        showToast('Menggunakan metode tradisional...', 'info');
+        
+        const ajaxField = document.createElement('input');
+        ajaxField.type = 'hidden';
+        ajaxField.name = 'ajax_fallback';
+        ajaxField.value = '1';
+        form.appendChild(ajaxField);
+        
+        form.submit();
+    }
+
+    // Enhanced error handling for fetch requests
+    async function safeFetch(url, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        try {
+            const response = await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+            return response;
+        } catch (error) {
+            clearTimeout(timeoutId);
+            if (error.name === 'AbortError') {
+                throw new Error('Request timeout - koneksi terlalu lama');
+            }
+            throw error;
+        }
+    }
+
+    // Update UI with new data
+    function updateViewModeWithNewData(data) {
+        if (data.name) {
+            document.getElementById('displayNameValue').textContent = data.name;
+            document.getElementById('displayName').textContent = data.name;
+        }
+        if (data.email) {
+            document.getElementById('displayEmailValue').textContent = data.email;
+        }
+        if (data.phone !== undefined) {
+            document.getElementById('phoneDisplayValue').textContent = data.phone || 'Belum diisi';
+        }
+        if (data.address !== undefined) {
+            document.getElementById('addressDisplayValue').textContent = data.address || 'Belum diisi';
+        }
+    }
+
+    function handleValidationErrors(errors) {
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-invalid');
+            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) errorDiv.remove();
+        });
+        
+        Object.keys(errors).forEach(field => {
+            const input = document.querySelector(`[name="${field}"]`);
+            if (input) {
+                input.classList.add('is-invalid');
+                
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = errors[field][0];
+                input.parentNode.appendChild(errorDiv);
+            }
+        });
+    }
+
+    // ===== VALIDATION =====
+    function handleInputValidation(e) {
+        const input = e.target;
+        const isValid = validateField(input);
+        
+        input.classList.remove('is-invalid', 'is-valid');
+        
+        const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) errorDiv.remove();
+        
+        if (input.value.trim() && !isValid) {
+            input.classList.add('is-invalid');
+            
+            const errorMsg = getValidationMessage(input);
+            if (errorMsg) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = errorMsg;
+                input.parentNode.appendChild(errorDiv);
+            }
+        } else if (input.value.trim() && isValid) {
+            input.classList.add('is-valid');
+        }
+    }
+
+    function validateField(input) {
+        const value = input.value.trim();
+        const type = input.type;
+        const name = input.name;
+        const minLength = input.getAttribute('minlength');
+
+        if (input.hasAttribute('required') && !value) {
+            return false;
+        }
+        
+        if (minLength && value.length < parseInt(minLength)) {
+            return false;
+        }
+        
+        // Email hanya @gmail.com
+        if (name === 'email') {
+            return /^[^\s@]+@gmail\.com$/i.test(value);
+        }
+        
+        if (type === 'tel') {
+            return /^[\+]?[0-9\s\-\(\)]+$/.test(value);
+        }
+        
+        if (name === 'password_confirmation') {
+            const password = document.querySelector('input[name="password"]')?.value;
+            return value === password;
+        }
+        
+        return true;
+    }
+
+    function getValidationMessage(input) {
+        const value = input.value.trim();
+        const name = input.name;
+        const minLength = input.getAttribute('minlength');
+
+        if (input.hasAttribute('required') && !value) {
+            if (name === 'address') {
+                return 'Alamat wajib diisi';
+            }
+            return 'Field ini wajib diisi';
         }
 
-        // Method 2: JSON submission
-        async function tryJsonSubmission(form) {
-            const formData = new FormData(form);
-            const data = {};
-            
-            for (let [key, value] of formData.entries()) {
-                if (key === '_method' || key === '_token') continue;
-                data[key] = value;
+        if (minLength && value.length < parseInt(minLength)) {
+            return `Minimal ${minLength} karakter`;
+        }
+
+        if (name === 'email') {
+            if (!value.includes('@gmail.com')) {
+                return 'Email harus menggunakan domain @gmail.com';
             }
-            
-            const response = await fetch(form.action, {
-                method: 'PATCH',
+            if (!/^[^\s@]+@gmail\.com$/i.test(value)) {
+                return 'Format email tidak valid. Gunakan: contoh@gmail.com';
+            }
+        }
+
+        if (type === 'tel') {
+            return 'Format nomor telepon tidak valid';
+        }
+
+        if (name === 'password_confirmation') {
+            return 'Konfirmasi password tidak cocok';
+        }
+
+        return 'Format tidak valid';
+    }
+
+    // ===== DATA MANAGEMENT =====
+    function storeOriginalData() {
+        const nameInput = document.getElementById('nameInput');
+        const emailInput = document.getElementById('emailInput');
+        const phoneInput = document.getElementById('phoneInput');
+        const addressInput = document.getElementById('addressInput');
+
+        originalFormData = {
+            name: nameInput ? nameInput.value : '',
+            email: emailInput ? emailInput.value : '',
+            phone: phoneInput ? phoneInput.value : '',
+            address: addressInput ? addressInput.value : ''
+        };
+    }
+
+    function restoreOriginalData() {
+        const nameInput = document.getElementById('nameInput');
+        const emailInput = document.getElementById('emailInput');
+        const phoneInput = document.getElementById('phoneInput');
+        const addressInput = document.getElementById('addressInput');
+
+        if (nameInput) nameInput.value = originalFormData.name || '';
+        if (emailInput) emailInput.value = originalFormData.email || '';
+        if (phoneInput) phoneInput.value = originalFormData.phone || '';
+        if (addressInput) addressInput.value = originalFormData.address || '';
+
+        document.querySelectorAll('.form-control').forEach(input => {
+            input.classList.remove('is-invalid', 'is-valid');
+            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) errorDiv.remove();
+        });
+    }
+
+    // ===== UTILITY FUNCTIONS =====
+    function changePassword() {
+        showPasswordModal();
+    }
+
+    async function sendVerificationEmail() {
+        const button = event.target;
+        const originalText = button.innerHTML;
+        
+        button.disabled = true;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengirim...';
+        
+        try {
+            const response = await safeFetch('/email/verification-notification', {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
-                body: JSON.stringify(data),
                 credentials: 'same-origin'
             });
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
             
             let result;
             try {
                 result = await response.json();
             } catch (e) {
-                result = { message: 'Profil berhasil diperbarui!' };
+                result = { message: 'Email verifikasi telah dikirim!' };
             }
             
-            // Handle validation errors
-            if (result.errors) {
-                handleValidationErrors(result.errors);
-                showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
-                return false;
+            if (response.ok) {
+                showToast('Email verifikasi telah dikirim!', 'success');
+            } else {
+                showToast(result.message || 'Gagal mengirim email verifikasi', 'error');
             }
-            
-            // Success - Update UI
-            updateViewModeWithNewData(data);
-            exitEditMode();
-            showToast(result.message || 'Profil berhasil diperbarui!', 'success');
-            storeOriginalData();
-            
-            return true;
+        } catch (error) {
+            console.error('Verification email error:', error);
+            showToast('Terjadi kesalahan saat mengirim email verifikasi', 'error');
+        } finally {
+            button.disabled = false;
+            button.innerHTML = originalText;
         }
+    }
 
-        // Method 3: Traditional form submission (fallback)
-        async function tryTraditionalSubmission(form) {
-            showToast('Menggunakan metode tradisional...', 'info');
-            
-            // Add a hidden field to indicate this is an AJAX request fallback
-            const ajaxField = document.createElement('input');
-            ajaxField.type = 'hidden';
-            ajaxField.name = 'ajax_fallback';
-            ajaxField.value = '1';
-            form.appendChild(ajaxField);
-            
-            // Submit form traditionally
-            form.submit();
+    function checkNetworkStatus() {
+        if (!navigator.onLine) {
+            showToast('Tidak ada koneksi internet. Periksa koneksi Anda.', 'error');
+            return false;
         }
+        return true;
+    }
 
-        // Enhanced error handling for fetch requests
-        async function safeFetch(url, options = {}) {
-            // Add timeout
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-            
-            try {
-                const response = await fetch(url, {
-                    ...options,
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-                return response;
-            } catch (error) {
-                clearTimeout(timeoutId);
-                if (error.name === 'AbortError') {
-                    throw new Error('Request timeout - koneksi terlalu lama');
-                }
-                throw error;
-            }
-        }
+    window.addEventListener('online', () => {
+        showToast('Koneksi internet tersambung kembali', 'success');
+    });
 
-        function updateViewModeWithNewData(data) {
-            // Update name displays
-            if (data.name) {
-                document.getElementById('displayNameValue').textContent = data.name;
-                document.getElementById('displayName').textContent = data.name;
-            }
-            
-            // Update email display
-            if (data.email) {
-                document.getElementById('displayEmailValue').textContent = data.email;
-            }
-        }
+    window.addEventListener('offline', () => {
+        showToast('Koneksi internet terputus', 'error');
+    });
 
-        function handleValidationErrors(errors) {
-            // Clear previous error states
-            document.querySelectorAll('.form-control').forEach(input => {
-                input.classList.remove('is-invalid');
-                const errorDiv = input.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) errorDiv.remove();
-            });
-            
-            // Display new errors
-            Object.keys(errors).forEach(field => {
-                const input = document.querySelector(`[name="${field}"]`);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    
-                    // Create error message div
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = errors[field][0];
-                    
-                    // Insert after input
-                    input.parentNode.appendChild(errorDiv);
-                }
-            });
-        }
-
-        // ===== VALIDATION =====
-        function handleInputValidation(e) {
-            const input = e.target;
-            const isValid = validateField(input);
-            
-            // Clear previous validation states
-            input.classList.remove('is-invalid', 'is-valid');
-            
-            // Remove existing error message
-            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
-            if (errorDiv) errorDiv.remove();
-            
-            if (input.value.trim() && !isValid) {
-                input.classList.add('is-invalid');
+    function logout() {
+        if (confirm('Apakah Anda yakin ingin keluar?')) {
+            showToast('Sedang logout...', 'info');
+            setTimeout(() => {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/logout';
                 
-                // Add error message
-                const errorMsg = getValidationMessage(input);
-                if (errorMsg) {
-                    const errorDiv = document.createElement('div');
-                    errorDiv.className = 'invalid-feedback';
-                    errorDiv.textContent = errorMsg;
-                    input.parentNode.appendChild(errorDiv);
-                }
-            } else if (input.value.trim() && isValid) {
-                input.classList.add('is-valid');
-            }
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }, 1000);
         }
+    }
 
-        function validateField(input) {
-            const value = input.value.trim();
-            const type = input.type;
-            const name = input.name;
-            const minLength = input.getAttribute('minlength');
-            
-            if (input.hasAttribute('required') && !value) {
-                return false;
-            }
-            
-            if (minLength && value.length < parseInt(minLength)) {
-                return false;
-            }
-            
-            switch (type) {
-                case 'email':
-                    return !value || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-                case 'tel':
-                    return !value || /^[\+]?[0-9\s\-\(\)]+$/.test(value);
-                default:
-                    if (name === 'password_confirmation') {
-                        const password = document.querySelector('input[name="password"]').value;
-                        return !value || value === password;
-                    }
-                    return true;
-            }
+    function closeAlert(alertId) {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            alert.style.opacity = '0';
+            alert.style.transform = 'translateY(-20px)';
+            setTimeout(() => alert.remove(), 300);
         }
+    }
 
-        function getValidationMessage(input) {
-            const type = input.type;
-            const name = input.name;
-            const minLength = input.getAttribute('minlength');
-            
-            if (input.hasAttribute('required') && !input.value.trim()) {
-                return 'Field ini wajib diisi';
-            }
-            
-            if (minLength && input.value.length < parseInt(minLength)) {
-                return `Minimal ${minLength} karakter`;
-            }
-            
-            switch (type) {
-                case 'email':
-                    return 'Format email tidak valid';
-                case 'tel':
-                    return 'Format nomor telepon tidak valid';
-                default:
-                    if (name === 'password_confirmation') {
-                        return 'Konfirmasi password tidak cocok';
-                    }
-                    return 'Format tidak valid';
-            }
-        }
-
-        // ===== DATA MANAGEMENT =====
-        function storeOriginalData() {
-            const nameInput = document.getElementById('nameInput');
-            const emailInput = document.getElementById('emailInput');
-            
-            originalFormData = {
-                name: nameInput ? nameInput.value : '',
-                email: emailInput ? emailInput.value : ''
-            };
-        }
-
-        function restoreOriginalData() {
-            const nameInput = document.getElementById('nameInput');
-            const emailInput = document.getElementById('emailInput');
-            
-            if (nameInput) nameInput.value = originalFormData.name || '';
-            if (emailInput) emailInput.value = originalFormData.email || '';
-            
-            // Clear validation states
-            document.querySelectorAll('.form-control').forEach(input => {
-                input.classList.remove('is-invalid', 'is-valid');
-                const errorDiv = input.parentNode.querySelector('.invalid-feedback');
-                if (errorDiv) errorDiv.remove();
+    function showToast(message, type = 'success') {
+        const toastId = type + 'Toast';
+        const toastElement = document.getElementById(toastId);
+        const messageElement = document.getElementById(type + 'ToastMessage');
+        
+        if (toastElement && messageElement) {
+            messageElement.textContent = message;
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 5000
             });
+            toast.show();
+        }
+    }
+
+    function handleKeyboardShortcuts(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+            e.preventDefault();
+            toggleEditMode();
+        }
+        
+        if ((e.ctrlKey || e.metaKey) && e.key === 's' && isEditMode) {
+            e.preventDefault();
+            document.getElementById('profileForm').dispatchEvent(new Event('submit'));
+        }
+        
+        if (e.key === 'Escape' && isEditMode) {
+            cancelEdit();
         }
 
-        // ===== UTILITY FUNCTIONS =====
-        function changePassword() {
-            showPasswordModal();
+        if (e.key === 'Escape' && passwordModal._isShown) {
+            passwordModal.hide();
         }
+    }
 
-        async function sendVerificationEmail() {
-            const button = event.target;
-            const originalText = button.innerHTML;
-            
-            // Show loading state
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengirim...';
-            
-            try {
-                const response = await safeFetch('/email/verification-notification', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    credentials: 'same-origin'
-                });
-                
-                let result;
-                try {
-                    result = await response.json();
-                } catch (e) {
-                    result = { message: 'Email verifikasi telah dikirim!' };
-                }
-                
-                if (response.ok) {
-                    showToast('Email verifikasi telah dikirim!', 'success');
-                } else {
-                    showToast(result.message || 'Gagal mengirim email verifikasi', 'error');
-                }
-            } catch (error) {
-                console.error('Verification email error:', error);
-                showToast('Terjadi kesalahan saat mengirim email verifikasi', 'error');
-            } finally {
-                // Reset button state
-                button.disabled = false;
-                button.innerHTML = originalText;
-            }
-        }
-
-        // Network status detection
-        function checkNetworkStatus() {
-            if (!navigator.onLine) {
-                showToast('Tidak ada koneksi internet. Periksa koneksi Anda.', 'error');
-                return false;
-            }
-            return true;
-        }
-
-        // Add network status listeners
-        window.addEventListener('online', () => {
-            showToast('Koneksi internet tersambung kembali', 'success');
+    // ===== ANIMATIONS =====
+    function addAnimations() {
+        const cards = document.querySelectorAll('.info-card');
+        cards.forEach((card, index) => {
+            card.style.animationDelay = `${index * 0.1}s`;
         });
-
-        window.addEventListener('offline', () => {
-            showToast('Koneksi internet terputus', 'error');
+        
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate-fade-in-up');
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        document.querySelectorAll('.info-card, .alert').forEach(el => {
+            observer.observe(el);
         });
+        
+        document.querySelectorAll('.btn').forEach(button => {
+            button.addEventListener('click', createRippleEffect);
+        });
+    }
 
-        function logout() {
-            if (confirm('Apakah Anda yakin ingin keluar?')) {
-                showToast('Sedang logout...', 'info');
-                setTimeout(() => {
-                    // Create logout form and submit
-                    const form = document.createElement('form');
-                    form.method = 'POST';
-                    form.action = '/logout';
-                    
-                    const csrfInput = document.createElement('input');
-                    csrfInput.type = 'hidden';
-                    csrfInput.name = '_token';
-                    csrfInput.value = csrfToken;
-                    form.appendChild(csrfInput);
-                    
-                    document.body.appendChild(form);
-                    form.submit();
-                }, 1000);
-            }
-        }
-
-        function closeAlert(alertId) {
-            const alert = document.getElementById(alertId);
-            if (alert) {
-                alert.style.opacity = '0';
-                alert.style.transform = 'translateY(-20px)';
-                setTimeout(() => alert.remove(), 300);
-            }
-        }
-
-        function showToast(message, type = 'success') {
-            const toastId = type + 'Toast';
-            const toastElement = document.getElementById(toastId);
-            const messageElement = document.getElementById(type + 'ToastMessage');
-            
-            if (toastElement && messageElement) {
-                messageElement.textContent = message;
-                const toast = new bootstrap.Toast(toastElement, {
-                    autohide: true,
-                    delay: 5000
-                });
-                toast.show();
-            }
-        }
-
-        function handleKeyboardShortcuts(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
-                e.preventDefault();
-                toggleEditMode();
-            }
-            
-            if ((e.ctrlKey || e.metaKey) && e.key === 's' && isEditMode) {
-                e.preventDefault();
-                document.getElementById('profileForm').dispatchEvent(new Event('submit'));
-            }
-            
-            if (e.key === 'Escape' && isEditMode) {
-                cancelEdit();
-            }
-
-            if (e.key === 'Escape' && passwordModal._isShown) {
-                passwordModal.hide();
-            }
-        }
-
-        // ===== ANIMATIONS =====
-        function addAnimations() {
-            // Stagger animations for cards
-            const cards = document.querySelectorAll('.info-card');
-            cards.forEach((card, index) => {
-                card.style.animationDelay = `${index * 0.1}s`;
-            });
-            
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('animate-fade-in-up');
+    function createRippleEffect(e) {
+        const button = e.currentTarget;
+        const ripple = document.createElement('span');
+        const rect = button.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const x = e.clientX - rect.left - size / 2;
+        const y = e.clientY - rect.top - size / 2;
+        
+        ripple.style.cssText = `
+            position: absolute;
+            width: ${size}px;
+            height: ${size}px;
+            left: ${x}px;
+            top: ${y}px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+            z-index: 0;
+        `;
+        
+        if (!document.querySelector('#ripple-keyframes')) {
+            const style = document.createElement('style');
+            style.id = 'ripple-keyframes';
+            style.textContent = `
+                @keyframes ripple {
+                    to {
+                        transform: scale(2);
+                        opacity: 0;
                     }
-                });
-            }, { threshold: 0.1 });
-            
-            document.querySelectorAll('.info-card, .alert').forEach(el => {
-                observer.observe(el);
-            });
-            
-            document.querySelectorAll('.btn').forEach(button => {
-                button.addEventListener('click', createRippleEffect);
-            });
-        }
-
-        function createRippleEffect(e) {
-            const button = e.currentTarget;
-            const ripple = document.createElement('span');
-            const rect = button.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-            
-            ripple.style.cssText = `
-                position: absolute;
-                width: ${size}px;
-                height: ${size}px;
-                left: ${x}px;
-                top: ${y}px;
-                background: rgba(255, 255, 255, 0.4);
-                border-radius: 50%;
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                pointer-events: none;
-                z-index: 0;
+                }
             `;
-            
-            if (!document.querySelector('#ripple-keyframes')) {
-                const style = document.createElement('style');
-                style.id = 'ripple-keyframes';
-                style.textContent = `
-                    @keyframes ripple {
-                        to {
-                            transform: scale(2);
-                            opacity: 0;
-                        }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            button.appendChild(ripple);
-            setTimeout(() => ripple.remove(), 600);
+            document.head.appendChild(style);
         }
+        
+        button.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+    }
 
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
                 clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
+                func(...args);
             };
-        }
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
 
-        function announceChange(message) {
-            const announcement = document.createElement('div');
-            announcement.setAttribute('aria-live', 'polite');
-            announcement.setAttribute('aria-atomic', 'true');
-            announcement.className = 'sr-only';
-            announcement.textContent = message;
-            
-            document.body.appendChild(announcement);
-            setTimeout(() => announcement.remove(), 1000);
-        }
-    </script>
+    function announceChange(message) {
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.className = 'sr-only';
+        announcement.textContent = message;
+        
+        document.body.appendChild(announcement);
+        setTimeout(() => announcement.remove(), 1000);
+    }
+</script>
 </body>
 </html>
