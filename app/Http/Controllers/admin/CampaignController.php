@@ -512,5 +512,43 @@ class CampaignController extends Controller
             ];
         }
     }
-    
+
+    public function verifyIndex()
+    {
+        // Ambil campaign dengan verification_status = 'pending'
+        $pendingCampaigns = Campaign::where('verification_status', 'pending')
+            ->with('user') // agar bisa akses nama/email user
+            ->latest()
+            ->get();
+
+        return view('admin.campaigns.verify', compact('pendingCampaigns'));
+    }
+
+    public function verifyApprove($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+        
+        $campaign->update([
+            'verification_status' => 'approved',
+            'status' => 'active', // bisa jadi aktif setelah disetujui
+        ]);
+
+        return redirect()->route('admin.campaigns.verify')
+            ->with('success', 'Campaign berhasil diverifikasi dan diaktifkan.');
+    }
+
+    public function verifyReject($id)
+    {
+        $campaign = Campaign::findOrFail($id);
+
+        // Opsional: tambahkan alasan penolakan
+        $campaign->update([
+            'verification_status' => 'rejected',
+            'rejection_reason' => request('rejection_reason') ?? 'Tidak sesuai kebijakan platform.',
+        ]);
+
+        return redirect()->route('admin.campaigns.verify')
+            ->with('success', 'Campaign berhasil ditolak.');
+    }
+
 }

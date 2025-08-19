@@ -1,3 +1,12 @@
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul>
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 @extends('layouts.app')
 @section('title', 'Buat Campaign Donasi')
 @section('content')
@@ -52,8 +61,14 @@
                                 <label class="form-label fw-semibold text-primary">
                                     <i class="fas fa-money-bill-wave text-primary me-1"></i> Target Dana (Rp) <span class="text-danger">*</span>
                                 </label>
-                                <input type="number" name="target_amount" class="form-control form-control-lg @error('target_amount') is-invalid @enderror"
-                                       value="{{ old('target_amount') }}" placeholder="Contoh: 5000000" min="1000" step="1000" required>
+                                <input type="number" name="target_amount" 
+                                    class="form-control form-control-lg @error('target_amount') is-invalid @enderror"
+                                    value="{{ old('target_amount') }}" 
+                                    placeholder="Contoh: 5000000" 
+                                    min="10000" 
+                                    max="1000000000" 
+                                    step="1000" 
+                                    required>
                                 @error('target_amount')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
