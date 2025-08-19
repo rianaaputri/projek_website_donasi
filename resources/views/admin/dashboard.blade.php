@@ -177,13 +177,16 @@
                                         </div>
                                     </td>
                                     <td>Rp {{ number_format($campaign->target_amount, 0, ',', '.') }}</td>
-                                    <td>Rp {{ number_format($campaign->current_amount, 0, ',', '.') }}</td>
-                                    <td>
-                                        <div class="progress" style="height: 8px;">
-                                            <div class="progress-bar" style="width: {{ $progress }}%"></div>
-                                        </div>
-                                        <small>{{ number_format($progress, 1) }}%</small>
-                                    </td>
+                                    <td>Rp {{ number_format($campaign->collected_amount, 0, ',', '.') }}</td>
+                                     <td>
+                            @php
+                                $progress = $campaign->target_amount > 0 ? ($campaign->collected_amount / $campaign->target_amount) * 100 : 0;
+                            @endphp
+                            <div class="progress mb-1" style="height: 6px;">
+                                <div class="progress-bar" style="width: {{ min($progress, 100) }}%"></div>
+                            </div>
+                            <small>{{ number_format($progress, 1) }}%</small>
+                        </td>
                                     <td>
                                         @if($campaign->status === 'active')
                                             <span class="badge bg-success">Active</span>
