@@ -182,7 +182,7 @@
                 <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>No</th>
                             <th>Campaign</th>
                             <th>Donatur</th>
                             <th>Email</th>
@@ -194,7 +194,7 @@
                     <tbody>
                         @forelse($donations as $donation)
                             <tr>
-                                <td>{{ $donation->id }}</td>
+                                <td>{{ $loop->iteration }}</td>
                                 <td>
                                     <a href="{{ route('campaign.show', $donation->campaign->id) }}" 
                                        target="_blank" class="text-decoration-none">
@@ -218,10 +218,9 @@
                                 <td>
                                     <strong>Rp {{ number_format($donation->amount, 0, ',', '.') }}</strong>
                                 </td>
-
                                 <td>
                                     @if($donation->payment_status == 'success')
-                                        <span class="badge bg-success text-white">
+                                        <span class="badge bg-success">
                                             <i class="fas fa-check-circle"></i> Success
                                         </span>
                                     @elseif($donation->payment_status == 'pending')
@@ -229,7 +228,7 @@
                                             <i class="fas fa-clock"></i> Pending
                                         </span>
                                     @else
-                                        <span class="badge bg-danger text-white">
+                                        <span class="badge bg-danger">
                                             <i class="fas fa-times-circle"></i> Failed
                                         </span>
                                     @endif
@@ -277,9 +276,9 @@ $(document).ready(function() {
         "searching": false,
         "info": false,
         "ordering": true,
-        "order": [[ 0, "desc" ]],
+        "order": [[ 6, "desc" ]], // urutkan berdasarkan tanggal
         "columnDefs": [
-            { "orderable": false, "targets": [6] }
+            { "orderable": false, "targets": [0,1,2,3,4,5] }
         ]
     });
 });
