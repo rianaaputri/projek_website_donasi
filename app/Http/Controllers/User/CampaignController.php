@@ -7,6 +7,7 @@ use App\Models\Campaign;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class CampaignController extends Controller
 {
@@ -17,13 +18,19 @@ class CampaignController extends Controller
 
     public function store(Request $request)
     {
+Log::info('Request input', $request->all()); // ✅ array
+Log::info('Uploaded file info', [
+    'has_file' => $request->hasFile('image'),
+    'file_name' => $request->file('image')?->getClientOriginalName(),
+    'file_size' => $request->file('image')?->getSize(),
+]);
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:50',
-            'target_amount' => 'required|integer|min:10000',
+            'target_amount' => 'required|integer|min:10000|max:1000000000', 
             'category' => 'required|string|max:100',
-            'end_date' => 'required|date|after:today', // ubah dari nullable ke required
-            'thumbnail' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'end_date' => 'required|date|after:today',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ], [
             'title.required' => 'Judul campaign wajib diisi.',
             'description.required' => 'Deskripsi campaign wajib diisi.',
@@ -33,19 +40,19 @@ class CampaignController extends Controller
             'category.required' => 'Kategori campaign wajib dipilih.',
             'end_date.required' => 'Tanggal berakhir wajib diisi.',
             'end_date.after' => 'Tanggal berakhir harus setelah hari ini.',
-            'thumbnail.required' => 'Gambar campaign wajib diunggah.',
-            'thumbnail.image' => 'File harus berupa gambar.',
-            'thumbnail.mimes' => 'Format gambar harus: jpeg, png, jpg, atau gif.',
-            'thumbnail.max' => 'Ukuran gambar maksimal 2MB.',
+            'image.required' => 'Gambar campaign wajib diunggah.', // ✅
+            'image.image' => 'File harus berupa gambar.',
+            'image.mimes' => 'Format gambar harus: jpeg, png, jpg, atau gif.',
+            'image.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         $data = $request->only(['title', 'description', 'target_amount', 'category', 'end_date']);
         $data['user_id'] = Auth::id();
-        $data['status'] = 'pending'; // ✅ Ini yang akan ditampilkan di history
-        $data['current_amount'] = 0;
+        $data['verification_status'] = 'pending';
 
-        if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
+        // ✅ Simpan ke kolom 'image' di database
+        if ($request->hasFile('image')) {
+            $data['image'] = $request->file('image')->store('campaigns', 'public');
         }
 
         Campaign::create($data);
@@ -110,7 +117,7 @@ public function update(Request $request, $id)
 
     $data = $request->only(['title', 'description', 'target_amount', 'category', 'end_date']);
 
-    if ($request->hasFile('thumbnail')) {
+    if ($request->hasFile('image')) {
         if ($campaign->thumbnail) {
             Storage::disk('public')->delete($campaign->thumbnail);
         }
@@ -119,7 +126,7 @@ public function update(Request $request, $id)
 
     // Reset status jika sebelumnya ditolak
     if ($campaign->status === 'rejected') {
-        $data['status'] = 'pending'; // ✅
+        $data['verification_status'] = 'pending'; // ✅
     }
 
     $campaign->update($data);
