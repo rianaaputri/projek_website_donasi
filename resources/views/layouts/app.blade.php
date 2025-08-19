@@ -429,6 +429,11 @@
                                 <ul class="dropdown-menu">
                                     @if (Auth::user()->role === 'admin')
                                         <li>
+                                            <a class="dropdown-item" href="{{ route('profile.show') }}">
+                                                <i class="fas fa-user me-2"></i>Profil Saya
+                                            </a>
+                                        </li>
+                                        <li>
                                             <a class="dropdown-item" href="{{ route('admin.dashboard') }}">
                                                 <i class="fas fa-tachometer-alt me-2"></i>Admin Panel
                                             </a>
