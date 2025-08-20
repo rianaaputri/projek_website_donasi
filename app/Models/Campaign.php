@@ -20,6 +20,7 @@ class Campaign extends Model
         'title',
         'description', 
         'target_amount',
+<<<<<<< HEAD
         'collected_amount',
         'category',
         'end_date',
@@ -31,6 +32,18 @@ class Campaign extends Model
         'is_active', // ✅ ditambahkan supaya sinkron dengan DB
     ];
 
+=======
+        'category', // <--- ini belum ada, tambahkan
+    ];
+
+    protected $casts = [
+    'end_date' => 'datetime',
+    'created_at' => 'datetime',
+    'updated_at' => 'datetime',
+    'target_amount' => 'decimal:2',
+    'collected_amount' => 'decimal:2',
+];
+>>>>>>> 5e9472d838b4762a161b889e8aced5922c429f29
     /**
      * Cast attributes ke tipe data yang sesuai
      */
