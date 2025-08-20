@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
+use Illuminate\Auth\Events\Verified;
 
 class ProfileController extends Controller
 {
@@ -54,13 +55,20 @@ class ProfileController extends Controller
         // Isi data dari request
         $user->fill($request->only('name', 'email', 'phone', 'address'));
 
-        // Jika email berubah, reset status verifikasi
-        if ($user->isDirty('email')) {
+        // Cek apakah email berubah
+        $emailChanged = $user->isDirty('email');
+
+        if ($emailChanged) {
             $user->email_verified_at = null;
         }
 
         // Simpan ke database
         $user->save();
+
+        // Jika email berubah, kirim notifikasi verifikasi
+        if ($emailChanged) {
+            $user->sendEmailVerificationNotification();
+        }
 
         // Ambil data baru yang disimpan
         $updatedData = $user->only(['name', 'email', 'phone', 'address', 'is_active', 'updated_at']);
@@ -68,8 +76,11 @@ class ProfileController extends Controller
         // Jika request AJAX (dari JS), kirim JSON
         if ($request->expectsJson()) {
             return response()->json([
-                'message' => 'Profil berhasil diperbarui!',
+                'message' => $emailChanged 
+                    ? 'Profil berhasil diperbarui! Silakan verifikasi email baru Anda.' 
+                    : 'Profil berhasil diperbarui!',
                 'data' => $updatedData,
+                'email_changed' => $emailChanged,
             ], 200);
         }
 

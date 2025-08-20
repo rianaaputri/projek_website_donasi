@@ -1387,44 +1387,79 @@
 
     // ===== FORM HANDLING WITH MULTIPLE FALLBACK METHODS =====
     async function handleFormSubmit(e) {
-        e.preventDefault();
-        
-        const saveBtn = document.getElementById('saveBtn');
-        const btnText = saveBtn.querySelector('.btn-text');
-        const form = e.target;
-        
-        // Show loading state
-        saveBtn.disabled = true;
-        saveBtn.classList.add('btn-loading');
-        btnText.textContent = 'Menyimpan...';
-        
-        let success = false;
-        
-        try {
-            success = await tryFormDataSubmission(form);
-            if (success) return;
-        } catch (error) {
-            console.warn('FormData submission failed:', error);
-        }
-        
-        try {
-            success = await tryJsonSubmission(form);
-            if (success) return;
-        } catch (error) {
-            console.warn('JSON submission failed:', error);
-        }
-        
-        try {
-            await tryTraditionalSubmission(form);
-        } catch (error) {
-            console.error('All submission methods failed:', error);
-            showToast('Gagal menyimpan perubahan. Silakan refresh halaman dan coba lagi.', 'error');
-        } finally {
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('btn-loading');
-            btnText.textContent = 'Simpan Perubahan';
-        }
+    e.preventDefault();
+    const saveBtn = document.getElementById('saveBtn');
+    const btnText = saveBtn.querySelector('.btn-text');
+    const form = e.target;
+    // Show loading state
+    saveBtn.disabled = true;
+    saveBtn.classList.add('btn-loading');
+    btnText.textContent = 'Menyimpan...';
+    let success = false;
+    try {
+        success = await tryFormDataSubmission(form);
+        if (success) return;
+    } catch (error) {
+        console.warn('FormData submission failed:', error);
     }
+    try {
+        success = await tryJsonSubmission(form);
+        if (success) return;
+    } catch (error) {
+        console.warn('JSON submission failed:', error);
+    }
+    try {
+        await tryTraditionalSubmission(form);
+    } catch (error) {
+        console.error('All submission methods failed:', error);
+        showToast('Gagal menyimpan perubahan. Silakan refresh halaman dan coba lagi.', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.classList.remove('btn-loading');
+        btnText.textContent = 'Simpan Perubahan';
+    }
+}
+
+        async function tryFormDataSubmission(form) {
+            const formData = new FormData(form);
+            const response = await fetch(form.action, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            let result;
+            try {
+                result = await response.json();
+            } catch (e) {
+                result = { message: 'Profil berhasil diperbarui!', email_changed: false };
+            }
+            // Handle validation errors
+            if (result.errors) {
+                handleValidationErrors(result.errors);
+                showToast('Terdapat kesalahan pada form. Silakan periksa kembali.', 'error');
+                return false;
+            }
+            // Success - Update UI
+            const data = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                phone: formData.get('phone'),
+                address: formData.get('address')
+            };
+            updateViewModeWithNewData(data, result.email_changed);
+            exitEditMode();
+            showToast(result.message || 'Profil berhasil diperbarui!', 'success');
+            storeOriginalData();
+            return true;
+        }
 
     // Method 1: FormData with fetch
     async function tryFormDataSubmission(form) {
@@ -1564,13 +1599,25 @@
     }
 
     // Update UI with new data
-    function updateViewModeWithNewData(data) {
+    function updateViewModeWithNewData(data, emailChanged = false) {
         if (data.name) {
             document.getElementById('displayNameValue').textContent = data.name;
             document.getElementById('displayName').textContent = data.name;
         }
         if (data.email) {
             document.getElementById('displayEmailValue').textContent = data.email;
+            
+            // Update badge status
+            const badgeContainer = document.querySelector('.profile-header .d-flex.justify-content-center');
+            let badge = badgeContainer.querySelector('.badge-custom');
+            if (badge) badge.remove();
+
+            const newBadge = document.createElement('span');
+            newBadge.className = `badge-custom ${emailChanged ? 'badge-unverified' : 'badge-verified'}`;
+            newBadge.innerHTML = emailChanged
+                ? '<i class="fas fa-exclamation-triangle"></i> Email Belum Terverifikasi'
+                : '<i class="fas fa-shield-check"></i> Email Terverifikasi';
+            badgeContainer.appendChild(newBadge);
         }
         if (data.phone !== undefined) {
             document.getElementById('phoneDisplayValue').textContent = data.phone || 'Belum diisi';
