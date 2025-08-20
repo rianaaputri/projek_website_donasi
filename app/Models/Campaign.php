@@ -31,6 +31,17 @@ class Campaign extends Model
         'is_active', // ✅ ditambahkan supaya sinkron dengan DB
     ];
 
+=======
+        'category', // <--- ini belum ada, tambahkan
+    ];
+
+    protected $casts = [
+    'end_date' => 'datetime',
+    'created_at' => 'datetime',
+    'updated_at' => 'datetime',
+    'target_amount' => 'decimal:2',
+    'collected_amount' => 'decimal:2',
+];
     /**
      * Cast attributes ke tipe data yang sesuai
      */
