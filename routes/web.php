@@ -10,6 +10,7 @@ use App\Http\Controllers\{
     UserController,
     ProfileController,
     DonationController,
+    SupportController,
     Auth\LoginController,
     Auth\PasswordResetLinkController,
     Auth\NewPasswordController,
@@ -163,9 +164,7 @@ Route::prefix('admin')
     });
 
 /*
-|--------------------------------------------------------------------------
 | Donation Public Routes
-|--------------------------------------------------------------------------
 */
 Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/', [DonationController::class, 'index'])->name('index');
@@ -178,15 +177,30 @@ Route::prefix('donation')->name('donation.')->group(function () {
 });
 
 /*
-|--------------------------------------------------------------------------
 | Midtrans Callback
-|--------------------------------------------------------------------------
 */
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
 
-/*
-|--------------------------------------------------------------------------
-| Verified User Routes (Alternatif, tapi sudah dihandle di atas)
-|--------------------------------------------------------------------------
-*/
-// Sudah termasuk di profile & user campaign routes dengan middleware 'verified'
+// Halaman Bantuan
+Route::get('/faq', function () {
+    return view('pages.faq');
+})->name('faq');
+
+Route::get('/cara-berdonasi', function () {
+    return view('pages.donation-guide');
+})->name('donation.guide');
+
+Route::get('/hubungi-kami', function () {
+    return view('pages.contact');
+})->name('contact');
+
+Route::get('/pusat-bantuan', function () {
+    return view('pages.support-center');
+})->name('support.center');
+
+// === Halaman Bantuan ===
+Route::get('/faq', [SupportController::class, 'faq'])->name('faq');
+Route::get('/cara-berdonasi', [SupportController::class, 'donationGuide'])->name('donation.guide');
+Route::get('/hubungi-kami', [SupportController::class, 'contact'])->name('contact');
+Route::post('/hubungi-kami', [SupportController::class, 'sendContact'])->name('contact.send');
+Route::get('/pusat-bantuan', [SupportController::class, 'supportCenter'])->name('support.center');

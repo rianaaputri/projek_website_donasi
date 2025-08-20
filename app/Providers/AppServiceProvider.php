@@ -35,7 +35,7 @@ class AppServiceProvider extends ServiceProvider
             );
         });
 
-        // Optional: Customize email verification message
+        // Customize email verification message
         VerifyEmail::toMailUsing(function ($notifiable, $url) {
             return (new MailMessage)
                 ->subject('Verifikasi Email Address')

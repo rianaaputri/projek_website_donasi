@@ -246,10 +246,9 @@
             <div class="col-lg-3 col-md-6 mb-4 text-center">
                 <h5 class="footer-title">Bantuan & Dukungan</h5>
                 <ul class="footer-links">
-                    <li><a href="#">FAQ</a></li>
-                    <li><a href="#">Cara Berdonasi</a></li>
-                    <li><a href="#">Hubungi Kami</a></li>
-                    <li><a href="#">Pusat Bantuan</a></li>
+                    <li><a href="{{ route('faq') }}">FAQ</a></li>
+                    <li><a href="{{ route('donation.guide') }}">Cara Berdonasi</a></li>
+                    <li><a href="{{ route('support.center') }}">Pusat Bantuan</a></li>
                 </ul>
             </div>
             
@@ -262,11 +261,11 @@
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-phone me-2"></i>
-                        <span>+62 812 3456 7890</span>
+                        <span>+62 821 3088 6804</span>
                     </div>
                     <div class="contact-item">
                         <i class="fas fa-map-marker-alt me-2"></i>
-                        <span>Jakarta, Indonesia</span>
+                        <span>Cimahi, Indonesia</span>
                     </div>
                 </div>
             </div>
