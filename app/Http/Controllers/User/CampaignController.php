@@ -18,12 +18,13 @@ class CampaignController extends Controller
 
     public function store(Request $request)
     {
-Log::info('Request input', $request->all()); // ✅ array
-Log::info('Uploaded file info', [
-    'has_file' => $request->hasFile('image'),
-    'file_name' => $request->file('image')?->getClientOriginalName(),
-    'file_size' => $request->file('image')?->getSize(),
-]);
+        Log::info('Request input', $request->all()); 
+        Log::info('Uploaded file info', [
+            'has_file' => $request->hasFile('image'),
+            'file_name' => $request->file('image')?->getClientOriginalName(),
+            'file_size' => $request->file('image')?->getSize(),
+        ]);
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string|min:50',
@@ -31,26 +32,13 @@ Log::info('Uploaded file info', [
             'category' => 'required|string|max:100',
             'end_date' => 'required|date|after:today',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-        ], [
-            'title.required' => 'Judul campaign wajib diisi.',
-            'description.required' => 'Deskripsi campaign wajib diisi.',
-            'description.min' => 'Deskripsi minimal 50 karakter.',
-            'target_amount.required' => 'Target donasi wajib diisi.',
-            'target_amount.min' => 'Target donasi minimal Rp 10.000.',
-            'category.required' => 'Kategori campaign wajib dipilih.',
-            'end_date.required' => 'Tanggal berakhir wajib diisi.',
-            'end_date.after' => 'Tanggal berakhir harus setelah hari ini.',
-            'image.required' => 'Gambar campaign wajib diunggah.', // ✅
-            'image.image' => 'File harus berupa gambar.',
-            'image.mimes' => 'Format gambar harus: jpeg, png, jpg, atau gif.',
-            'image.max' => 'Ukuran gambar maksimal 2MB.',
         ]);
 
         $data = $request->only(['title', 'description', 'target_amount', 'category', 'end_date']);
         $data['user_id'] = Auth::id();
         $data['verification_status'] = 'pending';
+        $data['collected_amount'] = 0;
 
-        // ✅ Simpan ke kolom 'image' di database
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('campaigns', 'public');
         }
@@ -87,72 +75,92 @@ Log::info('Uploaded file info', [
         return view('user.campaigns.detail', compact('campaign'));
     }
 
-public function edit($id)
-{
-    $campaign = Campaign::where('id', $id)
-        ->where('user_id', Auth::id())
-        ->firstOrFail();
+    public function donations($id)
+    {
+        $campaign = Campaign::with(['donations.user'])
+            ->where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-    // Ganti verification_status → status
-    if (!in_array($campaign->status, ['pending', 'rejected'])) {
-        return redirect()->route('user.campaigns.history')
-            ->with('error', 'Campaign yang sudah diverifikasi tidak dapat diedit.');
+        $donations = $campaign->donations()
+            ->with('user')
+            ->latest()
+            ->paginate(10);
+
+        return view('user.campaigns.donations', compact('campaign', 'donations'));
     }
 
-    return view('user.campaigns.edit', compact('campaign'));
-}
+    public function edit($id)
+    {
+        $campaign = Campaign::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-public function update(Request $request, $id)
-{
-    $campaign = Campaign::where('id', $id)
-        ->where('user_id', Auth::id())
-        ->firstOrFail();
-
-    if (!in_array($campaign->status, ['pending', 'rejected'])) {
-        return redirect()->route('user.campaigns.history')
-            ->with('error', 'Campaign yang sudah diverifikasi tidak dapat diedit.');
-    }
-
-    $request->validate([/* ... */]);
-
-    $data = $request->only(['title', 'description', 'target_amount', 'category', 'end_date']);
-
-    if ($request->hasFile('image')) {
-        if ($campaign->thumbnail) {
-            Storage::disk('public')->delete($campaign->thumbnail);
+        if (!in_array($campaign->verification_status, ['pending', 'rejected'])) {
+            return redirect()->route('user.campaigns.history')
+                ->with('error', 'Campaign yang sudah diverifikasi tidak dapat diedit.');
         }
-        $data['thumbnail'] = $request->file('thumbnail')->store('campaigns', 'public');
+
+        return view('user.campaigns.edit', compact('campaign'));
     }
 
-    // Reset status jika sebelumnya ditolak
-    if ($campaign->status === 'rejected') {
-        $data['verification_status'] = 'pending'; // ✅
+    public function update(Request $request, $id)
+    {
+        $campaign = Campaign::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
+
+        if (!in_array($campaign->verification_status, ['pending', 'rejected'])) {
+            return redirect()->route('user.campaigns.history')
+                ->with('error', 'Campaign yang sudah diverifikasi tidak dapat diedit.');
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'required|string|min:50',
+            'target_amount' => 'required|integer|min:10000|max:1000000000',
+            'category' => 'required|string|max:100',
+            'end_date' => 'required|date|after:today',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $data = $request->only(['title', 'description', 'target_amount', 'category', 'end_date']);
+
+        if ($request->hasFile('image')) {
+            if ($campaign->image) {
+                Storage::disk('public')->delete($campaign->image);
+            }
+            $data['image'] = $request->file('image')->store('campaigns', 'public');
+        }
+
+        if ($campaign->verification_status === 'rejected') {
+            $data['verification_status'] = 'pending';
+        }
+
+        $campaign->update($data);
+
+        return redirect()->route('user.campaigns.detail', $campaign->id)
+            ->with('success', 'Campaign berhasil diperbarui dan menunggu verifikasi ulang.');
     }
 
-    $campaign->update($data);
+    public function destroy($id)
+    {
+        $campaign = Campaign::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->firstOrFail();
 
-    return redirect()->route('user.campaigns.detail', $campaign->id)
-        ->with('success', 'Campaign berhasil diperbarui dan menunggu verifikasi ulang.');
-}
+        if ($campaign->verification_status !== 'pending') { 
+            return redirect()->route('user.campaigns.history')
+                ->with('error', 'Hanya campaign yang sedang menunggu verifikasi yang bisa dihapus.');
+        }
 
-public function destroy($id)
-{
-    $campaign = Campaign::where('id', $id)
-        ->where('user_id', Auth::id())
-        ->firstOrFail();
+        if ($campaign->image) {
+            Storage::disk('public')->delete($campaign->image);
+        }
 
-    if ($campaign->status !== 'pending') { // ✅ ganti dari verification_status
+        $campaign->delete();
+
         return redirect()->route('user.campaigns.history')
-            ->with('error', 'Hanya campaign yang sedang menunggu verifikasi yang bisa dihapus.');
+            ->with('success', 'Campaign berhasil dihapus.');
     }
-
-    if ($campaign->thumbnail) {
-        Storage::disk('public')->delete($campaign->thumbnail);
-    }
-
-    $campaign->delete();
-
-    return redirect()->route('user.campaigns.history')
-        ->with('success', 'Campaign berhasil dihapus.');
-}
 }

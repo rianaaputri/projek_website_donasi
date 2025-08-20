@@ -44,7 +44,7 @@ class CampaignController extends Controller
 
             $campaigns = $query->latest()->paginate(10);
 
-            // Manually add donation counts and sums for each campaign
+            // Tambah data donasi manual
             foreach ($campaigns as $campaign) {
                 $campaign->donations_count = 0;
                 $campaign->donations_sum_amount = 0;
@@ -60,7 +60,6 @@ class CampaignController extends Controller
                 }
             }
 
-            // Get filter options
             $categories = $this->getCategoryOptions();
             $statuses = $this->getStatusOptions();
 
@@ -96,7 +95,6 @@ class CampaignController extends Controller
     {
         $categories = array_keys($this->getCategoryOptions());
 
-        // Validasi
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -111,17 +109,15 @@ class CampaignController extends Controller
         try {
             DB::beginTransaction();
 
-            // Upload image
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('campaigns', 'public');
                 $validated['image'] = $imagePath;
             }
 
-            // Set default status
-            $validated['status'] = $validated['status'] ?? 'active';
-
-            // Set collected_amount ke 0
+            // Default status & verification
+            $validated['status'] = $validated['status'] ?? 'draft';
             $validated['collected_amount'] = 0;
+            $validated['verification_status'] = 'pending';
 
             $campaign = Campaign::create($validated);
 
@@ -145,18 +141,13 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Display the specified campaign.
-     */
     public function show(Campaign $campaign)
     {
-        // Initialize default values
         $totalDonations = 0;
         $totalAmount = 0;
         $recentDonations = collect();
         
         try {
-            // Calculate donation statistics safely
             if (Schema::hasTable('donations')) {
                 $totalDonations = DB::table('donations')
                     ->where('campaign_id', $campaign->id)
@@ -165,8 +156,7 @@ class CampaignController extends Controller
                 $totalAmount = DB::table('donations')
                     ->where('campaign_id', $campaign->id)
                     ->sum('amount') ?? 0;
-                
-                // Get recent donations with raw query
+
                 $recentDonationsData = DB::table('donations')
                     ->where('campaign_id', $campaign->id)
                     ->orderBy('created_at', 'desc')
@@ -193,9 +183,6 @@ class CampaignController extends Controller
         ));
     }
 
-    /**
-     * Show the form for editing the campaign.
-     */
     public function edit(Campaign $campaign)
     {
         $users = $this->getActiveUsers();
@@ -203,11 +190,7 @@ class CampaignController extends Controller
         
         return view('admin.campaigns.edit', compact('campaign', 'users', 'categories'));
     }
-    
 
-    /**
-     * Update the specified campaign.
-     */
     public function update(Request $request, Campaign $campaign)
     {
         $categories = array_keys($this->getCategoryOptions());
@@ -228,15 +211,16 @@ class CampaignController extends Controller
 
             $oldImage = $campaign->image;
 
-            // Upload gambar baru kalau ada
             if ($request->hasFile('image')) {
                 $imagePath = $request->file('image')->store('campaigns', 'public');
                 $validated['image'] = $imagePath;
             }
 
+            // Jangan reset verification_status kalau tidak diubah
+            $validated['verification_status'] = $campaign->verification_status ?? 'pending';
+
             $campaign->update($validated);
 
-            // Hapus gambar lama kalau ada gambar baru
             if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
                 Storage::disk('public')->delete($oldImage);
             }
@@ -261,15 +245,11 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Remove the specified campaign.
-     */
     public function destroy(Campaign $campaign)
     {
         try {
             DB::beginTransaction();
 
-            // Check if campaign has donations
             $donationCount = 0;
             if (Schema::hasTable('donations')) {
                 $donationCount = DB::table('donations')
@@ -285,7 +265,6 @@ class CampaignController extends Controller
 
             $campaign->delete();
 
-            // Delete image file
             if ($imagePath && Storage::disk('public')->exists($imagePath)) {
                 Storage::disk('public')->delete($imagePath);
             }
@@ -304,9 +283,6 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Update campaign status.
-     */
     public function updateStatus(Request $request, Campaign $campaign)
     {
         $validated = $request->validate([
@@ -337,9 +313,6 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Get campaign donations.
-     */
     public function donations(Campaign $campaign)
     {
         try {
@@ -349,7 +322,6 @@ class CampaignController extends Controller
                     ->with('error', 'Tabel donasi tidak ditemukan.');
             }
 
-            // Get donations using raw query
             $donationsData = DB::table('donations')
                 ->where('campaign_id', $campaign->id)
                 ->orderBy('created_at', 'desc')
@@ -366,9 +338,6 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Bulk actions for campaigns.
-     */
     public function bulkAction(Request $request)
     {
         $validated = $request->validate([
@@ -426,20 +395,15 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Helper method to get active users
-     */
     private function getActiveUsers()
     {
         try {
             $query = User::select('id', 'name', 'email');
             
-            // Check if we have role functionality
             if (Schema::hasColumn('users', 'role')) {
                 $query->where('role', 'user');
             }
-            
-            // Check if is_active column exists
+
             if (Schema::hasColumn('users', 'is_active')) {
                 $query->where('is_active', true);
             }
@@ -451,18 +415,13 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Get category options safely
-     */
     private function getCategoryOptions()
     {
         try {
-            // Check if Campaign model has getCategories method
             if (method_exists(Campaign::class, 'getCategories')) {
                 return Campaign::getCategories();
             }
-            
-            // Fallback default categories
+
             return [
                 'kesehatan' => 'Kesehatan',
                 'pendidikan' => 'Pendidikan', 
@@ -484,18 +443,13 @@ class CampaignController extends Controller
         }
     }
 
-    /**
-     * Get status options safely
-     */
     private function getStatusOptions()
     {
         try {
-            // Check if Campaign model has getStatuses method
             if (method_exists(Campaign::class, 'getStatuses')) {
                 return Campaign::getStatuses();
             }
             
-            // Fallback default statuses
             return [
                 'active' => 'Aktif',
                 'inactive' => 'Tidak Aktif',
@@ -513,35 +467,42 @@ class CampaignController extends Controller
         }
     }
 
+    /**
+     * Halaman verifikasi campaign
+     */
     public function verifyIndex()
     {
-        // Ambil campaign dengan verification_status = 'pending'
         $pendingCampaigns = Campaign::where('verification_status', 'pending')
-            ->with('user') // agar bisa akses nama/email user
+            ->with('user')
             ->latest()
             ->get();
 
         return view('admin.campaigns.verify', compact('pendingCampaigns'));
     }
 
+    /**
+     * Approve campaign
+     */
     public function verifyApprove($id)
     {
         $campaign = Campaign::findOrFail($id);
         
         $campaign->update([
             'verification_status' => 'approved',
-            'status' => 'active', // bisa jadi aktif setelah disetujui
+            'status' => 'active', 
         ]);
 
         return redirect()->route('admin.campaigns.verify')
             ->with('success', 'Campaign berhasil diverifikasi dan diaktifkan.');
     }
 
+    /**
+     * Reject campaign
+     */
     public function verifyReject($id)
     {
         $campaign = Campaign::findOrFail($id);
 
-        // Opsional: tambahkan alasan penolakan
         $campaign->update([
             'verification_status' => 'rejected',
             'rejection_reason' => request('rejection_reason') ?? 'Tidak sesuai kebijakan platform.',
@@ -550,5 +511,4 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.verify')
             ->with('success', 'Campaign berhasil ditolak.');
     }
-
 }
