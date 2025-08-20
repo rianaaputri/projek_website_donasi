@@ -42,8 +42,9 @@
                     </div>
                     <div class="col-md-6">
                         <h5>End Date</h5>
-                        <p class="text-muted">{{ $campaign->end_date?->format('d M Y') }}</p>
-                    </div>
+<p class="text-muted">
+    {{ $campaign->end_date ? \Carbon\Carbon::parse($campaign->end_date)->format('d M Y') : 'No end date' }}
+</p>                    </div>
                 </div>
             </div>
         </div>
