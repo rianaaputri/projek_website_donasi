@@ -2,7 +2,6 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\{
     HomeController,
     AdminController,
@@ -22,7 +21,6 @@ use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Http\Controllers\Auth\VerificationController;
-
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -67,7 +65,6 @@ Route::middleware(['auth'])->group(function () {
         ->name('verification.send');
 });
 
-// Verifikasi email (signed tidak wajib, tapi hash untuk keamanan)
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
     ->middleware(['throttle:6,1'])
     ->name('verification.verify');
@@ -93,9 +90,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
     Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
-
     Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
@@ -104,17 +99,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | User Campaign Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role.check:user', 'verified'])->prefix('user')->name('user.')->group(function () {
-    Route::get('/campaigns/create', [UserCampaignController::class, 'create'])->name('campaigns.create');
-    Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('campaigns.store');
-    Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaigns.history');
-    Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('campaigns.detail');
-});
-// Catatan: Karena prefix 'user' dan name('user.'), maka nama lengkap routenya:
-// - user.campaigns.create
-// - user.campaigns.store
-// - user.campaigns.history
-// - user.campaigns.detail
+Route::middleware(['auth', 'role.check:user', 'verified'])
+    ->prefix('user')
+    ->name('user.')
+    ->group(function () {
+        Route::get('/campaigns/create', [UserCampaignController::class, 'create'])->name('campaigns.create');
+        Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('campaigns.store');
+        Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaigns.history');
+
+        // FIX: pakai .show (bukan .detail)
+        Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('campaigns.show');
+
+        // Opsional: donations biar tombol di blade nggak error
+        Route::get('/campaigns/{id}/donations', [UserCampaignController::class, 'donations'])->name('campaigns.donations');
+    });
 
 /*
 |--------------------------------------------------------------------------
@@ -126,8 +124,6 @@ Route::prefix('admin')
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-        // Admin Logout - TAMBAHKAN INI
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
         // Admin Management
@@ -141,7 +137,7 @@ Route::prefix('admin')
         Route::patch('/campaigns/{id}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
         Route::patch('/campaigns/{id}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
 
-        // CRUD Campaign (Admin Only) - Using AdminCampaignController
+        // CRUD Campaign (Admin Only)
         Route::prefix('campaigns')->name('campaigns.')->group(function () {
             Route::get('/', [AdminCampaignController::class, 'index'])->name('index');
             Route::get('/create', [AdminCampaignController::class, 'create'])->name('create');
@@ -150,8 +146,7 @@ Route::prefix('admin')
             Route::get('/{campaign}/edit', [AdminCampaignController::class, 'edit'])->name('edit');
             Route::put('/{campaign}', [AdminCampaignController::class, 'update'])->name('update');
             Route::delete('/{campaign}', [AdminCampaignController::class, 'destroy'])->name('destroy');
-            
-            // Additional campaign routes
+
             Route::patch('/{campaign}/status', [AdminCampaignController::class, 'updateStatus'])->name('update-status');
             Route::get('/{campaign}/donations', [AdminCampaignController::class, 'donations'])->name('donations');
             Route::post('/bulk-action', [AdminCampaignController::class, 'bulkAction'])->name('bulk-action');
@@ -164,7 +159,9 @@ Route::prefix('admin')
     });
 
 /*
+|--------------------------------------------------------------------------
 | Donation Public Routes
+|--------------------------------------------------------------------------
 */
 Route::prefix('donation')->name('donation.')->group(function () {
     Route::get('/', [DonationController::class, 'index'])->name('index');
@@ -177,7 +174,9 @@ Route::prefix('donation')->name('donation.')->group(function () {
 });
 
 /*
+|--------------------------------------------------------------------------
 | Midtrans Callback
+|--------------------------------------------------------------------------
 */
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
 
@@ -198,7 +197,11 @@ Route::get('/pusat-bantuan', function () {
     return view('pages.support-center');
 })->name('support.center');
 
-// === Halaman Bantuan ===
+/*
+|--------------------------------------------------------------------------
+| Support Pages
+|--------------------------------------------------------------------------
+*/
 Route::get('/faq', [SupportController::class, 'faq'])->name('faq');
 Route::get('/cara-berdonasi', [SupportController::class, 'donationGuide'])->name('donation.guide');
 Route::get('/hubungi-kami', [SupportController::class, 'contact'])->name('contact');

@@ -529,4 +529,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 
-@endsection
+@endsection 

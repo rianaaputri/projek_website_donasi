@@ -9,9 +9,9 @@ class HomeController extends Controller
     public function index()
     {
         $campaigns = Campaign::where('status', 'active')
-            ->where('verification_status', 'accepted') // ✅ Hanya yang diverifikasi
+            ->where('verification_status', 'approved') // ✅ hanya campaign yang sudah disetujui admin
             ->with(['donations' => function ($q) {
-                $q->where('status', 'success'); // hanya donasi sukses
+                $q->where('payment_status', 'success'); // ✅ hanya donasi yang sukses
             }])
             ->latest()
             ->get();
@@ -26,14 +26,17 @@ class HomeController extends Controller
             abort(404, 'Campaign tidak ditemukan');
         }
 
-        $isActive = $campaign->status === 'active' && $campaign->verification_status === 'accepted';
+        // ✅ cek aktif & sudah disetujui
+        $isActive = $campaign->status === 'active' && $campaign->verification_status === 'approved';
 
+        // ✅ load donasi sukses terbaru
         $campaign->load([
             'donations' => function ($query) {
-                $query->where('status', 'success')->latest();
+                $query->where('payment_status', 'success')->latest();
             }
         ]);
 
+        // ✅ ambil max 10 donatur terbaru
         $recentDonors = $campaign->donations->take(10);
 
         return view('campaign.detail', compact('campaign', 'recentDonors', 'isActive'));

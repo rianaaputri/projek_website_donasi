@@ -140,7 +140,7 @@
                                 <div class="card-footer bg-transparent border-0 p-4 pt-0">
                                     <div class="d-flex gap-2">
                                         @if($campaign->verification_status === 'approved')
-                                            <a href="{{ route('campaigns.show', $campaign->slug) }}" 
+                                           <a href="{{ route('user.campaigns.show', $campaign->id) }}"  
                                                class="btn btn-outline-primary btn-sm rounded-pill flex-fill">
                                                 <i class="fas fa-eye me-1"></i>Lihat
                                             </a>

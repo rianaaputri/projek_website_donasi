@@ -32,3 +32,4 @@ class EnsureUserEmailIsVerified
         return $next($request);
     }
 }
+ 
