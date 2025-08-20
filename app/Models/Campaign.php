@@ -6,19 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\Log;
 
 class Campaign extends Model
 {
     use HasFactory;
 
-    /**
-     * Field yang bisa diisi (fillable)
-     */
     protected $fillable = [
         'user_id',
         'title',
-        'description', 
+        'description',
         'target_amount',
         'collected_amount',
         'category',
@@ -28,43 +24,29 @@ class Campaign extends Model
         'verification_status',
         'rejection_reason',
         'goal_amount',
-        'is_active', // ✅ ditambahkan supaya sinkron dengan DB
-        'category', // <--- ini belum ada, tambahkan
+        'is_active',
     ];
 
     protected $casts = [
-    'end_date' => 'datetime',
-    'created_at' => 'datetime',
-    'updated_at' => 'datetime',
-    'target_amount' => 'decimal:2',
-    'collected_amount' => 'decimal:2',
-];
-    /**
-     * Default values untuk attributes
-     */
-    protected $attributes = [
-        'collected_amount' => 0,
-        'status' => 'active',              // ✅ sesuai default DB
-        'verification_status' => 'pending',// ✅ paksa pending biar tidak NULL
-        'is_active' => 1,                  // ✅ sesuai default DB
+        'end_date' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'target_amount' => 'decimal:2',
+        'collected_amount' => 'decimal:2',
     ];
 
-    /**
-     * Boot method untuk handle events
-     */
+    protected $attributes = [
+        'collected_amount' => 0,
+        'status' => 'active',
+        'verification_status' => 'pending',
+        'is_active' => 1,
+    ];
+
     protected static function boot()
     {
         parent::boot();
-        
-        // Event saat campaign akan dibuat
+
         static::creating(function ($campaign) {
-            Log::info('Campaign Creating Event', [
-                'title' => $campaign->title,
-                'verification_status' => $campaign->verification_status ?? 'NOT_SET',
-                'status' => $campaign->status ?? 'NOT_SET',
-                'user_id' => $campaign->user_id
-            ]);
-            
             if (empty($campaign->verification_status)) {
                 $campaign->verification_status = 'pending';
             }
@@ -76,29 +58,6 @@ class Campaign extends Model
             }
             if (empty($campaign->is_active)) {
                 $campaign->is_active = 1;
-            }
-        });
-        
-        // Event setelah campaign dibuat
-        static::created(function ($campaign) {
-            Log::info('Campaign Created Successfully', [
-                'id' => $campaign->id,
-                'title' => $campaign->title,
-                'verification_status' => $campaign->verification_status,
-                'status' => $campaign->status,
-                'user_id' => $campaign->user_id
-            ]);
-        });
-
-        // Event saat campaign di update  
-        static::updating(function ($campaign) {
-            if ($campaign->isDirty('verification_status')) {
-                Log::info('Campaign Verification Status Changed', [
-                    'id' => $campaign->id,
-                    'title' => $campaign->title,
-                    'old_status' => $campaign->getOriginal('verification_status'),
-                    'new_status' => $campaign->verification_status,
-                ]);
             }
         });
     }
@@ -117,7 +76,18 @@ class Campaign extends Model
     }
 
     /**
-     * Accessor untuk progress percentage
+     * Update collected_amount berdasarkan donasi sukses
+     */
+    public function updateCollectedAmount(): void
+    {
+        $this->collected_amount = $this->donations()
+            ->where('payment_status', 'success')
+            ->sum('amount');
+        $this->saveQuietly(); // ✅ supaya ga trigger event berulang
+    }
+
+    /**
+     * Accessors
      */
     public function getProgressPercentageAttribute(): float
     {
@@ -127,18 +97,23 @@ class Campaign extends Model
         return min(100, ($this->collected_amount / $this->target_amount) * 100);
     }
 
-    public function getFormattedTargetAmountAttribute(): string
+    public function getFormattedTargetAttribute(): string
     {
         return 'Rp ' . number_format($this->target_amount, 0, ',', '.');
     }
 
-    public function getFormattedCollectedAmountAttribute(): string
+    public function getFormattedCollectedAttribute(): string
     {
         return 'Rp ' . number_format($this->collected_amount, 0, ',', '.');
     }
 
+    public function getDaysElapsedAttribute(): ?int
+    {
+        return $this->created_at ? now()->diffInDays($this->created_at) : null;
+    }
+
     /**
-     * Helpers untuk status campaign
+     * Helpers
      */
     public function isActive(): bool
     {
@@ -184,28 +159,28 @@ class Campaign extends Model
     public static function getCategories(): array
     {
         return [
-            'kesehatan' => 'Kesehatan',
-            'pendidikan' => 'Pendidikan', 
+            'kesehatan'     => 'Kesehatan',
+            'pendidikan'    => 'Pendidikan',
             'infrastruktur' => 'Infrastruktur',
-            'bencana_alam' => 'Bencana Alam',
-            'kemanusiaan' => 'Kemanusiaan',
-            'lingkungan' => 'Lingkungan'
+            'bencana_alam'  => 'Bencana Alam',
+            'kemanusiaan'   => 'Kemanusiaan',
+            'lingkungan'    => 'Lingkungan'
         ];
     }
 
     public static function getStatuses(): array
     {
         return [
-            'active' => 'Aktif',
+            'active'    => 'Aktif',
             'completed' => 'Selesai',
-            'sinactive' => 'Tidak Aktif',
+            'inactive'  => 'Tidak Aktif',
         ];
     }
 
     public static function getVerificationStatuses(): array
     {
         return [
-            'pending' => 'Menunggu Verifikasi',
+            'pending'  => 'Menunggu Verifikasi',
             'approved' => 'Disetujui',
             'rejected' => 'Ditolak'
         ];
