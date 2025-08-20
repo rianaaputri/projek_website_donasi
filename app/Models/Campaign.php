@@ -29,9 +29,6 @@ class Campaign extends Model
         'rejection_reason',
         'goal_amount',
         'is_active', // ✅ ditambahkan supaya sinkron dengan DB
-    ];
-
-=======
         'category', // <--- ini belum ada, tambahkan
     ];
 
@@ -42,15 +39,6 @@ class Campaign extends Model
     'target_amount' => 'decimal:2',
     'collected_amount' => 'decimal:2',
 ];
-    /**
-     * Cast attributes ke tipe data yang sesuai
-     */
-    protected $casts = [
-        'target_amount' => 'decimal:2',
-        'collected_amount' => 'decimal:2',
-        'end_date' => 'date',
-    ];
-
     /**
      * Default values untuk attributes
      */
