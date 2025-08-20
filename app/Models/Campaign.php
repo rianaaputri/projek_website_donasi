@@ -106,11 +106,20 @@ class Campaign extends Model
     {
         return 'Rp ' . number_format($this->collected_amount, 0, ',', '.');
     }
-
-    public function getDaysElapsedAttribute(): ?int
-    {
-        return $this->created_at ? now()->diffInDays($this->created_at) : null;
+public function getDaysElapsedAttribute(): int
+{
+    if (!$this->created_at) {
+        return 0;
     }
+
+    // Ambil hanya tanggal (tanpa jam)
+    $start = $this->created_at->startOfDay();
+    $today = now()->startOfDay();
+
+    $days = $start->diffInDays($today) + 1;
+
+    return $days;
+}
 
     /**
      * Helpers
