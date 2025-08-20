@@ -27,15 +27,12 @@ class Campaign extends Model
     ];
 
     protected $casts = [
-        'goal_amount' => 'decimal:2',
-        'current_amount' => 'decimal:2',
-        'collected_amount' => 'integer',
-        'deadline' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'is_active' => 'boolean',
-    ];
-
+    'end_date' => 'datetime',
+    'created_at' => 'datetime',
+    'updated_at' => 'datetime',
+    'target_amount' => 'decimal:2',
+    'collected_amount' => 'decimal:2',
+];
     /**
      * Campaign belongs to a user (creator)
      */
