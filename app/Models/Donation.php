@@ -18,7 +18,9 @@ class Donation extends Model
         'is_anonymous',
         'payment_method',
         'payment_status',
-        'payment_reference',
+        'midtrans_order_id',
+        'transaction_id',
+        'paid_at',
     ];
 
     protected $casts = [
@@ -70,15 +72,10 @@ class Donation extends Model
                 'class' => 'bg-success text-white',
                 'icon' => 'fa-check'
             ],
-            'failed' => [
+            'failed', 'expired' => [
                 'text' => 'Gagal',
                 'class' => 'bg-danger text-white',
                 'icon' => 'fa-times'
-            ],
-            'cancelled' => [
-                'text' => 'Dibatalkan',
-                'class' => 'bg-secondary text-white',
-                'icon' => 'fa-ban'
             ],
             default => [
                 'text' => 'Unknown',
@@ -89,41 +86,23 @@ class Donation extends Model
     }
 
     /**
-     * Scope: Paid donations (kalau ada kolom 'status' = paid)
-     */
-    public function scopePaid($query)
-{
-    return $query->where('payment_status', 'success');
-}
-
-
-    /**
-     * Scope: Successful payments
+     * Scopes
      */
     public function scopeSuccess($query)
     {
         return $query->where('payment_status', 'success');
     }
 
-    /**
-     * Scope: Filter by payment status
-     */
     public function scopePaymentStatus($query, $status)
     {
         return $query->where('payment_status', $status);
     }
 
-    /**
-     * Scope: Anonymous donations
-     */
     public function scopeAnonymous($query)
     {
         return $query->where('is_anonymous', true);
     }
 
-    /**
-     * Scope: Public donations
-     */
     public function scopePublic($query)
     {
         return $query->where('is_anonymous', false);
@@ -139,24 +118,20 @@ class Donation extends Model
         // Saat donasi dibuat
         static::created(function ($donation) {
             if ($donation->payment_status === 'success') {
-                $donation->campaign->increment('current_amount', $donation->amount);
+                $donation->campaign->updateCollectedAmount();
             }
         });
 
-        // Saat donasi diupdate
+        // Saat donasi diupdate (misal pending → success)
         static::updated(function ($donation) {
             if ($donation->wasChanged('payment_status')) {
-                $campaign = $donation->campaign;
-                $campaign->current_amount = $campaign->donations()->success()->sum('amount');
-                $campaign->save();
+                $donation->campaign->updateCollectedAmount();
             }
         });
 
-        // Saat donasi dihapus
+        // Saat donasi dihapus → SELALU hitung ulang biar nggak nyangkut
         static::deleted(function ($donation) {
-            if ($donation->payment_status === 'success') {
-                $donation->campaign->decrement('current_amount', $donation->amount);
-            }
+            $donation->campaign->updateCollectedAmount();
         });
     }
 }
