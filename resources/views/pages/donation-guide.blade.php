@@ -6,11 +6,9 @@
     <style>
         /* Import Poppins */
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
         body {
             font-family: 'Poppins', sans-serif;
         }
-
         .donation-step {
             background: linear-gradient(135deg, #e3f2fd, #bbdefb);
             border-radius: 16px;
@@ -19,12 +17,10 @@
             border: 1px solid #bbdefb;
             box-shadow: 0 4px 15px rgba(158, 196, 235, 0.2);
         }
-
         .donation-step:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 25px rgba(158, 196, 235, 0.3);
         }
-
         .step-icon {
             background: #2196f3;
             color: white;
@@ -37,7 +33,6 @@
             font-size: 1.5rem;
             margin-bottom: 1rem;
         }
-
         .step-number {
             background: #2196f3;
             color: white;
@@ -50,13 +45,11 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
-
         .step-title {
             color: #1565c0;
             font-weight: 600;
             font-size: 1.25rem;
         }
-
         .btn-primary-custom {
             background: #2196f3;
             border: none;
@@ -66,18 +59,15 @@
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
         }
-
         .btn-primary-custom:hover {
             background: #1976d2;
             transform: translateY(-2px);
             box-shadow: 0 8px 20px rgba(33, 150, 243, 0.4);
         }
-
         .guide-container {
             max-width: 900px;
             margin: 0 auto;
         }
-
         .section-title {
             font-weight: 700;
             color: #0d47a1;
@@ -85,14 +75,12 @@
             margin-bottom: 2rem;
             text-align: center;
         }
-
         .section-subtitle {
             color: #5472a7;
             font-size: 1.1rem;
             margin-bottom: 3rem;
             text-align: center;
         }
-
         .main-icon {
             color: #2196f3;
             font-size: 5rem;
@@ -110,9 +98,9 @@
             </p>
         </div>
 
-        <div class="row justify-content-center guide-container">
-            <!-- Step 1 -->
-            <div class="col-lg-10 mb-4">
+        <!-- Step 1 -->
+        <div class="row justify-content-center guide-container mb-5">
+            <div class="col-lg-10">
                 <div class="row donation-step align-items-center">
                     <div class="col-md-2 text-center mb-3 mb-md-0">
                         <div class="step-number">1</div>
@@ -130,9 +118,18 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Step 2 -->
-            <div class="col-lg-10 mb-4">
+        <!-- Gambar 1: Halaman Utama -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <img src="https://i.imgur.com/5ZzXJ6x.png" alt="Halaman Utama Campaign" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="row justify-content-center guide-container mb-5">
+            <div class="col-lg-10">
                 <div class="row donation-step align-items-center">
                     <div class="col-md-2 text-center mb-3 mb-md-0">
                         <div class="step-number">2</div>
@@ -150,9 +147,18 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Step 3 -->
-            <div class="col-lg-10 mb-4">
+        <!-- Gambar 2: Form Donasi -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <img src="https://i.imgur.com/8vW9o3H.png" alt="Form Donasi" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="row justify-content-center guide-container mb-5">
+            <div class="col-lg-10">
                 <div class="row donation-step align-items-center">
                     <div class="col-md-2 text-center mb-3 mb-md-0">
                         <div class="step-number">3</div>
@@ -170,9 +176,18 @@
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Step 4 -->
-            <div class="col-lg-10 mb-4">
+        <!-- Gambar 3: Metode Pembayaran -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <img src="https://i.imgur.com/7fYpNqR.png" alt="Metode Pembayaran" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="row justify-content-center guide-container mb-5">
+            <div class="col-lg-10">
                 <div class="row donation-step align-items-center">
                     <div class="col-md-2 text-center mb-3 mb-md-0">
                         <div class="step-number">4</div>
@@ -189,6 +204,13 @@
                         </p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- Gambar 4: Grid Campaign -->
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-10">
+                <img src="https://i.imgur.com/2eLmK4F.png" alt="Grid Campaign" class="img-fluid rounded shadow-sm" style="max-height: 400px;">
             </div>
         </div>
 
