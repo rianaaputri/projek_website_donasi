@@ -42,6 +42,11 @@ class CampaignController extends Controller
                 $query->where('category', $request->category);
             }
 
+            // Filter by verification status
+            if ($request->filled('verification_status')) {
+                $query->where('verification_status', $request->verification_status);
+            }
+
             $campaigns = $query->latest()->paginate(10);
 
             // Tambah data donasi manual
@@ -62,8 +67,9 @@ class CampaignController extends Controller
 
             $categories = $this->getCategoryOptions();
             $statuses = $this->getStatusOptions();
+            $verificationStatuses = $this->getVerificationStatusOptions();
 
-            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses'));
+            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses', 'verificationStatuses'));
             
         } catch (\Exception $e) {
             Log::error('Campaign index error: ' . $e->getMessage());
@@ -71,21 +77,11 @@ class CampaignController extends Controller
             $campaigns = Campaign::paginate(10);
             $categories = [];
             $statuses = [];
+            $verificationStatuses = [];
             
-            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses'))
+            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses', 'verificationStatuses'))
                 ->with('error', 'Terjadi kesalahan saat memuat data campaigns.');
         }
-    }
-
-    /**
-     * Show the form for creating a new campaign.
-     */
-    public function create()
-    {
-        $users = $this->getActiveUsers();
-        $categories = $this->getCategoryOptions();
-        
-        return view('admin.campaigns.create', compact('users', 'categories'));
     }
 
     /**
@@ -103,7 +99,6 @@ class CampaignController extends Controller
             'end_date' => 'required|date|after:today',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
             'user_id' => 'required|exists:users,id',
-            'status' => 'sometimes|in:active,inactive,completed,cancelled'
         ]);
 
         try {
@@ -114,10 +109,10 @@ class CampaignController extends Controller
                 $validated['image'] = $imagePath;
             }
 
-            // Default status & verification
-            $validated['status'] = $validated['status'] ?? 'draft';
+            // PERBAIKAN: Set status dan verification_status yang tepat
+            $validated['status'] = 'pending'; // Campaign dimulai dengan status pending
             $validated['collected_amount'] = 0;
-            $validated['verification_status'] = 'pending';
+            $validated['verification_status'] = 'pending'; // Harus diverifikasi dulu
 
             $campaign = Campaign::create($validated);
 
@@ -125,7 +120,7 @@ class CampaignController extends Controller
 
             return redirect()
                 ->route('admin.campaigns.index')
-                ->with('success', 'Campaign berhasil dibuat!');
+                ->with('success', 'Campaign berhasil dibuat dan menunggu verifikasi admin!');
 
         } catch (\Exception $e) {
             DB::rollback();
@@ -139,6 +134,303 @@ class CampaignController extends Controller
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Update campaign status dengan validasi verification_status
+     */
+    public function updateStatus(Request $request, Campaign $campaign)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:active,inactive,completed,cancelled,pending'
+        ]);
+
+        try {
+            // PERBAIKAN: Validasi apakah campaign sudah diverifikasi
+            if ($validated['status'] === 'active' && $campaign->verification_status !== 'approved') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Campaign belum diverifikasi. Tidak dapat diaktifkan.'
+                ], 400);
+            }
+
+            // PERBAIKAN: Jika campaign ditolak, tidak boleh diaktifkan
+            if ($campaign->verification_status === 'rejected' && $validated['status'] === 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Campaign yang ditolak tidak dapat diaktifkan.'
+                ], 400);
+            }
+
+            $campaign->update(['status' => $validated['status']]);
+
+            $statusMessages = [
+                'active' => 'Campaign diaktifkan',
+                'inactive' => 'Campaign dinonaktifkan', 
+                'completed' => 'Campaign diselesaikan',
+                'cancelled' => 'Campaign dibatalkan',
+                'pending' => 'Campaign dikembalikan ke status pending'
+            ];
+
+            return response()->json([
+                'success' => true,
+                'message' => $statusMessages[$validated['status']]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Campaign status update error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengubah status: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * PERBAIKAN: Approve campaign dengan validasi yang lebih ketat
+     */
+    public function verifyApprove(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'admin_notes' => 'sometimes|nullable|string|max:500'
+        ]);
+
+        try {
+            $campaign = Campaign::findOrFail($id);
+            
+            // Validasi apakah campaign masih pending
+            if ($campaign->verification_status !== 'pending') {
+                return redirect()->route('admin.campaigns.verify')
+                    ->with('error', 'Campaign ini sudah diproses sebelumnya.');
+            }
+
+            DB::beginTransaction();
+
+            $campaign->update([
+                'verification_status' => 'approved',
+                'status' => 'active', 
+                'verified_at' => now(),
+                'verified_by' => auth()->id(), // Simpan siapa yang memverifikasi
+                'admin_notes' => $validated['admin_notes'] ?? null
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.campaigns.verify')
+                ->with('success', 'Campaign "' . $campaign->title . '" berhasil diverifikasi dan diaktifkan.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Campaign verify approve error: ' . $e->getMessage());
+            return redirect()->route('admin.campaigns.verify')
+                ->with('error', 'Terjadi kesalahan saat memverifikasi campaign.');
+        }
+    }
+
+    /**
+     * PERBAIKAN: Reject campaign dengan alasan yang jelas
+     */
+    public function verifyReject(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'rejection_reason' => 'required|string|max:500'
+        ]);
+
+        try {
+            $campaign = Campaign::findOrFail($id);
+            
+            // Validasi apakah campaign masih pending
+            if ($campaign->verification_status !== 'pending') {
+                return redirect()->route('admin.campaigns.verify')
+                    ->with('error', 'Campaign ini sudah diproses sebelumnya.');
+            }
+
+            DB::beginTransaction();
+
+            $campaign->update([
+                'verification_status' => 'rejected',
+                'status' => 'rejected', // PERBAIKAN: Set status menjadi rejected
+                'rejection_reason' => $validated['rejection_reason'],
+                'rejected_at' => now(),
+                'rejected_by' => auth()->id(), // Simpan siapa yang menolak
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.campaigns.verify')
+                ->with('success', 'Campaign "' . $campaign->title . '" berhasil ditolak.');
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Campaign verify reject error: ' . $e->getMessage());
+            return redirect()->route('admin.campaigns.verify')
+                ->with('error', 'Terjadi kesalahan saat menolak campaign.');
+        }
+    }
+
+    /**
+     * PERBAIKAN: Bulk action dengan validasi verification_status
+     */
+    public function bulkAction(Request $request)
+    {
+        $validated = $request->validate([
+            'action' => 'required|in:activate,deactivate,delete,approve,reject',
+            'campaigns' => 'required|array|min:1',
+            'campaigns.*' => 'exists:campaigns,id',
+            'rejection_reason' => 'required_if:action,reject|string|max:500'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $campaigns = Campaign::whereIn('id', $validated['campaigns'])->get();
+            $count = 0;
+            $skipped = 0;
+
+            foreach ($campaigns as $campaign) {
+                switch ($validated['action']) {
+                    case 'activate':
+                        // PERBAIKAN: Hanya aktifkan campaign yang sudah approved
+                        if ($campaign->verification_status === 'approved') {
+                            $campaign->update(['status' => 'active']);
+                            $count++;
+                        } else {
+                            $skipped++;
+                        }
+                        break;
+                        
+                    case 'deactivate':
+                        if ($campaign->status !== 'rejected') {
+                            $campaign->update(['status' => 'inactive']);
+                            $count++;
+                        } else {
+                            $skipped++;
+                        }
+                        break;
+                        
+                    case 'approve':
+                        if ($campaign->verification_status === 'pending') {
+                            $campaign->update([
+                                'verification_status' => 'approved',
+                                'status' => 'active',
+                                'verified_at' => now(),
+                                'verified_by' => auth()->id()
+                            ]);
+                            $count++;
+                        } else {
+                            $skipped++;
+                        }
+                        break;
+                        
+                    case 'reject':
+                        if ($campaign->verification_status === 'pending') {
+                            $campaign->update([
+                                'verification_status' => 'rejected',
+                                'status' => 'rejected',
+                                'rejection_reason' => $validated['rejection_reason'],
+                                'rejected_at' => now(),
+                                'rejected_by' => auth()->id()
+                            ]);
+                            $count++;
+                        } else {
+                            $skipped++;
+                        }
+                        break;
+                        
+                    case 'delete':
+                        $donationCount = Schema::hasTable('donations') ? 
+                            DB::table('donations')->where('campaign_id', $campaign->id)->count() : 0;
+                        if ($donationCount == 0) {
+                            if ($campaign->image && Storage::disk('public')->exists($campaign->image)) {
+                                Storage::disk('public')->delete($campaign->image);
+                            }
+                            $campaign->delete();
+                            $count++;
+                        } else {
+                            $skipped++;
+                        }
+                        break;
+                }
+            }
+
+            DB::commit();
+
+            $actionMessages = [
+                'activate' => 'diaktifkan',
+                'deactivate' => 'dinonaktifkan',
+                'approve' => 'disetujui',
+                'reject' => 'ditolak',
+                'delete' => 'dihapus'
+            ];
+
+            $message = "{$count} campaign berhasil {$actionMessages[$validated['action']]}.";
+            if ($skipped > 0) {
+                $message .= " {$skipped} campaign dilewati karena tidak memenuhi syarat.";
+            }
+
+            return redirect()
+                ->route('admin.campaigns.index')
+                ->with('success', $message);
+
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Campaign bulk action error: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+        }
+    }
+
+    // ... (method lainnya tetap sama)
+
+    /**
+     * PERBAIKAN: Tambahkan method untuk mendapatkan verification status options
+     */
+    private function getVerificationStatusOptions()
+    {
+        return [
+            'pending' => 'Menunggu Verifikasi',
+            'approved' => 'Disetujui',
+            'rejected' => 'Ditolak'
+        ];
+    }
+
+    /**
+     * PERBAIKAN: Update getStatusOptions untuk menambahkan status rejected
+     */
+    private function getStatusOptions()
+    {
+        try {
+            if (method_exists(Campaign::class, 'getStatuses')) {
+                return Campaign::getStatuses();
+            }
+            
+            return [
+                'pending' => 'Menunggu',
+                'active' => 'Aktif',
+                'inactive' => 'Tidak Aktif',
+                'completed' => 'Selesai',
+                'cancelled' => 'Dibatalkan',
+                'rejected' => 'Ditolak'
+            ];
+        } catch (\Exception $e) {
+            Log::error('Get status options error: ' . $e->getMessage());
+            return [
+                'pending' => 'Menunggu',
+                'active' => 'Aktif',
+                'inactive' => 'Tidak Aktif',
+                'completed' => 'Selesai',
+                'cancelled' => 'Dibatalkan',
+                'rejected' => 'Ditolak'
+            ];
+        }
+    }
+
+    // Sisanya tetap sama seperti kode asli...
+    public function create()
+    {
+        $users = $this->getActiveUsers();
+        $categories = $this->getCategoryOptions();
+        
+        return view('admin.campaigns.create', compact('users', 'categories'));
     }
 
     public function show(Campaign $campaign)
@@ -203,7 +495,7 @@ class CampaignController extends Controller
             'end_date' => 'required|date|after_or_equal:today',
             'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:active,inactive,completed,cancelled'
+            'status' => 'required|in:active,inactive,completed,cancelled,pending,rejected'
         ]);
 
         try {
@@ -216,8 +508,16 @@ class CampaignController extends Controller
                 $validated['image'] = $imagePath;
             }
 
-            // Jangan reset verification_status kalau tidak diubah
-            $validated['verification_status'] = $campaign->verification_status ?? 'pending';
+            // PERBAIKAN: Jika campaign sedang rejected dan diupdate, set kembali ke pending untuk review ulang
+            if ($campaign->verification_status === 'rejected') {
+                $validated['verification_status'] = 'pending';
+                $validated['status'] = 'pending';
+                $validated['rejection_reason'] = null;
+                $validated['rejected_at'] = null;
+                $validated['rejected_by'] = null;
+            } else {
+                $validated['verification_status'] = $campaign->verification_status ?? 'pending';
+            }
 
             $campaign->update($validated);
 
@@ -283,36 +583,6 @@ class CampaignController extends Controller
         }
     }
 
-    public function updateStatus(Request $request, Campaign $campaign)
-    {
-        $validated = $request->validate([
-            'status' => 'required|in:active,inactive,completed,cancelled'
-        ]);
-
-        try {
-            $campaign->update(['status' => $validated['status']]);
-
-            $statusMessages = [
-                'active' => 'Campaign diaktifkan',
-                'inactive' => 'Campaign dinonaktifkan', 
-                'completed' => 'Campaign diselesaikan',
-                'cancelled' => 'Campaign dibatalkan'
-            ];
-
-            return response()->json([
-                'success' => true,
-                'message' => $statusMessages[$validated['status']]
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Campaign status update error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengubah status: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
     public function donations(Campaign $campaign)
     {
         try {
@@ -335,63 +605,6 @@ class CampaignController extends Controller
             return redirect()
                 ->route('admin.campaigns.show', $campaign)
                 ->with('error', 'Terjadi kesalahan saat memuat data donasi.');
-        }
-    }
-
-    public function bulkAction(Request $request)
-    {
-        $validated = $request->validate([
-            'action' => 'required|in:activate,deactivate,delete',
-            'campaigns' => 'required|array|min:1',
-            'campaigns.*' => 'exists:campaigns,id'
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $campaigns = Campaign::whereIn('id', $validated['campaigns'])->get();
-            $count = 0;
-
-            foreach ($campaigns as $campaign) {
-                switch ($validated['action']) {
-                    case 'activate':
-                        $campaign->update(['status' => 'active']);
-                        $count++;
-                        break;
-                    case 'deactivate':
-                        $campaign->update(['status' => 'inactive']);
-                        $count++;
-                        break;
-                    case 'delete':
-                        $donationCount = Schema::hasTable('donations') ? 
-                            DB::table('donations')->where('campaign_id', $campaign->id)->count() : 0;
-                        if ($donationCount == 0) {
-                            if ($campaign->image && Storage::disk('public')->exists($campaign->image)) {
-                                Storage::disk('public')->delete($campaign->image);
-                            }
-                            $campaign->delete();
-                            $count++;
-                        }
-                        break;
-                }
-            }
-
-            DB::commit();
-
-            $actionMessages = [
-                'activate' => 'diaktifkan',
-                'deactivate' => 'dinonaktifkan',
-                'delete' => 'dihapus'
-            ];
-
-            return redirect()
-                ->route('admin.campaigns.index')
-                ->with('success', "{$count} campaign berhasil {$actionMessages[$validated['action']]}.");
-
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Campaign bulk action error: ' . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
@@ -443,30 +656,6 @@ class CampaignController extends Controller
         }
     }
 
-    private function getStatusOptions()
-    {
-        try {
-            if (method_exists(Campaign::class, 'getStatuses')) {
-                return Campaign::getStatuses();
-            }
-            
-            return [
-                'active' => 'Aktif',
-                'inactive' => 'Tidak Aktif',
-                'completed' => 'Selesai',
-                'cancelled' => 'Dibatalkan'
-            ];
-        } catch (\Exception $e) {
-            Log::error('Get status options error: ' . $e->getMessage());
-            return [
-                'active' => 'Aktif',
-                'inactive' => 'Tidak Aktif',
-                'completed' => 'Selesai',
-                'cancelled' => 'Dibatalkan'
-            ];
-        }
-    }
-
     /**
      * Halaman verifikasi campaign
      */
@@ -478,37 +667,5 @@ class CampaignController extends Controller
             ->get();
 
         return view('admin.campaigns.verify', compact('pendingCampaigns'));
-    }
-
-    /**
-     * Approve campaign
-     */
-    public function verifyApprove($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-        
-        $campaign->update([
-            'verification_status' => 'approved',
-            'status' => 'active', 
-        ]);
-
-        return redirect()->route('admin.campaigns.verify')
-            ->with('success', 'Campaign berhasil diverifikasi dan diaktifkan.');
-    }
-
-    /**
-     * Reject campaign
-     */
-    public function verifyReject($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-
-        $campaign->update([
-            'verification_status' => 'rejected',
-            'rejection_reason' => request('rejection_reason') ?? 'Tidak sesuai kebijakan platform.',
-        ]);
-
-        return redirect()->route('admin.campaigns.verify')
-            ->with('success', 'Campaign berhasil ditolak.');
     }
 }

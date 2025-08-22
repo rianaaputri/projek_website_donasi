@@ -5,9 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2><i class="fas fa-bullhorn me-2"></i>Manage Campaigns</h2>
-    <a href="{{ route('admin.campaigns.create') }}" class="btn btn-primary">
-        <i class="fas fa-plus me-2"></i>Add New Campaign
-    </a>
+    {{-- Tombol Add New Campaign dihapus --}}
 </div>
 
 <div class="card">
@@ -61,16 +59,11 @@
                             </span>
                         </td>
                         <td>
+                            {{-- Hanya tombol Show yang tersisa --}}
                             <div class="btn-group btn-group-sm">
                                 <a href="{{ route('admin.campaigns.show', $campaign->id) }}" class="btn btn-outline-info" target="_blank">
                                     <i class="fas fa-eye"></i>
                                 </a>
-                                <a href="{{ route('admin.campaigns.edit', $campaign->id) }}" class="btn btn-outline-primary">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <button class="btn btn-outline-danger" onclick="confirmDelete({{ $campaign->id }})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
                             </div>
                         </td>
                     </tr>
@@ -78,7 +71,7 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-5">
                             <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
-                            No campaigns found. <a href="{{ route('admin.campaigns.create') }}">Create your first campaign</a>
+                            No campaigns found.
                         </td>
                     </tr>
                     @endforelse
@@ -90,35 +83,7 @@
     </div>
 </div>
 
-<!-- Delete Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                Are you sure you want to delete this campaign? This action cannot be undone.
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
+{{-- Modal Delete dihapus karena sudah tidak digunakan --}}
 @endsection
 
-@section('scripts')
-<script>
-function confirmDelete(campaignId) {
-    document.getElementById('deleteForm').action = '/admin/campaigns/' + campaignId;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
-</script>
-@endsection
+{{-- Script untuk confirmDelete dihapus karena sudah tidak digunakan --}}
