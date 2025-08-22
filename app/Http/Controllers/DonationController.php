@@ -172,7 +172,47 @@ class DonationController extends Controller
     {
         $donation = Donation::findOrFail($id);
         return view('donation.success', compact('donation'));
-    }
+    }// Semua donasi pending milik user
+public function pending()
+{
+    $pendingDonations = Donation::with('campaign')
+        ->where('user_id', auth()->id())
+        ->where('payment_status', 'pending')
+        ->get();
+
+    return view('donation.pending', compact('pendingDonations'));
+}
+
+// Detail satu donasi pending → arahkan ke edit
+public function edit($id)
+{
+    $donation = Donation::with(['campaign', 'user'])
+        ->where('user_id', auth()->id())
+        ->findOrFail($id);
+
+    $params = [
+        'transaction_details' => [
+            'order_id' => $donation->midtrans_order_id,
+            'gross_amount' => (int) $donation->amount
+        ],
+        'customer_details' => [
+            'first_name' => $donation->user->name,
+            'email' => $donation->user->email
+        ],
+        'item_details' => [
+            [
+                'id' => 'DON-' . $donation->campaign_id,
+                'price' => (int) $donation->amount,
+                'quantity' => 1,
+                'name' => 'Donasi untuk ' . $donation->campaign->title
+            ]
+        ]
+    ];
+
+    $snapToken = $this->midtrans->getSnapToken($params);
+
+    return view('donation.edit', compact('donation', 'snapToken'));
+}
 
     // =========================
     // Cek status donasi Midtrans
@@ -217,6 +257,28 @@ class DonationController extends Controller
         ]);
     }
 }
+
+public function update(Request $request, $id)
+{
+    $donation = Donation::where('user_id', auth()->id())->findOrFail($id);
+
+    // Validasi
+    $request->validate([
+        'amount' => 'required|numeric|min:10000',
+        'comment' => 'nullable|string|max:500'
+    ]);
+
+    // Update data donasi
+    $donation->update([
+        'amount' => $request->amount,
+        'comment' => $request->comment,
+        'payment_status' => 'pending', // pastikan status tetap pending
+    ]);
+
+    // Redirect langsung ke halaman payment
+    return redirect()->route('donation.payment', $donation->id);
+}
+
 
 
     // =========================

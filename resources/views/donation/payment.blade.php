@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
         },
         onClose: function(){
             alert("Kamu menutup pembayaran sebelum selesai.");
-            window.location.href = "{{ route('donation.status', $donation->id) }}";
+            window.location.href = "{{ route('donation.pending', $donation->id) }}";
         }
     });
 
