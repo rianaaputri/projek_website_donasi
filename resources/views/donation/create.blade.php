@@ -535,6 +535,26 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+document.addEventListener('DOMContentLoaded', function () {
+    const termsCheckbox = document.getElementById('terms');
+    const payButton = document.getElementById('pay-button');
+
+    // Disabled by default
+    payButton.disabled = true;
+    payButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+    // Enable/disable button saat checkbox berubah
+    termsCheckbox.addEventListener('change', function () {
+        if (this.checked) {
+            payButton.disabled = false;
+            payButton.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            payButton.disabled = true;
+            payButton.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+});
+
 </script>
 
 @endsection
