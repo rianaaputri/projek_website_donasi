@@ -562,7 +562,7 @@
                         Buat Campaign Baru
                     </a>
                     <div class="stats-card">
-                        <div class="stats-number">{{ $campaigns->count() }}</div>
+                        <div class="stats-numbersni">{{ $campaigns->count() }}</div>
                         <div class="stats-label">Total Campaign</div>
                     </div>
                 </div>
