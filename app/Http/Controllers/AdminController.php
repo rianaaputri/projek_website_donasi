@@ -3,309 +3,384 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\Campaign;
 use App\Models\Donation;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
-class CampaignController extends Controller
+class UserController extends Controller
 {
     /**
-     * Display a listing of campaigns.
+     * Display a listing of users.
      */
     public function index(Request $request)
     {
         try {
-            $query = Campaign::select('*');
+            $query = User::select('*');
 
             // Search functionality
             if ($request->filled('search')) {
                 $search = $request->search;
                 $query->where(function($q) use ($search) {
-                    $q->where('title', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%");
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%");
                 });
             }
 
+            // Filter by role
+            if ($request->filled('role') && Schema::hasColumn('users', 'role')) {
+                $query->where('role', $request->role);
+            }
+
             // Filter by status
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
+            if ($request->filled('status') && Schema::hasColumn('users', 'is_active')) {
+                $query->where('is_active', $request->status === 'active');
             }
 
-            // Filter by category
-            if ($request->filled('category')) {
-                $query->where('category', $request->category);
+            // Filter by verification status
+            if ($request->filled('verification') && Schema::hasColumn('users', 'email_verified_at')) {
+                if ($request->verification === 'verified') {
+                    $query->whereNotNull('email_verified_at');
+                } else {
+                    $query->whereNull('email_verified_at');
+                }
             }
 
-            $campaigns = $query->latest()->paginate(10);
+            $users = $query->latest()->paginate(15);
 
-            // Tambah data donasi manual
-            foreach ($campaigns as $campaign) {
-                $campaign->donations_count = 0;
-                $campaign->donations_sum_amount = 0;
+            // Tambah data statistik manual
+            foreach ($users as $user) {
+                $user->campaigns_count = 0;
+                $user->donations_count = 0;
+                $user->donations_total = 0;
+                
+                if (Schema::hasTable('campaigns')) {
+                    $user->campaigns_count = DB::table('campaigns')
+                        ->where('user_id', $user->id)
+                        ->count();
+                }
                 
                 if (Schema::hasTable('donations')) {
-                    $campaign->donations_count = DB::table('donations')
-                        ->where('campaign_id', $campaign->id)
+                    $user->donations_count = DB::table('donations')
+                        ->where('user_id', $user->id)
                         ->count();
-                    
-                    $campaign->donations_sum_amount = DB::table('donations')
-                        ->where('campaign_id', $campaign->id)
+                        
+                    $user->donations_total = DB::table('donations')
+                        ->where('user_id', $user->id)
                         ->sum('amount') ?? 0;
                 }
             }
 
-            $categories = $this->getCategoryOptions();
+            $roles = $this->getRoleOptions();
             $statuses = $this->getStatusOptions();
 
-            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses'));
+            return view('admin.users.index', compact('users', 'roles', 'statuses'));
             
         } catch (\Exception $e) {
-            Log::error('Campaign index error: ' . $e->getMessage());
+            Log::error('User index error: ' . $e->getMessage());
             
-            $campaigns = Campaign::paginate(10);
-            $categories = [];
+            $users = User::paginate(15);
+            $roles = [];
             $statuses = [];
             
-            return view('admin.campaigns.index', compact('campaigns', 'categories', 'statuses'))
-                ->with('error', 'Terjadi kesalahan saat memuat data campaigns.');
+            return view('admin.users.index', compact('users', 'roles', 'statuses'))
+                ->with('error', 'Terjadi kesalahan saat memuat data users.');
         }
     }
 
     /**
-     * Show the form for creating a new campaign.
+     * Show the form for creating a new user.
      */
     public function create()
     {
-        $users = $this->getActiveUsers();
-        $categories = $this->getCategoryOptions();
+        $roles = $this->getRoleOptions();
         
-        return view('admin.campaigns.create', compact('users', 'categories'));
+        return view('admin.users.create', compact('roles'));
     }
 
     /**
-     * Store a newly created campaign.
+     * Store a newly created user.
      */
     public function store(Request $request)
     {
-        $categories = array_keys($this->getCategoryOptions());
+        $roles = array_keys($this->getRoleOptions());
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'target_amount' => 'required|numeric|min:1000',
-            'category' => 'required|string|in:' . implode(',', $categories),
-            'end_date' => 'required|date|after:today',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'sometimes|in:active,inactive,completed,cancelled'
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:1024',
+            'role' => 'required|string|in:' . implode(',', $roles),
+            'is_active' => 'boolean'
         ]);
 
         try {
             DB::beginTransaction();
 
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('campaigns', 'public');
-                $validated['image'] = $imagePath;
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $validated['avatar'] = $avatarPath;
             }
 
-            // Default status & verification
-            $validated['status'] = $validated['status'] ?? 'draft';
-            $validated['collected_amount'] = 0;
-            $validated['verification_status'] = 'pending';
+            // Hash password
+            $validated['password'] = Hash::make($validated['password']);
+            
+            // Default values
+            $validated['is_active'] = $validated['is_active'] ?? true;
+            $validated['email_verified_at'] = now(); // Auto verify admin created users
 
-            $campaign = Campaign::create($validated);
+            $user = User::create($validated);
 
             DB::commit();
 
             return redirect()
-                ->route('admin.campaigns.index')
-                ->with('success', 'Campaign berhasil dibuat!');
+                ->route('admin.users.index')
+                ->with('success', 'User berhasil dibuat!');
 
         } catch (\Exception $e) {
             DB::rollback();
 
-            if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-                Storage::disk('public')->delete($validated['image']);
+            if (isset($validated['avatar']) && Storage::disk('public')->exists($validated['avatar'])) {
+                Storage::disk('public')->delete($validated['avatar']);
             }
 
-            Log::error('Campaign store error: ' . $e->getMessage());
+            Log::error('User store error: ' . $e->getMessage());
             return back()
                 ->withInput()
-                ->with('error', 'Terjadi kesalahan saat membuat campaign: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan saat membuat user: ' . $e->getMessage());
         }
     }
 
-    public function show(Campaign $campaign)
+    /**
+     * Display the specified user.
+     */
+    public function show(User $user)
     {
-        $totalDonations = 0;
-        $totalAmount = 0;
+        $campaignsCount = 0;
+        $donationsCount = 0;
+        $donationsTotal = 0;
+        $recentCampaigns = collect();
         $recentDonations = collect();
         
         try {
-            if (Schema::hasTable('donations')) {
-                $totalDonations = DB::table('donations')
-                    ->where('campaign_id', $campaign->id)
+            if (Schema::hasTable('campaigns')) {
+                $campaignsCount = DB::table('campaigns')
+                    ->where('user_id', $user->id)
                     ->count();
                     
-                $totalAmount = DB::table('donations')
-                    ->where('campaign_id', $campaign->id)
+                $recentCampaignsData = DB::table('campaigns')
+                    ->where('user_id', $user->id)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
+                    ->get();
+                
+                $recentCampaigns = collect($recentCampaignsData);
+            }
+
+            if (Schema::hasTable('donations')) {
+                $donationsCount = DB::table('donations')
+                    ->where('user_id', $user->id)
+                    ->count();
+                    
+                $donationsTotal = DB::table('donations')
+                    ->where('user_id', $user->id)
                     ->sum('amount') ?? 0;
 
                 $recentDonationsData = DB::table('donations')
-                    ->where('campaign_id', $campaign->id)
+                    ->where('user_id', $user->id)
                     ->orderBy('created_at', 'desc')
-                    ->limit(10)
+                    ->limit(5)
                     ->get();
                 
                 $recentDonations = collect($recentDonationsData);
             }
             
         } catch (\Exception $e) {
-            Log::error('Campaign donations calculation error: ' . $e->getMessage());
+            Log::error('User statistics calculation error: ' . $e->getMessage());
         }
-        
-        $progressPercentage = $campaign->target_amount > 0 
-            ? min(100, ($totalAmount / $campaign->target_amount) * 100) 
-            : 0;
 
-        return view('admin.campaigns.show', compact(
-            'campaign', 
-            'totalDonations', 
-            'totalAmount', 
-            'progressPercentage', 
+        return view('admin.users.show', compact(
+            'user',
+            'campaignsCount',
+            'donationsCount', 
+            'donationsTotal',
+            'recentCampaigns',
             'recentDonations'
         ));
     }
 
-    public function edit(Campaign $campaign)
+    /**
+     * Show the form for editing the specified user.
+     */
+    public function edit(User $user)
     {
-        $users = $this->getActiveUsers();
-        $categories = $this->getCategoryOptions();
+        $roles = $this->getRoleOptions();
         
-        return view('admin.campaigns.edit', compact('campaign', 'users', 'categories'));
+        return view('admin.users.edit', compact('user', 'roles'));
     }
 
-    public function update(Request $request, Campaign $campaign)
+    /**
+     * Update the specified user.
+     */
+    public function update(Request $request, User $user)
     {
-        $categories = array_keys($this->getCategoryOptions());
+        $roles = array_keys($this->getRoleOptions());
 
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'required|string',
-            'target_amount' => 'required|numeric|min:1000',
-            'category' => 'required|string|in:' . implode(',', $categories),
-            'end_date' => 'required|date|after_or_equal:today',
-            'image' => 'sometimes|nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'user_id' => 'required|exists:users,id',
-            'status' => 'required|in:active,inactive,completed,cancelled'
+            'name' => 'required|string|max:255',
+            'email' => [
+                'required',
+                'string',
+                'email',
+                'max:255',
+                Rule::unique('users')->ignore($user->id),
+            ],
+            'password' => 'nullable|string|min:8|confirmed',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string|max:500',
+            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:1024',
+            'role' => 'required|string|in:' . implode(',', $roles),
+            'is_active' => 'boolean'
         ]);
 
         try {
             DB::beginTransaction();
 
-            $oldImage = $campaign->image;
+            $oldAvatar = $user->avatar;
 
-            if ($request->hasFile('image')) {
-                $imagePath = $request->file('image')->store('campaigns', 'public');
-                $validated['image'] = $imagePath;
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $validated['avatar'] = $avatarPath;
             }
 
-            // Jangan reset verification_status kalau tidak diubah
-            $validated['verification_status'] = $campaign->verification_status ?? 'pending';
+            // Only update password if provided
+            if (!empty($validated['password'])) {
+                $validated['password'] = Hash::make($validated['password']);
+            } else {
+                unset($validated['password']);
+            }
 
-            $campaign->update($validated);
+            $validated['is_active'] = $validated['is_active'] ?? false;
 
-            if (isset($validated['image']) && $oldImage && Storage::disk('public')->exists($oldImage)) {
-                Storage::disk('public')->delete($oldImage);
+            $user->update($validated);
+
+            // Delete old avatar if new one uploaded
+            if (isset($validated['avatar']) && $oldAvatar && Storage::disk('public')->exists($oldAvatar)) {
+                Storage::disk('public')->delete($oldAvatar);
             }
 
             DB::commit();
 
             return redirect()
-                ->route('admin.campaigns.index')
-                ->with('success', 'Campaign berhasil diperbarui!');
+                ->route('admin.users.index')
+                ->with('success', 'User berhasil diperbarui!');
 
         } catch (\Exception $e) {
             DB::rollback();
 
-            if (isset($validated['image']) && Storage::disk('public')->exists($validated['image'])) {
-                Storage::disk('public')->delete($validated['image']);
+            if (isset($validated['avatar']) && Storage::disk('public')->exists($validated['avatar'])) {
+                Storage::disk('public')->delete($validated['avatar']);
             }
 
-            Log::error('Campaign update error: ' . $e->getMessage());
+            Log::error('User update error: ' . $e->getMessage());
             return back()
                 ->withInput()
                 ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    public function destroy(Campaign $campaign)
+    /**
+     * Remove the specified user from storage.
+     */
+    public function destroy(User $user)
     {
         try {
             DB::beginTransaction();
 
+            // Check if user has campaigns
+            $campaignCount = 0;
+            if (Schema::hasTable('campaigns')) {
+                $campaignCount = DB::table('campaigns')
+                    ->where('user_id', $user->id)
+                    ->count();
+            }
+            
+            if ($campaignCount > 0) {
+                return back()->with('error', 'Tidak dapat menghapus user yang memiliki campaign aktif.');
+            }
+
+            // Check if user has donations
             $donationCount = 0;
             if (Schema::hasTable('donations')) {
                 $donationCount = DB::table('donations')
-                    ->where('campaign_id', $campaign->id)
+                    ->where('user_id', $user->id)
                     ->count();
             }
             
             if ($donationCount > 0) {
-                return back()->with('error', 'Tidak dapat menghapus campaign yang sudah memiliki donasi.');
+                return back()->with('error', 'Tidak dapat menghapus user yang memiliki riwayat donasi.');
             }
 
-            $imagePath = $campaign->image;
+            $avatarPath = $user->avatar;
 
-            $campaign->delete();
+            $user->delete();
 
-            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
-                Storage::disk('public')->delete($imagePath);
+            if ($avatarPath && Storage::disk('public')->exists($avatarPath)) {
+                Storage::disk('public')->delete($avatarPath);
             }
 
             DB::commit();
 
             return redirect()
-                ->route('admin.campaigns.index')
-                ->with('success', 'Campaign berhasil dihapus!');
+                ->route('admin.users.index')
+                ->with('success', 'User berhasil dihapus!');
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Campaign destroy error: ' . $e->getMessage());
+            Log::error('User destroy error: ' . $e->getMessage());
 
-            return back()->with('error', 'Terjadi kesalahan saat menghapus campaign: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menghapus user: ' . $e->getMessage());
         }
     }
 
-    public function updateStatus(Request $request, Campaign $campaign)
+    /**
+     * Update user status (active/inactive).
+     */
+    public function updateStatus(Request $request, User $user)
     {
+        if (!Schema::hasColumn('users', 'is_active')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fitur status tidak tersedia'
+            ], 400);
+        }
+
         $validated = $request->validate([
-            'status' => 'required|in:active,inactive,completed,cancelled'
+            'is_active' => 'required|boolean'
         ]);
 
         try {
-            $campaign->update(['status' => $validated['status']]);
+            $user->update(['is_active' => $validated['is_active']]);
 
-            $statusMessages = [
-                'active' => 'Campaign diaktifkan',
-                'inactive' => 'Campaign dinonaktifkan', 
-                'completed' => 'Campaign diselesaikan',
-                'cancelled' => 'Campaign dibatalkan'
-            ];
+            $message = $validated['is_active'] ? 'User diaktifkan' : 'User dinonaktifkan';
 
             return response()->json([
                 'success' => true,
-                'message' => $statusMessages[$validated['status']]
+                'message' => $message
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Campaign status update error: ' . $e->getMessage());
+            Log::error('User status update error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Gagal mengubah status: ' . $e->getMessage()
@@ -313,63 +388,133 @@ class CampaignController extends Controller
         }
     }
 
-    public function donations(Campaign $campaign)
+    /**
+     * Verify user email.
+     */
+    public function verifyEmail(User $user)
+    {
+        try {
+            $user->update([
+                'email_verified_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email user berhasil diverifikasi'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('User email verification error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memverifikasi email: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Show user's campaigns.
+     */
+    public function campaigns(User $user)
+    {
+        try {
+            if (!Schema::hasTable('campaigns')) {
+                return redirect()
+                    ->route('admin.users.show', $user)
+                    ->with('error', 'Tabel campaign tidak ditemukan.');
+            }
+
+            $campaigns = DB::table('campaigns')
+                ->where('user_id', $user->id)
+                ->orderBy('created_at', 'desc')
+                ->paginate(10);
+
+            return view('admin.users.campaigns', compact('user', 'campaigns'));
+            
+        } catch (\Exception $e) {
+            Log::error('User campaigns error: ' . $e->getMessage());
+            
+            return redirect()
+                ->route('admin.users.show', $user)
+                ->with('error', 'Terjadi kesalahan saat memuat data campaign.');
+        }
+    }
+
+    /**
+     * Show user's donations.
+     */
+    public function donations(User $user)
     {
         try {
             if (!Schema::hasTable('donations')) {
                 return redirect()
-                    ->route('admin.campaigns.show', $campaign)
+                    ->route('admin.users.show', $user)
                     ->with('error', 'Tabel donasi tidak ditemukan.');
             }
 
-            $donationsData = DB::table('donations')
-                ->where('campaign_id', $campaign->id)
+            $donations = DB::table('donations')
+                ->where('user_id', $user->id)
                 ->orderBy('created_at', 'desc')
                 ->paginate(15);
 
-            return view('admin.campaigns.donations', compact('campaign', 'donationsData'));
+            return view('admin.users.donations', compact('user', 'donations'));
             
         } catch (\Exception $e) {
-            Log::error('Campaign donations error: ' . $e->getMessage());
+            Log::error('User donations error: ' . $e->getMessage());
             
             return redirect()
-                ->route('admin.campaigns.show', $campaign)
+                ->route('admin.users.show', $user)
                 ->with('error', 'Terjadi kesalahan saat memuat data donasi.');
         }
     }
 
+    /**
+     * Bulk actions for users.
+     */
     public function bulkAction(Request $request)
     {
         $validated = $request->validate([
-            'action' => 'required|in:activate,deactivate,delete',
-            'campaigns' => 'required|array|min:1',
-            'campaigns.*' => 'exists:campaigns,id'
+            'action' => 'required|in:activate,deactivate,verify,delete',
+            'users' => 'required|array|min:1',
+            'users.*' => 'exists:users,id'
         ]);
 
         try {
             DB::beginTransaction();
 
-            $campaigns = Campaign::whereIn('id', $validated['campaigns'])->get();
+            $users = User::whereIn('id', $validated['users'])->get();
             $count = 0;
 
-            foreach ($campaigns as $campaign) {
+            foreach ($users as $user) {
                 switch ($validated['action']) {
                     case 'activate':
-                        $campaign->update(['status' => 'active']);
-                        $count++;
+                        if (Schema::hasColumn('users', 'is_active')) {
+                            $user->update(['is_active' => true]);
+                            $count++;
+                        }
                         break;
                     case 'deactivate':
-                        $campaign->update(['status' => 'inactive']);
+                        if (Schema::hasColumn('users', 'is_active')) {
+                            $user->update(['is_active' => false]);
+                            $count++;
+                        }
+                        break;
+                    case 'verify':
+                        $user->update(['email_verified_at' => now()]);
                         $count++;
                         break;
                     case 'delete':
+                        // Check dependencies before deleting
+                        $campaignCount = Schema::hasTable('campaigns') ? 
+                            DB::table('campaigns')->where('user_id', $user->id)->count() : 0;
                         $donationCount = Schema::hasTable('donations') ? 
-                            DB::table('donations')->where('campaign_id', $campaign->id)->count() : 0;
-                        if ($donationCount == 0) {
-                            if ($campaign->image && Storage::disk('public')->exists($campaign->image)) {
-                                Storage::disk('public')->delete($campaign->image);
+                            DB::table('donations')->where('user_id', $user->id)->count() : 0;
+                            
+                        if ($campaignCount == 0 && $donationCount == 0) {
+                            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+                                Storage::disk('public')->delete($user->avatar);
                             }
-                            $campaign->delete();
+                            $user->delete();
                             $count++;
                         }
                         break;
@@ -381,134 +526,53 @@ class CampaignController extends Controller
             $actionMessages = [
                 'activate' => 'diaktifkan',
                 'deactivate' => 'dinonaktifkan',
+                'verify' => 'diverifikasi',
                 'delete' => 'dihapus'
             ];
 
             return redirect()
-                ->route('admin.campaigns.index')
-                ->with('success', "{$count} campaign berhasil {$actionMessages[$validated['action']]}.");
+                ->route('admin.users.index')
+                ->with('success', "{$count} user berhasil {$actionMessages[$validated['action']]}.");
 
         } catch (\Exception $e) {
             DB::rollback();
-            Log::error('Campaign bulk action error: ' . $e->getMessage());
+            Log::error('User bulk action error: ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 
-    private function getActiveUsers()
+    /**
+     * Get role options.
+     */
+    private function getRoleOptions()
     {
         try {
-            $query = User::select('id', 'name', 'email');
-            
-            if (Schema::hasColumn('users', 'role')) {
-                $query->where('role', 'user');
-            }
-
-            if (Schema::hasColumn('users', 'is_active')) {
-                $query->where('is_active', true);
-            }
-            
-            return $query->get();
-        } catch (\Exception $e) {
-            Log::error('Get active users error: ' . $e->getMessage());
-            return User::select('id', 'name', 'email')->get();
-        }
-    }
-
-    private function getCategoryOptions()
-    {
-        try {
-            if (method_exists(Campaign::class, 'getCategories')) {
-                return Campaign::getCategories();
+            if (method_exists(User::class, 'getRoles')) {
+                return User::getRoles();
             }
 
             return [
-                'kesehatan' => 'Kesehatan',
-                'pendidikan' => 'Pendidikan', 
-                'infrastruktur' => 'Infrastruktur',
-                'bencana_alam' => 'Bencana Alam',
-                'kemanusiaan' => 'Kemanusiaan',
-                'lingkungan' => 'Lingkungan'
+                'user' => 'User',
+                'admin' => 'Admin',
+                'moderator' => 'Moderator'
             ];
         } catch (\Exception $e) {
-            Log::error('Get category options error: ' . $e->getMessage());
+            Log::error('Get role options error: ' . $e->getMessage());
             return [
-                'kesehatan' => 'Kesehatan',
-                'pendidikan' => 'Pendidikan', 
-                'infrastruktur' => 'Infrastruktur',
-                'bencana_alam' => 'Bencana Alam',
-                'kemanusiaan' => 'Kemanusiaan',
-                'lingkungan' => 'Lingkungan'
+                'user' => 'User',
+                'admin' => 'Admin'
             ];
         }
     }
 
+    /**
+     * Get status options.
+     */
     private function getStatusOptions()
     {
-        try {
-            if (method_exists(Campaign::class, 'getStatuses')) {
-                return Campaign::getStatuses();
-            }
-            
-            return [
-                'active' => 'Aktif',
-                'inactive' => 'Tidak Aktif',
-                'completed' => 'Selesai',
-                'cancelled' => 'Dibatalkan'
-            ];
-        } catch (\Exception $e) {
-            Log::error('Get status options error: ' . $e->getMessage());
-            return [
-                'active' => 'Aktif',
-                'inactive' => 'Tidak Aktif',
-                'completed' => 'Selesai',
-                'cancelled' => 'Dibatalkan'
-            ];
-        }
-    }
-
-    /**
-     * Halaman verifikasi campaign
-     */
-    public function verifyIndex()
-    {
-        $pendingCampaigns = Campaign::where('verification_status', 'pending')
-            ->with('user')
-            ->latest()
-            ->get();
-
-        return view('admin.campaigns.verify', compact('pendingCampaigns'));
-    }
-
-    /**
-     * Approve campaign
-     */
-    public function verifyApprove($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-        
-        $campaign->update([
-            'verification_status' => 'approved',
-            'status' => 'active', 
-        ]);
-
-        return redirect()->route('admin.campaigns.verify')
-            ->with('success', 'Campaign berhasil diverifikasi dan diaktifkan.');
-    }
-
-    /**
-     * Reject campaign
-     */
-    public function verifyReject($id)
-    {
-        $campaign = Campaign::findOrFail($id);
-
-        $campaign->update([
-            'verification_status' => 'rejected',
-            'rejection_reason' => request('rejection_reason') ?? 'Tidak sesuai kebijakan platform.',
-        ]);
-
-        return redirect()->route('admin.campaigns.verify')
-            ->with('success', 'Campaign berhasil ditolak.');
+        return [
+            'active' => 'Aktif',
+            'inactive' => 'Tidak Aktif'
+        ];
     }
 }
