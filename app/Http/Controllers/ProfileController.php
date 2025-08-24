@@ -27,12 +27,12 @@ class ProfileController extends Controller
     /**
      * Tampilkan form edit profil.
      */
-    public function edit(Request $request): View
-    {
-        return view('profile.edit', [
-            'user' => $request->user(),
-        ]);
-    }
+public function edit(Request $request): View
+{
+    return view('profile.edit', [
+        'user' => $request->user(),
+    ]);
+}
 
     /**
      * Simpan perubahan data profil user (untuk AJAX dan Redirect).
