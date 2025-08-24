@@ -36,7 +36,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-users"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum(fn($c) => $c->donations->count())) }}</div>
-                    <div class="stat-label">Donatur Bergabung</div>
+                    <div class="stat-label">Donasi Aktif</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -50,7 +50,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-coins"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum('collected_amount'), 0, ',', '.') }}</div>
-                    <div class="stat-label">Dana Terkumpul (Rp)</div>
+                    <div class="stat-label">Dana Terkumpul dari Campaign Aktif</div>
                 </div>
             </div>
         </div>
