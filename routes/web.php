@@ -19,9 +19,10 @@ use App\Http\Controllers\{
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
-use App\Http\Controllers\Admin\UserController as AdminUserController; // ADD THIS LINE
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Auth\CampaignCreatorRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -55,20 +56,29 @@ Route::middleware('guest')->group(function () {
 // Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// ✅ Form & Proses Registrasi Campaign Creator
+Route::get('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'showRegistrationForm'])
+    ->name('campaign.creator.register.form');
+Route::post('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'register'])
+    ->name('campaign.creator.register');
+
 /*
 |--------------------------------------------------------------------------
 | Email Verification Routes
 |--------------------------------------------------------------------------
 */
+// ✅ Hanya untuk user yang sudah login
 Route::middleware(['auth'])->group(function () {
     Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
+
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
 });
 
+// ✅ Route untuk verifikasi link (harus signed)
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-    ->middleware(['throttle:6,1'])
+    ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
 /*
@@ -107,8 +117,7 @@ Route::middleware(['auth', 'role.check:user', 'verified'])
         Route::get('/campaigns/create', [UserCampaignController::class, 'create'])->name('campaigns.create');
         Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('campaigns.store');
         Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaigns.history');
-        
-        // Tambahkan dua rute ini
+
         Route::get('/campaigns/{campaign}/edit', [UserCampaignController::class, 'edit'])->name('campaigns.edit');
         Route::put('/campaigns/{campaign}', [UserCampaignController::class, 'update'])->name('campaigns.update');
 
@@ -143,6 +152,7 @@ Route::prefix('admin')
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
         // USER MANAGEMENT ROUTES - Menggunakan AdminUserController
+
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
@@ -151,8 +161,7 @@ Route::prefix('admin')
             Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
             Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
             Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
-            
-            // Additional user actions
+
             Route::patch('/{user}/status', [AdminUserController::class, 'updateStatus'])->name('update-status');
             Route::patch('/{user}/verify-email', [AdminUserController::class, 'verifyEmail'])->name('verify-email');
             Route::get('/{user}/campaigns', [AdminUserController::class, 'campaigns'])->name('campaigns');
@@ -165,7 +174,7 @@ Route::prefix('admin')
         Route::patch('/campaigns/{campaign}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
         Route::patch('/campaigns/{campaign}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
 
-        // CRUD Campaign (Admin Only)
+        // CRUD Campaign
         Route::prefix('campaigns')->name('campaigns.')->group(function () {
             Route::get('/', [AdminCampaignController::class, 'index'])->name('index');
             Route::get('/create', [AdminCampaignController::class, 'create'])->name('create');
