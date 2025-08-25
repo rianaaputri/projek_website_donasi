@@ -41,6 +41,7 @@
                         <option value="">Semua Role</option>
                         <option value="user" {{ request('role') == 'user' ? 'selected' : '' }}>User</option>
                         <option value="admin" {{ request('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                        <option value="campaign_creator" {{ request('role') == 'campaign_creator' ? 'selected' : '' }}>Campaign Creator</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -385,13 +386,15 @@
         currentUserId = userId;
         currentAction = 'role';
         
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        const newRole = currentRole === 'admin' ? 'user' : 'admin' : 'campaign_creator';
         
         document.getElementById('roleUserName').textContent = userName;
         document.getElementById('currentRole').textContent = currentRole.charAt(0).toUpperCase() + currentRole.slice(1);
         document.getElementById('currentRole').className = `badge bg-${currentRole === 'admin' ? 'danger' : 'primary'}`;
+        document.getElementById('currentRole').className = `badge bg-${currentRole === 'campaign_creator' ? 'danger' : 'primary'}`;
         document.getElementById('newRole').textContent = newRole.charAt(0).toUpperCase() + newRole.slice(1);
         document.getElementById('newRole').className = `badge bg-${newRole === 'admin' ? 'danger' : 'primary'}`;
+        document.getElementById('newRole').className = `badge bg-${newRole === 'campaign_creator' ? 'danger' : 'primary'}`;
         
         new bootstrap.Modal(document.getElementById('roleModal')).show();
     }
@@ -467,7 +470,7 @@
                                 <tr><td><strong>Email:</strong></td><td>${user.email} ${verifiedStatus}</td></tr>
                                 <tr><td><strong>Telepon:</strong></td><td>${user.phone || '-'}</td></tr>
                                 <tr><td><strong>Alamat:</strong></td><td>${user.address || '-'}</td></tr>
-                                <tr><td><strong>Role:</strong></td><td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role.charAt(0).toUpperCase() + user.role.slice(1)}</span></td></tr>
+                                <tr><td><strong>Role:</strong></td><td><span class="badge bg-${user.role === 'admin' ? 'danger' : 'primary'}">${user.role === 'admin' ? 'danger' : 'primary'} ${user.role.charAt(0).toUpperCase() + user.role.slice(1)} </span></td></tr>
                                 <tr><td><strong>Status:</strong></td><td><span class="badge bg-${user.is_active ? 'success' : 'secondary'}">${user.is_active ? 'Aktif' : 'Tidak Aktif'}</span></td></tr>
                                 <tr><td><strong>Bergabung:</strong></td><td>${createdDate}</td></tr>
                             </table>

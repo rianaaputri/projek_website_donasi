@@ -22,6 +22,8 @@ use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Auth\CampaignCreatorRegisterController;
+use App\Http\Controllers\Creator\CreatorDashboardController;
 
 /*
 |--------------------------------------------------------------------------
@@ -157,8 +159,6 @@ Route::prefix('admin')
         Route::get('/show-user/{id}', [AdminController::class, 'showUserDetail'])->name('show-user-detail');
         
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
-
-        // USER MANAGEMENT ROUTES - Menggunakan AdminUserController
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
