@@ -45,6 +45,16 @@ class VerificationController extends Controller
         }
     }
 
+    private function redirectBasedOnRole($user)
+    {
+        if ($user->role === 'campaign_creator') {
+            return redirect()->route('creator.dashboard');
+        }
+
+        // Default: user biasa atau admin
+        return redirect()->route('home');
+    }
+
     /**
      * Verify the user's email address
      */
@@ -68,16 +78,14 @@ class VerificationController extends Controller
             if ($user->hasVerifiedEmail()) {
                 Auth::login($user);
                 Log::info("User already verified: {$user->email}");
-                return redirect()->route('dashboard')
-                    ->with('info', 'Email sudah terverifikasi sebelumnya.');
+                return $this->redirectBasedOnRole($user);
             }
 
             if ($user->markEmailAsVerified()) {
                 event(new Verified($user));
                 Auth::login($user);
                 Log::info("User email successfully verified: {$user->email}");
-                return redirect()->route('dashboard')
-                    ->with('success', 'Email berhasil diverifikasi! Selamat datang.');
+                return $this->redirectBasedOnRole($user);
             }
 
             Log::error("Failed to mark email as verified: {$user->email}");
