@@ -22,7 +22,6 @@ use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Http\Controllers\Auth\VerificationController;
-use App\Http\Controllers\Auth\CampaignCreatorRegisterController;
 
 /*
 |--------------------------------------------------------------------------
@@ -81,6 +80,14 @@ Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'
     ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
 
+    Route::get('/creator/dashboard', function () {
+        return view('auth.creator-dashboard');
+    })->name('creator.dashboard')->middleware(['auth']);
+
+    Route::get('/creator/dashboard', [CreatorDashboardController::class, 'index'])
+    ->name('creator.dashboard')
+    ->middleware(['auth']);
+
 /*
 |--------------------------------------------------------------------------
 | Dashboard Redirect
@@ -110,7 +117,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | User Campaign Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role.check:user', 'verified'])
+Route::middleware(['auth', 'role.check:user,campaign_creator', 'verified'])
     ->prefix('user')
     ->name('user.')
     ->group(function () {
@@ -152,7 +159,6 @@ Route::prefix('admin')
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
         // USER MANAGEMENT ROUTES - Menggunakan AdminUserController
-
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
