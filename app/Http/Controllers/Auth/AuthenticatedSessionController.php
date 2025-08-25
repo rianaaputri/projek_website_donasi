@@ -28,36 +28,49 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-        // Cek apakah email sudah diverifikasi
+        // ✅ Cek apakah email sudah diverifikasi
         if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            return redirect()->route('verification.notice')
-                ->with('warning', 'Silakan verifikasi email Anda terlebih dahulu sebelum login.');
-        }
+            // Redirect ke halaman login dengan pesan + link verifikasi
+            return redirect()->route('login')->with('warning', 
+                'Akun anda belum diverifikasi. 
+                 <a href="'.route('verification.notice').'" class="fw-bold">Klik di sini untuk verifikasi</a>'
+            );
+        }// ✅ Cek apakah email sudah diverifikasi
+if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
+    // Redirect balik ke login, tapi kasih pesan + link
+    return redirect()->route('login')
+        ->with('warning', 'Akun anda belum bisa login, silakan verifikasi email terlebih dahulu. 
+            <a href="'.route('verification.notice').'" class="fw-bold">Klik di sini untuk verifikasi</a>');
+}
+
+
+        // ✅ Kalau sudah diverifikasi, lanjut login normal
         $request->session()->regenerate();
 
         // Redirect berdasarkan role
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        }
-
-        // Default redirect
-        return redirect()->route('home');
+        return $user->role === 'admin'
+            ? redirect()->route('admin.dashboard')
+            : redirect()->route('home');
     }
 
     /**
-     * Logout
+     * Proses logout
      */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::logout();
+
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/')->with('success', 'Berhasil logout.');
     }
 }

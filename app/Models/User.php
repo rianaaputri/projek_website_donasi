@@ -23,7 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'address',
         'role',
         'is_active',
-        'avatar'
+        'avatar',
     ];
 
     /**
@@ -40,7 +40,7 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
-        'is_active' => 'boolean'
+        'is_active' => 'boolean',
     ];
 
     /**
@@ -80,6 +80,7 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getTotalDonatedAttribute(): float
     {
+        // pastikan donations punya scopeSuccess()
         return (float) $this->donations()->success()->sum('amount');
     }
 
@@ -96,17 +97,17 @@ class User extends Authenticatable implements MustVerifyEmail
      */
     public function getRoleLabelAttribute(): string
     {
-        return match($this->role) {
+        return match ($this->role) {
             'admin' => 'Administrator',
-            'user' => 'Pengguna',
-            default => ucfirst($this->role)
+            'user'  => 'Pengguna',
+            default => ucfirst((string) $this->role),
         };
     }
 
     /**
      * Scope: Filter by role
      */
-    public function scopeRole($query, $role)
+    public function scopeRole($query, string $role)
     {
         return $query->where('role', $role);
     }
@@ -134,9 +135,8 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         parent::boot();
 
-        // Set default role when creating user
         static::creating(function ($user) {
-            if (!$user->role) {
+            if (empty($user->role)) {
                 $user->role = 'user';
             }
             if (!isset($user->is_active)) {
