@@ -121,6 +121,8 @@ Route::middleware(['auth', 'role.check:user', 'verified'])
 | Admin Routes
 |--------------------------------------------------------------------------
 */
+// Di file routes/web.php - Bagian Admin Routes yang diperbaiki
+
 Route::prefix('admin')
     ->middleware(['auth', 'role.check:admin'])
     ->name('admin.')
@@ -128,13 +130,19 @@ Route::prefix('admin')
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-        // Admin Management
-        Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
-        Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
+        // Admin Management - SEMUA ROUTE DIPERBAIKI
         Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
+        Route::post('/update-role', [AdminController::class, 'updateRole'])->name('update-role');
+        Route::post('/update-status', [AdminController::class, 'updateStatus'])->name('update-status');
+        Route::post('/verify-email', [AdminController::class, 'verifyEmail'])->name('verify-email');
+        
+        // PERBAIKAN: Tambahkan route yang hilang
+        Route::post('/show-user', [AdminController::class, 'showUser'])->name('show-user');
+        Route::get('/show-user/{id}', [AdminController::class, 'showUserDetail'])->name('show-user-detail');
+        
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
 
-        // USER MANAGEMENT ROUTES - ADD THESE
+        // USER MANAGEMENT ROUTES - Menggunakan AdminUserController
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
@@ -152,7 +160,7 @@ Route::prefix('admin')
             Route::post('/bulk-action', [AdminUserController::class, 'bulkAction'])->name('bulk-action');
         });
 
-        // Campaign Verification - FIXED ROUTES
+        // Campaign Verification
         Route::get('/campaigns/verify', [AdminCampaignController::class, 'verifyIndex'])->name('campaigns.verify');
         Route::patch('/campaigns/{campaign}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
         Route::patch('/campaigns/{campaign}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
@@ -177,7 +185,6 @@ Route::prefix('admin')
         Route::get('/donations/{donation}', [AdminDonationController::class, 'show'])->name('donations.show');
         Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');
     });
-
 /*
 |--------------------------------------------------------------------------
 | Donation Public Routes
