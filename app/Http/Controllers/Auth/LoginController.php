@@ -5,120 +5,108 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Password;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
-use Illuminate\Validation\Rules;
+use Illuminate\Support\Facades\Log;
 use App\Providers\RouteServiceProvider;
+use App\Models\User;
+use Exception;
 
 class LoginController extends Controller
 {
+    /**
+     * ✅ Tampilkan halaman login
+     */
     public function showLoginForm()
     {
-        return view('auth.login');
+        try {
+            Log::info("Akses halaman login");
+            return view('auth.login');
+        } catch (Exception $e) {
+            Log::error("Gagal load halaman login: " . $e->getMessage());
+            abort(500, "Terjadi kesalahan pada server.");
+        }
     }
 
+    /**
+     * ✅ Proses login user
+     */
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email'    => ['required', 'email'],
-            'password' => ['required'],
-        ]);
+        try {
+            Log::info("Proses login dimulai", ['email' => $request->email]);
 
-        if (Auth::attempt($credentials, $request->filled('remember'))) {
-            $user = Auth::user();
+            $credentials = $request->validate([
+                'email'    => ['required', 'email'],
+                'password' => ['required'],
+            ]);
 
-            // Cek email terverifikasi
-            if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
-                Auth::logout();
-                $request->session()->invalidate();
-                $request->session()->regenerateToken();
+            if (Auth::attempt($credentials, $request->filled('remember'))) {
+                $user = Auth::user();
+                Log::info("Login berhasil", ['user_id' => $user->id, 'email' => $user->email]);
 
-                return redirect()->route('verification.notice')
-                    ->with('warning', 'Silakan verifikasi email Anda terlebih dahulu sebelum login.');
+                // 🔒 Cek apakah email sudah diverifikasi
+                if (method_exists($user, 'hasVerifiedEmail') && ! $user->hasVerifiedEmail()) {
+                    Log::warning("User mencoba login tanpa verifikasi email", ['user_id' => $user->id]);
+
+                    Auth::logout();
+                    $request->session()->invalidate();
+                    $request->session()->regenerateToken();
+
+                    // ✅ langsung arahkan ke halaman verifikasi
+                    return redirect()->route('verification.notice')
+                        ->with('warning', 'Akun Anda belum bisa login. Silakan verifikasi email terlebih dahulu.');
+                }
+
+                // 🔒 Regenerasi session untuk keamanan
+                $request->session()->regenerate();
+
+                // 🔀 Redirect sesuai role
+                return $user->role === 'admin'
+                    ? redirect()->intended(route('admin.dashboard'))->with('success', 'Selamat datang Admin!')
+                    : redirect()->intended(RouteServiceProvider::HOME)->with('success', 'Login berhasil. Selamat datang!');
             }
 
-            // Regenerate session untuk keamanan
-            $request->session()->regenerate();
+            // ⚠️ Jika login gagal → cek user
+            $user = User::where('email', $request->email)->first();
 
-            // Redirect sesuai role
-            return $user->role === 'admin'
-                ? redirect()->intended(route('admin.dashboard'))
-                : redirect()->intended(RouteServiceProvider::HOME);
+            if (! $user) {
+                Log::warning("Login gagal: email tidak ditemukan", ['email' => $request->email]);
+                return back()->withErrors([
+                    'email' => 'Email tidak ditemukan dalam sistem kami.',
+                ])->withInput();
+            }
+
+            Log::warning("Login gagal: password salah", ['email' => $request->email]);
+            return back()->withErrors([
+                'password' => 'Password yang Anda masukkan salah.',
+            ])->withInput();
+
+        } catch (Exception $e) {
+            Log::error("Error saat login: " . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Terjadi kesalahan saat login. Silakan coba lagi.');
         }
-
-        return back()->withErrors([
-            'email' => 'Kredensial tidak valid. Periksa email dan password Anda.',
-        ])->withInput();
     }
 
+    /**
+     * ✅ Proses logout user
+     */
     public function logout(Request $request)
     {
-        $role = auth()->check() ? auth()->user()->role : null;
+        try {
+            $role = auth()->check() ? auth()->user()->role : null;
+            $email = auth()->check() ? auth()->user()->email : null;
 
-        Auth::logout();
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+            Log::info("User logout", ['email' => $email, 'role' => $role]);
 
-        return $role === 'admin'
-            ? redirect()->route('login')->with('success', 'Berhasil logout.')
-            : redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
-    }
-
-    // Forgot Password Methods
-    public function showForgotPasswordForm()
-    {
-        return view('auth.forgot-password');
-    }
-
-    public function sendResetLinkEmail(Request $request)
-    {
-        $request->validate([
-            'email' => ['required', 'email'],
-        ]);
-
-        $status = Password::sendResetLink(
-            $request->only('email')
-        );
-
-        return $status === Password::RESET_LINK_SENT
-            ? back()->with('success', 'Link reset password telah dikirim ke email Anda.')
-            : back()->withErrors(['email' => 'Email tidak ditemukan dalam sistem kami.']);
-    }
-
-    public function showResetPasswordForm(Request $request, $token = null)
-    {
-        return view('auth.reset-password', [
-            'token' => $token,
-            'email' => $request->email
-        ]);
-    }
-
-    public function resetPassword(Request $request)
-    {
-        $request->validate([
-            'token' => ['required'],
-            'email' => ['required', 'email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
-
-        $status = Password::reset(
-            $request->only('email', 'password', 'password_confirmation', 'token'),
-            function ($user, $password) {
-                $user->forceFill([
-                    'password' => Hash::make($password)
-                ])->setRememberToken(Str::random(60));
-
-                $user->save();
-
-                // Trigger event reset password
-                event(new \Illuminate\Auth\Events\PasswordReset($user));
-            }
-        );
-
-        return $status === Password::PASSWORD_RESET
-            ? redirect()->route('login')->with('success', 'Password berhasil direset. Silakan login dengan password baru.')
-            : back()->withErrors(['email' => 'Token reset password tidak valid atau sudah expired.']);
+            return $role === 'admin'
+                ? redirect()->route('login')->with('success', 'Berhasil logout dari akun Admin.')
+                : redirect(RouteServiceProvider::HOME)->with('success', 'Berhasil logout.');
+        } catch (Exception $e) {
+            Log::error("Error saat logout: " . $e->getMessage());
+            return redirect()->route('login')->with('error', 'Terjadi kesalahan saat logout.');
+        }
     }
 }

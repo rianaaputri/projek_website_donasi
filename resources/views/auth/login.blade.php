@@ -468,6 +468,48 @@
   </style>
 </head>
 <body>
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  @if(session('success'))
+    <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          {!! session('success') !!}
+          @if(str_contains(session('success'), 'verifikasi'))
+            <br>
+            <a href="{{ route('verification.notice') }}" class="text-white fw-bold">Klik di sini untuk verifikasi</a>
+          @endif
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          {!! session('error') !!}
+          @if(str_contains(session('error'), 'verifikasi'))
+            <br>
+            <a href="{{ route('verification.notice') }}" class="text-white fw-bold">Klik di sini untuk verifikasi</a>
+          @endif
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+
+   
+         @if(session('warning'))
+ <div class="toast align-items-center text-bg-warning border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+    {!! session('warning') !!}
+    <a href="{{ route('verification.notice') }}" class="fw-bold">Klik di sini untuk verifikasi</a>
+  </div>
+@endif
+  </div>
 
 <div class="login-wrapper">
   <div class="login-container">
@@ -477,31 +519,26 @@
 
     @if(session('error'))
       <div class="alert alert-danger bounce-in">
-        {{ session('error') }}
+        {!! session('error') !!}
+        @if(str_contains(session('error'), 'verifikasi'))
+          <br>
+          <a href="{{ route('verification.notice') }}" class="fw-bold">Klik di sini untuk verifikasi</a>
+        @endif
       </div>
     @endif
 
     <form method="POST" action="{{ route('login') }}" id="loginForm">
       @csrf
 
-      <!-- Email Address -->
+      <!-- Email -->
       <div class="form-group">
         <div class="floating-label">
           <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="username" placeholder=" " onblur="validateEmail()" onkeyup="validateEmail()" />
-          <label for="email">
-            <i class="bi bi-envelope"></i>
-            Email (Gmail)
-          </label>
+          <label for="email"><i class="bi bi-envelope"></i> Email (Gmail)</label>
         </div>
-        @if($errors->get('email'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('email') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('email')
+          <div class="error-message bounce-in"><ul><li>{{ $message }}</li></ul></div>
+        @enderror
         <div id="emailMessage"></div>
       </div>
 
@@ -509,40 +546,28 @@
       <div class="form-group mt-4">
         <div class="floating-label password-wrapper">
           <input id="password" type="password" name="password" required autocomplete="current-password" onblur="validatePassword()" onkeyup="validatePassword()" placeholder=" " />
-          <label for="password">
-            <i class="bi bi-lock"></i>
-            Password
-          </label>
-          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button" aria-label="Toggle password visibility">
+          <label for="password"><i class="bi bi-lock"></i> Password</label>
+          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button">
             <i class="bi bi-eye-slash" id="passwordEyeIcon"></i>
           </span>
         </div>
-        @if($errors->get('password'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('password') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('password')
+          <div class="error-message bounce-in"><ul><li>{{ $message }}</li></ul></div>
+        @enderror
         <div id="passwordMessage"></div>
       </div>
 
-      <!-- Forgot Password Link -->
+      <!-- Forgot Password -->
       <div class="forgot-password-container">
         <a href="{{ route('password.request') }}" class="forgot-password">
-          <i class="bi bi-key me-1"></i>
-          Lupa password?
+          <i class="bi bi-key me-1"></i> Lupa password?
         </a>
       </div>
 
       <div class="form-actions">
-        <button type="submit" class="btn-login" id="submitBtn">
-          <i class="bi bi-box-arrow-in-right me-2"></i>
-          Login
+        <button type="submit" class="btn-login">
+          <i class="bi bi-box-arrow-in-right me-2"></i> Login
         </button>
-        
         <div class="register-link">
           <p class="mb-0">Belum punya akun? <a href="{{ route('register') }}">Daftar sekarang</a></p>
         </div>
@@ -557,10 +582,12 @@
   const friendlyMessages = {
     email: {
       invalid: "Format email tidak valid!",
-      noAt: "Email harus menggunakan format @gmail.com!",
+      noAt: "Email harus menggunakan tanda @",
+      notGmail: "Email harus menggunakan domain @gmail.com!",
+      noUsername: "Email tidak boleh kosong sebelum @gmail.com!"
     },
     password: {
-      tooShort: "Password minimal 6 karakter ya biar aman!",
+      tooShort: "Password minimal 6 karakter ya biar aman!"
     }
   };
 
@@ -594,33 +621,22 @@
       return true; 
     }
     
-    // Check if email contains @
     if (!email.includes('@')) {
       field.className = 'needs-attention';
       showMessage('emailMessage', friendlyMessages.email.noAt, 'helper');
       return false;
     }
     
-    // Check if email ends with @gmail.com
     if (!email.endsWith('@gmail.com')) {
       field.className = 'needs-attention';
       showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
       return false;
     }
     
-    // Check if there's a username before @gmail.com
     const username = email.split('@')[0];
     if (username.length === 0) {
       field.className = 'needs-attention';
       showMessage('emailMessage', friendlyMessages.email.noUsername, 'helper');
-      return false;
-    }
-    
-    // Additional check: make sure it's exactly @gmail.com (not subdomain)
-    const emailParts = email.split('@');
-    if (emailParts.length !== 2 || emailParts[1] !== 'gmail.com') {
-      field.className = 'needs-attention';
-      showMessage('emailMessage', friendlyMessages.email.notGmail, 'helper');
       return false;
     }
     
@@ -662,8 +678,7 @@
       eyeIcon.className = 'bi bi-eye-slash';
     }
     
-    // Force floating label to stay in correct position
-    if (passwordField.value && passwordField.value.trim() !== '') {
+    if (passwordField.value.trim() !== '') {
       passwordField.classList.add('has-value');
     } else {
       passwordField.classList.remove('has-value');
@@ -673,35 +688,15 @@
   document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('loginForm');
     const inputs = form.querySelectorAll('input');
-    
-    // Handle floating labels for inputs with values (like from old() helper)
+
+    // Floating label init
     inputs.forEach(input => {
-      // Check if input has value on page load
-      if (input.value && input.value.trim() !== '') {
-        input.classList.add('has-value');
-      }
-      
+      if (input.value.trim() !== '') input.classList.add('has-value');
       input.addEventListener('input', function() {
-        if (this.value && this.value.trim() !== '') {
-          this.classList.add('has-value');
-        } else {
-          this.classList.remove('has-value');
-        }
-      });
-      
-      input.addEventListener('focus', function() {
-        this.parentElement.classList.add('focused');
-      });
-      
-      input.addEventListener('blur', function() {
-        this.parentElement.classList.remove('focused');
-        // Keep has-value class if input still has content
-        if (!this.value || this.value.trim() === '') {
-          this.classList.remove('has-value');
-        }
+        this.value.trim() !== '' ? this.classList.add('has-value') : this.classList.remove('has-value');
       });
     });
-    
+
     // Enhanced toggle password accessibility
     document.querySelectorAll('.toggle-password').forEach(toggle => {
       toggle.addEventListener('keydown', function(e) {
@@ -712,19 +707,24 @@
       });
     });
 
-    // Form submission validation
+    // Form validation
     form.addEventListener('submit', function(e) {
       const isEmailValid = validateEmail();
       const isPasswordValid = validatePassword();
-      
       if (!isEmailValid || !isPasswordValid) {
         e.preventDefault();
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        return false;
       }
+    });
+
+    // Auto-hide bootstrap toast
+    const toastElList = [].slice.call(document.querySelectorAll('.toast'))
+    toastElList.map(toastEl => {
+      new bootstrap.Toast(toastEl, { delay: 5000 }).show()
     });
   });
 </script>
+
 
 </body>
 </html>
