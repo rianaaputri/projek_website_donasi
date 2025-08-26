@@ -134,4 +134,5 @@ class Donation extends Model
             $donation->campaign->updateCollectedAmount();
         });
     }
+    
 }
