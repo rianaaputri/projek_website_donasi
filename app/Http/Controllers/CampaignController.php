@@ -102,7 +102,7 @@ class CampaignController extends Controller
     {
         $campaign = Campaign::findOrFail($id);
         $campaign->verification_status = 'accepted';
-        $campaign->status = 'active'; // bisa juga tetap 'draft' sampai user publish
+        $campaign->status = 'active';
         $campaign->save();
 
         return redirect()->route('admin.campaigns.verify')
@@ -119,4 +119,28 @@ class CampaignController extends Controller
         return redirect()->route('admin.campaigns.verify')
             ->with('info', 'Campaign ditolak dan tidak akan muncul di halaman utama.');
     }
+
+// Ganti method detail di CampaignController dengan ini:
+public function detail($id)
+{
+    $campaign = Campaign::with(['donations.user'])->findOrFail($id);
+    $totalAmount = $campaign->donations->sum('amount');
+    $donorsCount = $campaign->donations->count();
+    $progressPercentage = $campaign->target_amount > 0 ? min(100, ($totalAmount / $campaign->target_amount) * 100) : 0;
+    
+    // Tambahkan recentDonors - ambil 10 donasi terbaru
+    $recentDonors = $campaign->donations()
+        ->with('user')
+        ->latest()
+        ->take(10)
+        ->get();
+    
+    // Tentukan apakah kampanye masih aktif
+    $isActive = $campaign->status === 'active' && 
+                $campaign->verification_status === 'accepted' &&
+                (!$campaign->end_date || $campaign->end_date >= now()->toDateString()) &&
+                $totalAmount < $campaign->target_amount;
+    
+    return view('campaign.detail', compact('campaign', 'totalAmount', 'donorsCount', 'progressPercentage', 'recentDonors', 'isActive'));
+}
 }
