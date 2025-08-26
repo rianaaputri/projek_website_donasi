@@ -394,13 +394,6 @@
                 Donations
             </a>
 
-            <!-- Add Admin -->
-            <a href="{{ route('admin.add-admin') }}" 
-               class="menu-item {{ request()->routeIs('admin.add-admin') ? 'active' : '' }}">
-                <i class="fas fa-user-plus"></i>
-                Add Admin
-            </a>
-
             <!-- Manage Admins -->
             <a href="{{ route('admin.list-admins') }}" 
                class="menu-item {{ request()->routeIs('admin.list-admins') ? 'active' : '' }}">

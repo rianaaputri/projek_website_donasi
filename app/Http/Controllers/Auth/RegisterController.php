@@ -31,7 +31,7 @@ class RegisteredUserController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
@@ -41,10 +41,14 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
+        // Trigger event untuk kirim email verifikasi
         event(new Registered($user));
 
+        // Login user sementara
         Auth::login($user);
 
-        return redirect(route('dashboard', absolute: false));
+        // Redirect ke halaman verifikasi email dengan alert
+        return redirect()->route('verification.notice')
+            ->with('status', 'Registrasi berhasil! Silakan cek email Anda untuk verifikasi sebelum login.');
     }
 }

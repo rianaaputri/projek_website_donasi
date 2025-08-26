@@ -26,9 +26,7 @@
       --danger-bg: #FEE2E2;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       font-family: 'Poppins', sans-serif;
@@ -55,11 +53,7 @@
       z-index: -1;
     }
 
-    .register-wrapper {
-      width: 100%;
-      max-width: 450px;
-      position: relative;
-    }
+    .register-wrapper { width: 100%; max-width: 450px; position: relative; }
 
     .register-container {
       background: rgba(255, 255, 255, 0.95);
@@ -91,41 +85,16 @@
                   0 4px 24px rgba(0, 0, 0, 0.04);
     }
 
-    .register-header {
-      text-align: center;
-      margin-bottom: 2.5rem;
-    }
-
-    .register-header h3 {
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: 1.75rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .register-header p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin: 0;
-      font-weight: 400;
-    }
+    .register-header { text-align: center; margin-bottom: 2.5rem; }
+    .register-header h3 { color: var(--text-primary); font-weight: 600; font-size: 1.75rem; margin-bottom: 0.5rem; }
+    .register-header p { color: var(--text-secondary); font-size: 0.95rem; margin: 0; font-weight: 400; }
 
     /* Form Group Styling */
-    .form-group {
-      margin-bottom: 1.5rem;
-      position: relative;
-    }
+    .form-group { margin-bottom: 1.5rem; position: relative; }
+    .form-group.mt-4 { margin-top: 1.5rem; }
 
-    .form-group.mt-4 {
-      margin-top: 1.5rem;
-    }
-
-    /* Floating Label Container */
-    .floating-label {
-      position: relative;
-    }
-
-    /* Input Label Styling - Floating */
+    /* Floating Label */
+    .floating-label { position: relative; }
     .floating-label label {
       position: absolute;
       left: 1.25rem;
@@ -144,7 +113,6 @@
       transform-origin: left center;
     }
 
-    /* Label animation when focused or filled */
     .floating-label input:focus ~ label,
     .floating-label input:not(:placeholder-shown) ~ label,
     .floating-label input.has-value ~ label {
@@ -158,7 +126,6 @@
       transform: scale(0.9);
     }
 
-    /* Input Field Styling */
     input[type="text"],
     input[type="email"],
     input[type="password"] {
@@ -167,7 +134,7 @@
       padding: 1rem 1.25rem;
       font-size: 0.95rem;
       background-color: rgba(248, 250, 252, 0.5);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s;
       width: 100%;
       min-height: 3.5rem;
       outline: none;
@@ -181,25 +148,12 @@
       background-color: white;
     }
 
-    /* Remove default placeholder visibility */
-    input::placeholder {
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
+    input::placeholder { opacity: 0; transition: opacity 0.3s ease; }
+    input:focus::placeholder { opacity: 0.6; }
 
-    input:focus::placeholder {
-      opacity: 0.6;
-    }
-
-    /* Password field with icon */
-    .password-wrapper {
-      position: relative;
-    }
-
-    .password-wrapper input {
-      padding-right: 3.5rem;
-    }
-
+    /* Password Toggle */
+    .password-wrapper { position: relative; }
+    .password-wrapper input { padding-right: 3.5rem; }
     .toggle-password {
       position: absolute;
       right: 1rem;
@@ -211,13 +165,8 @@
       transition: color 0.2s ease;
       padding: 0.5rem;
       border-radius: 8px;
-      line-height: 1;
     }
-
-    .toggle-password:hover {
-      color: var(--dark-blue);
-      background-color: rgba(33, 150, 243, 0.1);
-    }
+    .toggle-password:hover { color: var(--dark-blue); background-color: rgba(33, 150, 243, 0.1); }
 
     /* Error Styling */
     .error-message {
@@ -232,23 +181,11 @@
       align-items: center;
       gap: 0.5rem;
     }
+    .error-message::before { content: '💡'; font-size: 0.9rem; }
+    .error-message ul { margin: 0; padding: 0; list-style: none; }
+    .error-message li { margin: 0; }
 
-    .error-message::before {
-      content: '💡';
-      font-size: 0.9rem;
-    }
-
-    .error-message ul {
-      margin: 0;
-      padding: 0;
-      list-style: none;
-    }
-
-    .error-message li {
-      margin: 0;
-    }
-
-    /* Button Styling */
+    /* Button */
     .btn-register {
       background: linear-gradient(135deg, var(--accent-blue) 0%, var(--dark-blue) 100%);
       border: none;
@@ -257,126 +194,80 @@
       font-weight: 600;
       font-size: 1rem;
       color: white;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: all 0.3s;
       box-shadow: 0 4px 16px rgba(33, 150, 243, 0.3);
       cursor: pointer;
     }
-
     .btn-register:hover {
       transform: translateY(-2px);
       box-shadow: 0 6px 24px rgba(33, 150, 243, 0.4);
       background: linear-gradient(135deg, var(--dark-blue) 0%, #1976D2 100%);
     }
 
-    .btn-register:active {
-      transform: translateY(0);
-      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2);
-    }
+    .login-link { text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); }
+    .login-link a { color: var(--dark-blue); font-weight: 600; font-size: 0.9rem; text-decoration: none; }
+    .login-link a:hover { color: var(--accent-blue); text-decoration: underline; }
 
-    /* Login Link */
-    .login-link {
-      text-align: center;
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border-color);
-    }
+    .bounce-in { animation: bounceIn 0.5s ease-out; }
+    @keyframes bounceIn { 0% {opacity:0;transform:scale(0.3);}50%{opacity:1;transform:scale(1.05);}70%{transform:scale(0.9);}100%{opacity:1;transform:scale(1);} }
 
-    .login-link a {
-      color: var(--dark-blue);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 0.9rem;
-      transition: color 0.2s ease;
-    }
-
-    .login-link a:hover {
-      color: var(--accent-blue);
-      text-decoration: underline;
-    }
-
-    /* Form Actions */
-    .form-actions {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 2rem;
-    }
-
-    .form-actions .flex {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-
-    @media (max-width: 480px) {
-      .register-container {
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-      }
-      
-      .register-header h3 {
-        font-size: 1.5rem;
-      }
-
-      .form-actions .flex {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn-register {
-        width: 100%;
-      }
-    }
-
-    .bounce-in {
-      animation: bounceIn 0.5s ease-out;
-    }
-
-    @keyframes bounceIn {
-      0% { opacity: 0; transform: scale(0.3); }
-      50% { opacity: 1; transform: scale(1.05); }
-      70% { transform: scale(0.9); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    /* Client-side validation styling */
-    input.needs-attention {
-      border-color: var(--warning-color) !important;
-      background-color: var(--warning-bg) !important;
-    }
-
-    input.looks-good {
-      border-color: var(--success-color) !important;
-      background-color: var(--success-bg) !important;
-    }
+    /* Client-side validation */
+    input.needs-attention { border-color: var(--warning-color) !important; background-color: var(--warning-bg) !important; }
+    input.looks-good { border-color: var(--success-color) !important; background-color: var(--success-bg) !important; }
 
     .friendly-message {
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
+      font-size: 0.85rem; margin-top: 0.5rem; padding: 0.75rem 1rem;
+      border-radius: 8px; display: flex; align-items: center; gap: 0.5rem;
       transition: all 0.3s ease;
     }
-
-    .friendly-message.helper {
-      background: var(--warning-bg);
-      color: #92400E;
-      border: 1px solid #FDE68A;
-    }
-
-    .friendly-message.success {
-      background: var(--success-bg);
-      color: #065F46;
-      border: 1px solid #A7F3D0;
-    }
+    .friendly-message.helper { background: var(--warning-bg); color: #92400E; border: 1px solid #FDE68A; }
+    .friendly-message.success { background: var(--success-bg); color: #065F46; border: 1px solid #A7F3D0; }
   </style>
 </head>
 <body>
+<!-- Toast -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;">
+  @if(session('success'))
+    <div class="toast align-items-center text-bg-success border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">
+          {{ session('success') }} 
+          @if(str_contains(session('success'), 'Akun berhasil'))
+            <br><a href="{{ route('login') }}" class="text-white fw-bold">Klik di sini untuk login</a>
+          @endif
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+
+  @if(session('error'))
+    <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">{{ session('error') }}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+
+  @if(session('warning'))
+    <div class="toast align-items-center text-bg-warning border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">{{ session('warning') }}</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+
+  @if(session('info'))
+    <div class="toast align-items-center text-bg-info border-0 show" role="alert">
+      <div class="d-flex">
+        <div class="toast-body">{{ session('info') }}</div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+</div>
 
 <div class="register-wrapper">
   <div class="register-container">
@@ -391,101 +282,62 @@
       <!-- Name -->
       <div class="form-group">
         <div class="floating-label">
-          <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus autocomplete="name" placeholder=" " onblur="validateName()" onkeyup="validateName()" />
-          <label for="name">
-            <i class="bi bi-person"></i>
-            Name
-          </label>
+          <input id="name" type="text" name="name" value="{{ old('name') }}" required autofocus placeholder=" " />
+          <label for="name"><i class="bi bi-person"></i> Name</label>
         </div>
-        @if($errors->get('name'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('name') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('name')
+          <div class="error-message bounce-in">{{ $message }}</div>
+        @enderror
         <div id="nameMessage"></div>
       </div>
 
-      <!-- Email Address -->
+      <!-- Email -->
       <div class="form-group mt-4">
         <div class="floating-label">
-          <input id="email" type="email" name="email" value="{{ old('email') }}" required autocomplete="username" onblur="validateEmail()" onkeyup="validateEmail()" placeholder=" " />
-          <label for="email">
-            <i class="bi bi-envelope"></i>
-            Email (Gmail)
-          </label>
+          <input id="email" type="email" name="email" value="{{ old('email') }}" required placeholder=" " />
+          <label for="email"><i class="bi bi-envelope"></i> Email (Gmail)</label>
         </div>
-        @if($errors->get('email'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('email') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('email')
+          <div class="error-message bounce-in">{{ $message }}</div>
+        @enderror
         <div id="emailMessage"></div>
       </div>
 
       <!-- Password -->
       <div class="form-group mt-4">
         <div class="floating-label password-wrapper">
-          <input id="password" type="password" name="password" required autocomplete="new-password" onblur="validatePassword()" onkeyup="validatePassword()" placeholder=" " />
-          <label for="password">
-            <i class="bi bi-lock"></i>
-            Password
-          </label>
-          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button" aria-label="Toggle password visibility">
+          <input id="password" type="password" name="password" required placeholder=" " />
+          <label for="password"><i class="bi bi-lock"></i> Password</label>
+          <span class="toggle-password" onclick="togglePassword('password')" tabindex="0" role="button">
             <i class="bi bi-eye-slash" id="passwordEyeIcon"></i>
           </span>
         </div>
-        @if($errors->get('password'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('password') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('password')
+          <div class="error-message bounce-in">{{ $message }}</div>
+        @enderror
         <div id="passwordMessage"></div>
       </div>
 
       <!-- Confirm Password -->
       <div class="form-group mt-4">
         <div class="floating-label password-wrapper">
-          <input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" onblur="validatePasswordConfirmation()" onkeyup="validatePasswordConfirmation()" placeholder=" " />
-          <label for="password_confirmation">
-            <i class="bi bi-shield-lock"></i>
-            Confirm Password
-          </label>
-          <span class="toggle-password" onclick="togglePassword('password_confirmation')" tabindex="0" role="button" aria-label="Toggle password confirmation visibility">
-            <i class="bi bi-eye-slash" id="confirmPasswordEyeIcon"></i>
+          <input id="password_confirmation" type="password" name="password_confirmation" required placeholder=" " />
+          <label for="password_confirmation"><i class="bi bi-shield-lock"></i> Confirm Password</label>
+          <span class="toggle-password" onclick="togglePassword('password_confirmation')" tabindex="0" role="button">
+            <i class="bi bi-eye-slash" id="password_confirmationEyeIcon"></i>
           </span>
         </div>
-        @if($errors->get('password_confirmation'))
-          <div class="error-message bounce-in">
-            <ul>
-              @foreach($errors->get('password_confirmation') as $message)
-                <li>{{ $message }}</li>
-              @endforeach
-            </ul>
-          </div>
-        @endif
+        @error('password_confirmation')
+          <div class="error-message bounce-in">{{ $message }}</div>
+        @enderror
         <div id="confirmPasswordMessage"></div>
       </div>
 
       <div class="form-actions">
-        <div class="flex">
-          <a href="{{ route('login') }}">
-            Already registered?
-          </a>
+        <div class="flex d-flex justify-content-between">
+          <a href="{{ route('login') }}">Already registered?</a>
           <button type="submit" class="btn-register" id="submitBtn">
-            <i class="bi bi-person-plus me-2"></i>
-            Register
+            <i class="bi bi-person-plus me-2"></i> Register
           </button>
         </div>
       </div>
@@ -494,16 +346,10 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 <script>
   const friendlyMessages = {
-    email: {
-      invalid: "Email harus pakai format @gmail.com ya!",
-      noAt: "Email harus pakai format @gmail.com ya!",
-    },
-    password: {
-      tooShort: "Password minimal 6 karakter ya biar aman!",
-    },
+    email: { invalid: "Email harus pakai format @gmail.com ya!", noAt: "Email harus pakai format @gmail.com ya!" },
+    password: { tooShort: "Password minimal 6 karakter ya biar aman!" },
     confirmPassword: {
       tooShort: "Password ga sama nih! Coba cek lagi ya!",
       noMatch: "Password ga sama nih! Coba cek lagi ya!",
@@ -513,198 +359,71 @@
 
   function showMessage(elementId, message, type = 'helper') {
     const element = document.getElementById(elementId);
-    if (!message) {
-      element.innerHTML = '';
-      return;
-    }
-    
-    const iconMap = {
-      helper: 'bi-lightbulb',
-      success: 'bi-check-circle'
-    };
-    
-    element.innerHTML = `
-      <div class="friendly-message ${type} bounce-in">
-        <i class="bi ${iconMap[type]}"></i>
-        ${message}
-      </div>
-    `;
+    if (!message) { element.innerHTML = ''; return; }
+    const iconMap = { helper: 'bi-lightbulb', success: 'bi-check-circle' };
+    element.innerHTML = `<div class="friendly-message ${type} bounce-in"><i class="bi ${iconMap[type]}"></i> ${message}</div>`;
   }
 
   function validateName() {
     const name = document.getElementById('name').value.trim();
     const field = document.getElementById('name');
-    
-    if (name === '') {
-      field.className = '';
-      showMessage('nameMessage', '');
-      return true; 
-    }
-    
-    if (name.length < 2) {
-      field.className = 'needs-attention';
-      showMessage('nameMessage', 'Nama minimal 2 karakter ya!', 'helper');
-      return false;
-    }
-    
-    field.className = 'looks-good';
-    showMessage('nameMessage', '');
-    return true;
+    if (name === '') { field.className = ''; showMessage('nameMessage',''); return true; }
+    if (name.length < 2) { field.className = 'needs-attention'; showMessage('nameMessage','Nama minimal 2 karakter ya!','helper'); return false; }
+    field.className = 'looks-good'; showMessage('nameMessage',''); return true;
   }
 
   function validateEmail() {
     const email = document.getElementById('email').value.trim().toLowerCase();
     const field = document.getElementById('email');
-    
-    if (email === '') {
-      field.className = '';
-      showMessage('emailMessage', '');
-      return true; 
-    }
-    
-    if (!email.includes('@')) {
-      field.className = 'needs-attention';
-      showMessage('emailMessage', friendlyMessages.email.noAt, 'helper');
-      return false;
-    }
-    
-    if (!email.endsWith('@gmail.com')) {
-      field.className = 'needs-attention';
-      showMessage('emailMessage', friendlyMessages.email.invalid, 'helper');
-      return false;
-    }
-    
-    const username = email.split('@')[0];
-    if (username.length === 0) {
-      field.className = 'needs-attention';
-      showMessage('emailMessage', friendlyMessages.email.invalid, 'helper');
-      return false;
-    }
-    
-    field.className = 'looks-good';
-    showMessage('emailMessage', '');
-    return true;
+    if (email === '') { field.className = ''; showMessage('emailMessage',''); return true; }
+    if (!email.includes('@')) { field.className='needs-attention'; showMessage('emailMessage',friendlyMessages.email.noAt,'helper'); return false; }
+    if (!email.endsWith('@gmail.com')) { field.className='needs-attention'; showMessage('emailMessage',friendlyMessages.email.invalid,'helper'); return false; }
+    const username=email.split('@')[0]; if(username.length===0){ field.className='needs-attention'; showMessage('emailMessage',friendlyMessages.email.invalid,'helper'); return false; }
+    field.className='looks-good'; showMessage('emailMessage',''); return true;
   }
 
   function validatePassword() {
-    const password = document.getElementById('password').value;
-    const field = document.getElementById('password');
-    
-    if (password === '') {
-      field.className = '';
-      showMessage('passwordMessage', '');
-      return true;
-    }
-    
-    if (password.length < 6) {
-      field.className = 'needs-attention';
-      showMessage('passwordMessage', friendlyMessages.password.tooShort, 'helper');
-      return false;
-    }
-    
-    field.className = 'looks-good';
-    showMessage('passwordMessage', '');
-    return true;
+    const password=document.getElementById('password').value;
+    const field=document.getElementById('password');
+    if(password===''){ field.className=''; showMessage('passwordMessage',''); return true; }
+    if(password.length<6){ field.className='needs-attention'; showMessage('passwordMessage',friendlyMessages.password.tooShort,'helper'); return false; }
+    field.className='looks-good'; showMessage('passwordMessage',''); return true;
   }
 
   function validatePasswordConfirmation() {
-    const password = document.getElementById('password').value;
-    const confirmPassword = document.getElementById('password_confirmation').value;
-    const field = document.getElementById('password_confirmation');
-    
-    if (confirmPassword === '') {
-      field.className = '';
-      showMessage('confirmPasswordMessage', '');
-      return true;
-    }
-    
-    if (confirmPassword.length < 6) {
-      field.className = 'needs-attention';
-      showMessage('confirmPasswordMessage', friendlyMessages.confirmPassword.tooShort, 'helper');
-      return false;
-    }
-    
-    if (password !== '' && confirmPassword !== password) {
-      field.className = 'needs-attention';
-      showMessage('confirmPasswordMessage', friendlyMessages.confirmPassword.noMatch, 'helper');
-      return false;
-    }
-    
-    field.className = 'looks-good';
-    showMessage('confirmPasswordMessage', '');
-    return true;
+    const password=document.getElementById('password').value;
+    const confirmPassword=document.getElementById('password_confirmation').value;
+    const field=document.getElementById('password_confirmation');
+    if(confirmPassword===''){ field.className=''; showMessage('confirmPasswordMessage',''); return true; }
+    if(confirmPassword.length<6){ field.className='needs-attention'; showMessage('confirmPasswordMessage',friendlyMessages.confirmPassword.tooShort,'helper'); return false; }
+    if(password!=='' && confirmPassword!==password){ field.className='needs-attention'; showMessage('confirmPasswordMessage',friendlyMessages.confirmPassword.noMatch,'helper'); return false; }
+    field.className='looks-good'; showMessage('confirmPasswordMessage',''); return true;
   }
 
   function togglePassword(fieldId) {
-    const passwordField = document.getElementById(fieldId);
-    const eyeIcon = document.getElementById(fieldId + 'EyeIcon');
-    
-    if (passwordField.type === 'password') {
-      passwordField.type = 'text';
-      eyeIcon.className = 'bi bi-eye';
-    } else {
-      passwordField.type = 'password';
-      eyeIcon.className = 'bi bi-eye-slash';
-    }
+    const passwordField=document.getElementById(fieldId);
+    const eyeIcon=document.getElementById(fieldId+'EyeIcon');
+    if(passwordField.type==='password'){ passwordField.type='text'; eyeIcon.className='bi bi-eye'; }
+    else{ passwordField.type='password'; eyeIcon.className='bi bi-eye-slash'; }
   }
 
   document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registerForm');
-    const inputs = form.querySelectorAll('input');
-    
-    // Handle floating labels for inputs with values (like from old() helper)
-    inputs.forEach(input => {
-      // Check if input has value on page load
-      if (input.value && input.value.trim() !== '') {
-        input.classList.add('has-value');
-      }
-      
-      input.addEventListener('input', function() {
-        if (this.value && this.value.trim() !== '') {
-          this.classList.add('has-value');
-        } else {
-          this.classList.remove('has-value');
-        }
-      });
-      
-      input.addEventListener('focus', function() {
-        this.parentElement.classList.add('focused');
-      });
-      
-      input.addEventListener('blur', function() {
-        this.parentElement.classList.remove('focused');
-        // Keep has-value class if input still has content
-        if (!this.value || this.value.trim() === '') {
-          this.classList.remove('has-value');
-        }
-      });
+    const form=document.getElementById('registerForm');
+    const inputs=form.querySelectorAll('input');
+    inputs.forEach(input=>{
+      if(input.value && input.value.trim()!==''){ input.classList.add('has-value'); }
+      input.addEventListener('input',function(){ if(this.value.trim()!==''){ this.classList.add('has-value'); } else { this.classList.remove('has-value'); } });
+      input.addEventListener('focus',()=>input.parentElement.classList.add('focused'));
+      input.addEventListener('blur',function(){ input.parentElement.classList.remove('focused'); if(!this.value.trim()){ this.classList.remove('has-value'); } });
     });
-    
-    // Enhanced toggle password accessibility
-    document.querySelectorAll('.toggle-password').forEach(toggle => {
-      toggle.addEventListener('keydown', function(e) {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          this.click();
-        }
-      });
+    document.querySelectorAll('.toggle-password').forEach(toggle=>{
+      toggle.addEventListener('keydown',function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); this.click(); } });
     });
-
-    // Form submission validation
-    form.addEventListener('submit', function(e) {
-      const isNameValid = validateName();
-      const isEmailValid = validateEmail();
-      const isPasswordValid = validatePassword();
-      const isPasswordConfirmValid = validatePasswordConfirmation();
-      
-      if (!isNameValid || !isEmailValid || !isPasswordValid || !isPasswordConfirmValid) {
-        e.preventDefault();
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        return false;
-      }
+    form.addEventListener('submit',function(e){
+      const isNameValid=validateName(), isEmailValid=validateEmail(), isPasswordValid=validatePassword(), isPasswordConfirmValid=validatePasswordConfirmation();
+      if(!isNameValid||!isEmailValid||!isPasswordValid||!isPasswordConfirmValid){ e.preventDefault(); window.scrollTo({top:0,behavior:'smooth'}); return false; }
     });
   });
 </script>
-
 </body>
 </html>

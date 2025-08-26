@@ -19,8 +19,12 @@ use App\Http\Controllers\{
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Admin\DonationController as AdminDonationController;
 use App\Http\Controllers\Admin\CampaignController as AdminCampaignController;
+use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\User\CampaignController as UserCampaignController;
 use App\Http\Controllers\Auth\VerificationController;
+use App\Http\Controllers\Auth\CampaignCreatorRegisterController;
+use App\Http\Controllers\Creator\CreatorDashboardController;
+
 /*
 |--------------------------------------------------------------------------
 | Public Routes
@@ -53,21 +57,38 @@ Route::middleware('guest')->group(function () {
 // Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
+// ✅ Form & Proses Registrasi Campaign Creator
+Route::get('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'showRegistrationForm'])
+    ->name('campaign.creator.register.form');
+Route::post('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'register'])
+    ->name('campaign.creator.register');
+
 /*
 |--------------------------------------------------------------------------
 | Email Verification Routes
 |--------------------------------------------------------------------------
 */
+// ✅ Hanya untuk user yang sudah login
 Route::middleware(['auth'])->group(function () {
     Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
+
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
 });
 
+// ✅ Route untuk verifikasi link (harus signed)
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-    ->middleware(['throttle:6,1'])
+    ->middleware(['signed', 'throttle:6,1'])
     ->name('verification.verify');
+
+    Route::get('/creator/dashboard', function () {
+        return view('auth.creator-dashboard');
+    })->name('creator.dashboard')->middleware(['auth']);
+
+    Route::get('/creator/dashboard', [CreatorDashboardController::class, 'index'])
+    ->name('creator.dashboard')
+    ->middleware(['auth']);
 
 /*
 |--------------------------------------------------------------------------
@@ -87,10 +108,9 @@ Route::get('/dashboard', function () {
 |--------------------------------------------------------------------------
 */
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::get('/profile/show', [ProfileController::class, 'show'])->name('profile.show');
     Route::post('/password/update', [PasswordController::class, 'update'])->name('profile.password.update');
 });
 
@@ -99,7 +119,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 | User Campaign Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role.check:user', 'verified'])
+Route::middleware(['auth', 'role.check:user,campaign_creator', 'verified'])
     ->prefix('user')
     ->name('user.')
     ->group(function () {
@@ -107,10 +127,10 @@ Route::middleware(['auth', 'role.check:user', 'verified'])
         Route::post('/campaigns/store', [UserCampaignController::class, 'store'])->name('campaigns.store');
         Route::get('/campaigns/history', [UserCampaignController::class, 'history'])->name('campaigns.history');
 
-        // FIX: pakai .show (bukan .detail)
-        Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('campaigns.show');
+        Route::get('/campaigns/{campaign}/edit', [UserCampaignController::class, 'edit'])->name('campaigns.edit');
+        Route::put('/campaigns/{campaign}', [UserCampaignController::class, 'update'])->name('campaigns.update');
 
-        // Opsional: donations biar tombol di blade nggak error
+        Route::get('/campaigns/{id}', [UserCampaignController::class, 'detail'])->name('campaigns.show');
         Route::get('/campaigns/{id}/donations', [UserCampaignController::class, 'donations'])->name('campaigns.donations');
     });
 
@@ -119,6 +139,8 @@ Route::middleware(['auth', 'role.check:user', 'verified'])
 | Admin Routes
 |--------------------------------------------------------------------------
 */
+// Di file routes/web.php - Bagian Admin Routes yang diperbaiki
+
 Route::prefix('admin')
     ->middleware(['auth', 'role.check:admin'])
     ->name('admin.')
@@ -126,18 +148,39 @@ Route::prefix('admin')
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-        // Admin Management
-        Route::get('/add-admin', [AdminController::class, 'showAddAdminForm'])->name('add-admin');
-        Route::post('/add-admin', [AdminController::class, 'storeAdmin'])->name('store-admin');
+        // Admin Management - SEMUA ROUTE DIPERBAIKI
         Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
+        Route::post('/update-role', [AdminController::class, 'updateRole'])->name('update-role');
+        Route::post('/update-status', [AdminController::class, 'updateStatus'])->name('update-status');
+        Route::post('/verify-email', [AdminController::class, 'verifyEmail'])->name('verify-email');
+        
+        // PERBAIKAN: Tambahkan route yang hilang
+        Route::post('/show-user', [AdminController::class, 'showUser'])->name('show-user');
+        Route::get('/show-user/{id}', [AdminController::class, 'showUserDetail'])->name('show-user-detail');
+        
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
+        Route::prefix('users')->name('users.')->group(function () {
+            Route::get('/', [AdminUserController::class, 'index'])->name('index');
+            Route::get('/create', [AdminUserController::class, 'create'])->name('create');
+            Route::post('/', [AdminUserController::class, 'store'])->name('store');
+            Route::get('/{user}', [AdminUserController::class, 'show'])->name('show');
+            Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('edit');
+            Route::put('/{user}', [AdminUserController::class, 'update'])->name('update');
+            Route::delete('/{user}', [AdminUserController::class, 'destroy'])->name('destroy');
+
+            Route::patch('/{user}/status', [AdminUserController::class, 'updateStatus'])->name('update-status');
+            Route::patch('/{user}/verify-email', [AdminUserController::class, 'verifyEmail'])->name('verify-email');
+            Route::get('/{user}/campaigns', [AdminUserController::class, 'campaigns'])->name('campaigns');
+            Route::get('/{user}/donations', [AdminUserController::class, 'donations'])->name('donations');
+            Route::post('/bulk-action', [AdminUserController::class, 'bulkAction'])->name('bulk-action');
+        });
 
         // Campaign Verification
         Route::get('/campaigns/verify', [AdminCampaignController::class, 'verifyIndex'])->name('campaigns.verify');
-        Route::patch('/campaigns/{id}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
-        Route::patch('/campaigns/{id}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
+        Route::patch('/campaigns/{campaign}/verify', [AdminCampaignController::class, 'verifyApprove'])->name('campaigns.verify.approve');
+        Route::patch('/campaigns/{campaign}/reject', [AdminCampaignController::class, 'verifyReject'])->name('campaigns.verify.reject');
 
-        // CRUD Campaign (Admin Only)
+        // CRUD Campaign
         Route::prefix('campaigns')->name('campaigns.')->group(function () {
             Route::get('/', [AdminCampaignController::class, 'index'])->name('index');
             Route::get('/create', [AdminCampaignController::class, 'create'])->name('create');
@@ -157,7 +200,6 @@ Route::prefix('admin')
         Route::get('/donations/{donation}', [AdminDonationController::class, 'show'])->name('donations.show');
         Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');
     });
-
 /*
 |--------------------------------------------------------------------------
 | Donation Public Routes
@@ -169,6 +211,7 @@ Route::prefix('donation')->name('donation.')->group(function () {
     Route::post('/', [DonationController::class, 'store'])->name('store');
     Route::get('/payment/{donation}', [DonationController::class, 'payment'])->name('payment');
     Route::get('/success/{donation}', [DonationController::class, 'success'])->name('success');
+
     Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status'); 
     
      Route::middleware(['auth'])->group(function () {
@@ -178,6 +221,7 @@ Route::prefix('donation')->name('donation.')->group(function () {
         Route::put('/{id}', [DonationController::class, 'update'])->name('update');
     });
 
+
 });
 
 /*
@@ -186,23 +230,6 @@ Route::prefix('donation')->name('donation.')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::post('/midtrans/callback', [MidtransController::class, 'handleCallback'])->name('midtrans.callback');
-
-// Halaman Bantuan
-Route::get('/faq', function () {
-    return view('pages.faq');
-})->name('faq');
-
-Route::get('/cara-berdonasi', function () {
-    return view('pages.donation-guide');
-})->name('donation.guide');
-
-Route::get('/hubungi-kami', function () {
-    return view('pages.contact');
-})->name('contact');
-
-Route::get('/pusat-bantuan', function () {
-    return view('pages.support-center');
-})->name('support.center');
 
 /*
 |--------------------------------------------------------------------------

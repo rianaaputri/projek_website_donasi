@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Auth\Events\Registered;
-use App\Models\User;
 
 class UserController extends Controller
 {
@@ -85,11 +85,9 @@ class UserController extends Controller
             $user = Auth::guard('web')->user();
 
             if (!$user->hasVerifiedEmail()) {
-                //Auth::logout(); // Logout jika belum verifikasi
-                //return redirect()->route('verification.notice')
-                //    ->with('error', 'Email kamu belum diverifikasi! Cek inbox dulu ya 📮');
+                // Perbaikan: Ganti pesan dan pastikan logout tidak terjadi jika tujuannya redirect ke notice
                 return redirect()->route('verification.notice')
-                ->with('warning', 'Silakan verifikasi email dulu ya!');
+                    ->with('warning', 'Silakan verifikasi email dulu ya!');
             }
 
             $request->session()->regenerate();

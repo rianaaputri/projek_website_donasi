@@ -152,10 +152,6 @@
                                             <button class="btn btn-outline-secondary btn-sm rounded-pill flex-fill" disabled>
                                                 <i class="fas fa-times me-1"></i>Ditolak
                                             </button>
-                                            <a href="{{ route('user.campaigns.edit', $campaign->id) }}" 
-                                               class="btn btn-warning btn-sm rounded-pill flex-fill">
-                                                <i class="fas fa-edit me-1"></i>Edit
-                                            </a>
                                         @else
                                             <button class="btn btn-outline-warning btn-sm rounded-pill w-100" disabled>
                                                 <i class="fas fa-clock me-1"></i>Menunggu Verifikasi

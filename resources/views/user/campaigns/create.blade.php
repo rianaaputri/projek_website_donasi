@@ -1,12 +1,3 @@
-@if ($errors->any())
-    <div class="alert alert-danger">
-        <ul>
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
-            @endforeach
-        </ul>
-    </div>
-@endif
 @extends('layouts.app')
 @section('title', 'Buat Campaign Donasi')
 @section('content')
@@ -115,7 +106,15 @@
                             <small class="form-text text-muted d-block mt-1">
                                 Maksimal 2MB. Format: JPG, PNG, GIF.
                             </small>
+                            <!-- 👇 Peringatan penting -->
+                            <small class="text-warning d-block mt-1">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <strong>Perhatian:</strong> Jika terjadi kesalahan validasi, Anda harus upload ulang gambar.
+                            </small>
                         </div>
+
+                        <!-- Hidden input untuk simpan nama file sementara (siap untuk dikembangkan) -->
+                        <input type="hidden" name="temp_image_name" id="temp_image_name" value="{{ old('temp_image_name') }}">
 
                         <!-- Preview Gambar -->
                         <div class="mb-4" id="imagePreview" style="display: none;">
@@ -227,6 +226,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const descriptionInput = document.querySelector('[name="description"]');
     const charCounter = document.getElementById('charCount');
+    const imageInput = document.getElementById('imageInput');
+    const preview = document.getElementById('preview');
+    const previewContainer = document.getElementById('imagePreview');
+    const campaignForm = document.getElementById('campaignForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
 
     // Update karakter
     if (descriptionInput && charCounter) {
@@ -251,63 +256,58 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Preview gambar
-    const imageInput = document.getElementById('imageInput');
     if (imageInput) {
         imageInput.addEventListener('change', function() {
-            previewImage(this);
+            const file = this.files[0];
+            if (file) {
+                const maxSize = 2 * 1024 * 1024;
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+
+                if (file.size > maxSize) {
+                    alert('Ukuran file maksimal 2MB.');
+                    this.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Format tidak didukung. Gunakan JPG, PNG, atau GIF.');
+                    this.value = '';
+                    previewContainer.style.display = 'none';
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    previewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.style.display = 'none';
+            }
         });
     }
 
-    // Form submission protection
-    const campaignForm = document.getElementById('campaignForm');
-    if (campaignForm) {
-        campaignForm.addEventListener('submit', function(e) {
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn.disabled) {
-                e.preventDefault();
-                return;
-            }
+    // Validasi frontend: Cegah submit jika deskripsi kurang dari 50 karakter
+    campaignForm.addEventListener('submit', function(e) {
+        const descValue = descriptionInput.value.trim();
 
-            const submitText = document.getElementById('submitText');
-            submitBtn.disabled = true;
-            submitText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
-        });
-    }
-
-    // Fungsi preview gambar
-    function previewImage(input) {
-        const preview = document.getElementById('preview');
-        const previewContainer = document.getElementById('imagePreview');
-        const file = input.files[0];
-
-        if (file) {
-            const maxSize = 2 * 1024 * 1024;
-            const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
-
-            if (file.size > maxSize) {
-                alert('Ukuran file maksimal 2MB.');
-                input.value = '';
-                previewContainer.style.display = 'none';
-                return;
-            }
-
-            if (!allowedTypes.includes(file.type)) {
-                alert('Format tidak didukung. Gunakan JPG, PNG, atau GIF.');
-                input.value = '';
-                previewContainer.style.display = 'none';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                previewContainer.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            previewContainer.style.display = 'none';
+        if (descValue.length < 50) {
+            e.preventDefault();
+            alert('Deskripsi minimal 50 karakter. Mohon periksa kembali.');
+            descriptionInput.focus();
+            return false;
         }
-    }
+
+        if (submitBtn.disabled) {
+            e.preventDefault();
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Mengirim...';
+    });
 });
 </script>
 
