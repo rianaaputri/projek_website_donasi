@@ -103,7 +103,7 @@ class DonationController extends Controller
         ]);
 
         $user = auth()->user();
-        $orderId = 'DON-' . time() . '-' . strtoupper(Str::random(5));
+        $orderId = 'DON-' .  now()->timestamp . '-' . strtoupper(Str::random(5));
 
         $donation = Donation::create([
             'user_id' => $user->id,
@@ -128,7 +128,7 @@ class DonationController extends Controller
         $donation = Donation::findOrFail($id);
 
         if (empty($donation->midtrans_order_id)) {
-            $donation->midtrans_order_id = 'DON-' . time() . '-' . strtoupper(Str::random(5));
+            $donation->midtrans_order_id = 'DON-' . now()->timestamp. '-' . strtoupper(Str::random(5));
             $donation->save();
         }
 
@@ -189,7 +189,10 @@ public function edit($id)
     $donation = Donation::with(['campaign', 'user'])
         ->where('user_id', auth()->id())
         ->findOrFail($id);
-
+if ($donation->payment_status === 'pending') {
+    $donation->midtrans_order_id = 'DON-' . now()->timestamp . '-' . $donation->id;
+    $donation->save();
+}
     $params = [
         'transaction_details' => [
             'order_id' => $donation->midtrans_order_id,

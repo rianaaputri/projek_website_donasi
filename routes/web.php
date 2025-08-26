@@ -169,11 +169,13 @@ Route::prefix('donation')->name('donation.')->group(function () {
     Route::post('/', [DonationController::class, 'store'])->name('store');
     Route::get('/payment/{donation}', [DonationController::class, 'payment'])->name('payment');
     Route::get('/success/{donation}', [DonationController::class, 'success'])->name('success');
-    Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status');
-    Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
-     Route::get('/pending', [DonationController::class, 'pending'])->name('pending');
-    Route::get('/{id}/edit', [DonationController::class, 'edit'])->name('edit');
-Route::put('/{id}', [DonationController::class, 'update'])->name('update');
+    Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status'); 
+     Route::middleware(['auth'])->group(function () {
+        Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
+        Route::get('/pending', [DonationController::class, 'pending'])->name('pending');
+        Route::get('/{id}/edit', [DonationController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DonationController::class, 'update'])->name('update');
+    });
 
 });
 
