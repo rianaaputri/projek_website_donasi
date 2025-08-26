@@ -776,6 +776,20 @@
                 Oops! Link verifikasi sudah kedaluwarsa. Silakan minta link baru ya!
             </div>
         </div>
+@if (session('warning'))
+    <div class="alert alert-custom alert-warning">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+            <div>
+                <h5 class="mb-1">
+                    <span class="status-indicator status-warning"></span>
+                    Verifikasi Diperlukan
+                </h5>
+                <p class="mb-0">{{ session('warning') }}</p>
+            </div>
+        </div>
+    </div>
+@endif
 
         <div id="successToast" class="toast" role="alert" style="border-left-color: var(--success-green);">
             <div class="toast-header">

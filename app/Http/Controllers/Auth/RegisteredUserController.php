@@ -15,7 +15,7 @@ use Illuminate\View\View;
 class RegisteredUserController extends Controller
 {
     /**
-     * Display the registration view.
+     * Tampilkan form registrasi
      */
     public function create(): View
     {
@@ -23,36 +23,34 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
-     *
-     * @throws \Illuminate\Validation\ValidationException
+     * Proses registrasi user baru
      */
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // ✅ Buat user baru
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'user', // tambahkan role default jika diperlukan
+            'name'      => $request->name,
+            'email'     => $request->email,
+            'password'  => Hash::make($request->password),
+            'role'      => 'user', // role default
+            'is_active' => 1,      // default aktif
         ]);
 
-        // Trigger event untuk mengirim email verifikasi
+        // ✅ Login otomatis supaya bisa akses halaman verifikasi
+        Auth::login($user);
+
+        // ✅ Trigger event Registered → otomatis kirim email verifikasi
         event(new Registered($user));
 
-        // Kirim email verifikasi
-        $user->sendEmailVerificationNotification();
-
-        // Pastikan user logout agar belum bisa akses sebelum verifikasi
-        Auth::logout();
-
-        // Redirect ke halaman notice verifikasi email
+        // ✅ Redirect ke halaman verifikasi
         return redirect()->route('verification.notice')
-                         ->with('status', 'verification-link-sent');
+            ->with('success', '✅ Registrasi berhasil! Silakan cek email Anda untuk verifikasi akun. 
+                                Jika email tidak masuk, klik tombol kirim ulang.');
     }
 }

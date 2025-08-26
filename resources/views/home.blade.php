@@ -36,7 +36,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-users"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum(fn($c) => $c->donations->count())) }}</div>
-                    <div class="stat-label">Donatur Bergabung</div>
+                    <div class="stat-label">Donasi Aktif</div>
                 </div>
             </div>
             <div class="col-md-4">
@@ -50,7 +50,7 @@
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fas fa-coins"></i></div>
                     <div class="stat-number">{{ number_format($campaigns->sum('collected_amount'), 0, ',', '.') }}</div>
-                    <div class="stat-label">Dana Terkumpul (Rp)</div>
+                    <div class="stat-label">Dana Terkumpul dari Campaign Aktif</div>
                 </div>
             </div>
         </div>
@@ -184,26 +184,21 @@
     <div class="container text-center text-white">
         <div class="col-lg-8 mx-auto">
             <h2 class="mb-4">Ingin Membuat Campaign Donasi?</h2>
-            <p class="lead mb-4">Platform donasi terpercaya untuk Anda yang ingin berkontribusi lebih.</p>
+            <p class="lead mb-4">Jadilah bagian dari perubahan! Daftar sebagai Campaign Creator dan mulai galang dana untuk sesama.</p>
             @guest
-                <div class="button-group">
-                    <a href="{{ route('register') }}" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-user-plus me-2"></i> Daftar Sekarang
-                    </a>
-                    <a href="{{ route('login') }}" class="btn-custom btn-outline-custom">
-                        <i class="fas fa-sign-in-alt me-2"></i> Masuk
-                    </a>
-                </div>
+                <a href="{{ route('campaign.creator.register.form') }}" class="btn-custom btn-primary-custom">
+                    <i class="fas fa-bullhorn me-2"></i> Daftar untuk Membuat Campaign
+                </a>
             @else
                 @auth('admin')
-                    <a href="{{ route('admin.campaigns.create') }}" class="btn-custom btn-primary-custom">
-                        <i class="fas fa-plus me-2"></i> Buat Campaign (Admin)
+                    <a href="{{ route('campaign.creator.register.form') }}" class="btn-custom btn-primary-custom">
+                        <i class="fas fa-bullhorn me-2"></i> Daftar untuk Membuat Campaign
                     </a>
-            @else
-                <a href="{{ route('user.campaigns.create') }}" class="btn-custom btn-primary-custom">
-                    <i class="fas fa-plus me-2"></i> Buat Campaign
-                </a>
-            @endauth
+                @else
+                    <a href="{{ route('campaign.creator.register.form') }}" class="btn-custom btn-primary-custom">
+                        <i class="fas fa-bullhorn me-2"></i> Daftar untuk Membuat Campaign
+                    </a>
+                @endauth
             @endguest
         </div>
     </div>
