@@ -189,6 +189,7 @@ public function edit($id)
     $donation = Donation::with(['campaign', 'user'])
         ->where('user_id', auth()->id())
         ->findOrFail($id);
+        
 if ($donation->payment_status === 'pending') {
     $donation->midtrans_order_id = 'DON-' . now()->timestamp . '-' . $donation->id;
     $donation->save();
