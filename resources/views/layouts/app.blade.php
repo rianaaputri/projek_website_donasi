@@ -457,6 +457,12 @@
                                             <i class="fas fa-list-alt me-2"></i>History Campaign
                                         </a>
                                     </li>
+                                    <li>
+    <a class="dropdown-item" href="{{ route('donation.history') }}">
+        <i class="fas fa-history me-2"></i>Riwayat Donasi
+    </a>
+</li>
+
 
                                 <!-- Role: user (donatur biasa) -->
                                 @elseif (Auth::user()->role === 'user')
