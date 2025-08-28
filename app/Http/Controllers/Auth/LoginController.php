@@ -51,9 +51,13 @@ class LoginController extends Controller
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();
 
-                    // ✅ langsung arahkan ke halaman verifikasi
-                    return redirect()->route('verification.notice')
-                        ->with('warning', 'Akun Anda belum bisa login. Silakan verifikasi email terlebih dahulu.');
+                    // 🚨 ALERT + LINK ke verifikasi
+                    return redirect()->route('login')->with([
+                        'warning' => 'Akun Anda belum diverifikasi. 
+                            <a href="'.route('verification.notice').'" class="underline text-blue-600">
+                                Klik di sini untuk verifikasi email
+                            </a>.'
+                    ]);
                 }
 
                 // 🔒 Regenerasi session untuk keamanan

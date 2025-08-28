@@ -500,16 +500,21 @@
     </div>
   @endif
 
-   
-         @if(session('warning'))
- <div class="toast align-items-center text-bg-warning border-0 show" role="alert">
+  @if(session('warning'))
+    <div class="toast align-items-center text-bg-warning border-0 show" role="alert">
       <div class="d-flex">
         <div class="toast-body">
-    {!! session('warning') !!}
-    <a href="{{ route('verification.notice') }}" class="fw-bold">Klik di sini untuk verifikasi</a>
-  </div>
-@endif
-  </div>
+          {!! session('warning') !!}
+          @if(str_contains(session('warning'), 'verifikasi'))
+            <br>
+            <a href="{{ route('verification.notice') }}" class="fw-bold">Klik di sini untuk verifikasi</a>
+          @endif
+        </div>
+        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>
+    </div>
+  @endif
+</div>
 
 <div class="login-wrapper">
   <div class="login-container">
@@ -724,7 +729,5 @@
     });
   });
 </script>
-
-
 </body>
 </html>

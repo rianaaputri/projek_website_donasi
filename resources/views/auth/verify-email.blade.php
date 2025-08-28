@@ -617,388 +617,248 @@
     </style>
 </head>
 <body>
-    <div class="floating-elements">
-        <div class="floating-circle circle-1"></div>
-        <div class="floating-circle circle-2"></div>
-        <div class="floating-circle circle-3"></div>
-        <div class="floating-circle circle-4"></div>
-    </div>
+<div class="floating-elements">
+    <div class="floating-circle circle-1"></div>
+    <div class="floating-circle circle-2"></div>
+    <div class="floating-circle circle-3"></div>
+    <div class="floating-circle circle-4"></div>
+</div>
 
-    <div class="main-container">
-        <div class="card verification-card fade-in">
-            <div class="card-header">
-                <div class="header-icon icon-pulse">
-                    <i class="fas fa-envelope-open-text"></i>
-                </div>
-                <h2 class="mb-0">Verifikasi Email</h2>
-                <p class="mb-0 mt-2">Langkah terakhir untuk mengaktifkan akun kamu</p>
+<div class="main-container">
+    <div class="card verification-card fade-in">
+        <div class="card-header">
+            <div class="header-icon icon-pulse">
+                <i class="fas fa-envelope-open-text"></i>
             </div>
+            <h2 class="mb-0">Verifikasi Email</h2>
+            <p class="mb-0 mt-2">Langkah terakhir untuk mengaktifkan akun kamu</p>
+        </div>
 
-            <div class="card-body">
-                <!-- Laravel Session Alerts -->
-                @if (session('error'))
-                    @if (str_contains(session('error'), 'kadaluarsa'))
-                        <!-- Expired Link Alert -->
-                        <div class="alert alert-custom alert-warning">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock fa-2x me-3"></i>
-                                <div>
-                                    <h5 class="mb-1">
-                                        <span class="status-indicator status-warning"></span>
-                                        Oops! Link Sudah Kedaluwarsa
-                                    </h5>
-                                    <p class="mb-2">{{ session('error') }}</p>
-                                    <small class="text-muted">Tenang aja, tinggal minta link baru di bawah ini!</small>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <!-- Other errors -->
-                        <div class="alert alert-custom alert-danger">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-exclamation-circle fa-2x me-3"></i>
-                                <div>
-                                    <h5 class="mb-1">
-                                        <span class="status-indicator status-danger"></span>
-                                        Ada Masalah Nih
-                                    </h5>
-                                    <p class="mb-0">{{ session('error') }}</p>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
-                @elseif (session('resent') || session('status'))
-                    <div class="alert alert-custom alert-success">
+        <div class="card-body">
+            {{-- Session Alerts --}}
+            @if (session('error'))
+                @if (Str::contains(session('error'), 'kadaluarsa'))
+                    <div class="alert alert-custom alert-warning">
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle fa-2x me-3"></i>
+                            <i class="fas fa-clock fa-2x me-3"></i>
                             <div>
-                                <h6 class="mb-1">
-                                    <span class="status-indicator status-active"></span>
-                                    Sip! Link verifikasi baru udah dikirim ke email kamu.
-                                </h6>
-                                <small>{{ session('status') ?? 'Cek inbox atau folder spam ya!' }}</small>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <!-- Normal message when no session alerts -->
-                    <div class="alert alert-custom alert-info">
-                        <div class="d-flex align-items-start">
-                            <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
-                            <div>
-                                <h6 class="mb-2">
+                                <h5 class="mb-1">
                                     <span class="status-indicator status-warning"></span>
-                                    Verifikasi Email Diperlukan
-                                </h6>
-                                <p class="mb-3">Makasih udah daftar! Sebelum mulai, bisa verifikasi email address kamu dulu ga dengan klik link yang udah kita kirim ke email kamu?</p>
-
-                                <div class="info-box">
-                                    <small class="text-muted-custom">
-                                        <i class="fas fa-lightbulb me-2"></i>
-                                        <strong>Tips:</strong> Link verifikasi cuma valid selama 5 menit aja ya! Kalo belum dapet emailnya atau udah expired, tinggal klik tombol "Kirim Ulang" di bawah.
-                                    </small>
-                                </div>
+                                    Oops! Link Sudah Kedaluwarsa
+                                </h5>
+                                <p class="mb-2">{{ session('error') }}</p>
+                                <small class="text-muted">Tenang aja, tinggal minta link baru di bawah ini!</small>
                             </div>
                         </div>
                     </div>
-                @endif
-
-                @if (isset($user))
-                    <!-- User Info -->
-                    <div class="info-box mb-4">
-                        <p class="mb-1"><strong>Email:</strong> {{ $user->email }}</p>
-                        <p class="mb-0"><small class="text-muted-custom">Daftar pada: {{ $user->created_at->format('d M Y H:i') }} WIB</small></p>
-                    </div>
-                @endif
-
-                <!-- Countdown Timers -->
-                <div class="row g-3 mb-4">
-                    <!-- Link Expiry Countdown -->
-                    <div class="col-md-6">
-                        <div class="countdown-timer border border-warning">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-hourglass-half me-3 text-warning fa-lg"></i>
-                                <div>
-                                    <p class="mb-1 fw-semibold">Link akan kedaluwarsa dalam:</p>
-                                    <span id="expiryCountdown" class="timer-display text-success">4m 30s</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Resend Cooldown -->
-                    <div class="col-md-6">
-                        <div id="cooldownSection" class="countdown-timer border border-info" style="display: none;">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-clock me-3 text-info fa-lg"></i>
-                                <div>
-                                    <p class="mb-1 fw-semibold">Kirim ulang tersedia dalam:</p>
-                                    <span id="cooldownTimer" class="timer-display text-info">2m 00s</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Action Button -->
-                <form id="resendForm" method="POST" action="{{ route('verification.send') }}">
-                    @csrf
-                    <div class="d-flex justify-content-center mt-4">
-                        <button id="resendBtn" type="submit" class="btn btn-primary-custom">
-                            <i class="fas fa-paper-plane me-2"></i>
-                            <span id="btnText">Kirim Ulang Email Verifikasi</span>
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Hidden logout form (removed as requested) -->
-
-                <!-- Progress indicator -->
-                <div class="text-center mt-4">
-                    <small class="text-muted-custom">
-                        <i class="fas fa-shield-alt me-1"></i>
-                        Email kamu akan digunakan untuk keamanan akun dan notifikasi penting
-                    </small>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container for notifications -->
-    <div class="toast-container">
-        <div id="expiredToast" class="toast toast-custom" role="alert">
-            <div class="toast-header">
-                <i class="fas fa-exclamation-triangle text-danger me-2"></i>
-                <strong class="me-auto">Link Kedaluwarsa!</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                Oops! Link verifikasi sudah kedaluwarsa. Silakan minta link baru ya!
-            </div>
-        </div>
-@if (session('warning'))
-    <div class="alert alert-custom alert-warning">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-            <div>
-                <h5 class="mb-1">
-                    <span class="status-indicator status-warning"></span>
-                    Verifikasi Diperlukan
-                </h5>
-                <p class="mb-0">{{ session('warning') }}</p>
-            </div>
-        </div>
-    </div>
-@endif
-
-        <div id="successToast" class="toast" role="alert" style="border-left-color: var(--success-green);">
-            <div class="toast-header">
-                <i class="fas fa-check-circle text-success me-2"></i>
-                <strong class="me-auto">Email Terkirim!</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body">
-                Link verifikasi baru sudah dikirim ke email kamu. Cek inbox ya!
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Configuration - these would come from server in real app
-            const config = {
-                linkExpiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 minutes from now
-                canResendAt: @if(session('last_resent_at'))
-                    new Date({{ (strtotime(session('last_resent_at')) + 120) * 1000 }}) // 2 minutes after last resend
                 @else
-                    new Date() // Can resend immediately if no previous resend
-                @endif,
-                isLinkExpired: {{ session('error') && str_contains(session('error'), 'kadaluarsa') ? 'true' : 'false' }}
-            };
+                    <div class="alert alert-custom alert-danger">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                            <div>
+                                <h5 class="mb-1">
+                                    <span class="status-indicator status-danger"></span>
+                                    Ada Masalah Nih
+                                </h5>
+                                <p class="mb-0">{{ session('error') }}</p>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+            @elseif (session('resent') || session('status'))
+                <div class="alert alert-custom alert-success">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-check-circle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="mb-1">
+                                <span class="status-indicator status-active"></span>
+                                Sip! Link verifikasi baru udah dikirim ke email kamu.
+                            </h6>
+                            <small>{{ session('status') ?? 'Cek inbox atau folder spam ya!' }}</small>
+                        </div>
+                    </div>
+                </div>
+            @else
+                <div class="alert alert-custom alert-info">
+                    <div class="d-flex align-items-start">
+                        <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+                        <div>
+                            <h6 class="mb-2">
+                                <span class="status-indicator status-warning"></span>
+                                Verifikasi Email Diperlukan
+                            </h6>
+                            <p class="mb-3">Makasih udah daftar! Sebelum mulai, bisa verifikasi email address kamu dulu ga dengan klik link yang udah kita kirim ke email kamu?</p>
 
-            const elements = {
-                expiryCountdown: document.getElementById('expiryCountdown'),
-                cooldownTimer: document.getElementById('cooldownTimer'),
-                cooldownSection: document.getElementById('cooldownSection'),
-                resendBtn: document.getElementById('resendBtn'),
-                btnText: document.getElementById('btnText'),
-                resendForm: document.getElementById('resendForm'),
-                expiredToast: document.getElementById('expiredToast'),
-                successToast: document.getElementById('successToast')
-            };
-
-            // Show expired toast if link was expired
-            if (config.isLinkExpired) {
-                const toast = new bootstrap.Toast(elements.expiredToast);
-                toast.show();
-            }
-
-            // Show success toast if email was resent
-            @if(session('resent') || session('status'))
-            const successToast = new bootstrap.Toast(elements.successToast);
-            successToast.show();
+                            <div class="info-box">
+                                <small class="text-muted-custom">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    <strong>Tips:</strong> Link verifikasi cuma valid selama 5 menit aja ya! Kalo belum dapet emailnya atau udah expired, tinggal klik tombol "Kirim Ulang" di bawah.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             @endif
 
-            function updateExpiryCountdown() {
-                const now = new Date().getTime();
-                const distance = config.linkExpiresAt.getTime() - now;
+            @if (isset($user))
+                <div class="info-box mb-4">
+                    <p class="mb-1"><strong>Email:</strong> {{ $user->email }}</p>
+                    <p class="mb-0"><small class="text-muted-custom">Daftar pada: {{ $user->created_at->format('d M Y H:i') }} WIB</small></p>
+                </div>
+            @endif
 
-                if (distance <= 0) {
-                    elements.expiryCountdown.innerHTML = '<span class="text-danger fw-bold">KEDALUWARSA</span>';
-                    elements.expiryCountdown.closest('.countdown-timer').classList.add('pulse-animation');
-                    return;
-                }
-
-                const hours = Math.floor(distance / (1000 * 60 * 60));
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                
-                let display = '';
-                if (hours > 0) {
-                    display = `${hours}j ${minutes}m ${seconds}s`;
-                } else {
-                    display = `${minutes}m ${seconds}s`;
-                }
-                
-                elements.expiryCountdown.textContent = display;
-
-                // Change color based on remaining time
-                if (distance <= 1 * 60 * 1000) { // Less than 1 minute
-                    elements.expiryCountdown.className = 'timer-display text-danger';
-                } else if (distance <= 2 * 60 * 1000) { // Less than 2 minutes
-                    elements.expiryCountdown.className = 'timer-display text-warning';
-                } else {
-                    elements.expiryCountdown.className = 'timer-display text-success';
-                }
-            }
-
-            function updateResendCooldown() {
-                const now = new Date().getTime();
-                const distance = config.canResendAt.getTime() - now;
-
-                if (distance <= 0) {
-                    // Can resend now
-                    elements.cooldownSection.style.display = 'none';
-                    elements.resendBtn.disabled = false;
-                    elements.resendBtn.classList.remove('btn-disabled');
-                    elements.btnText.textContent = 'Kirim Ulang Email Verifikasi';
-                    return;
-                }
-
-                // Still in cooldown
-                elements.cooldownSection.style.display = 'block';
-                elements.resendBtn.disabled = true;
-                elements.resendBtn.classList.add('btn-disabled');
-
-                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-                
-                elements.cooldownTimer.textContent = `${minutes}m ${seconds}s`;
-                elements.btnText.textContent = `Tunggu ${minutes}m ${seconds}s`;
-            }
-
-            // Update countdowns every second
-            updateExpiryCountdown();
-            updateResendCooldown();
-            
-            setInterval(updateExpiryCountdown, 1000);
-            setInterval(updateResendCooldown, 1000);
-
-            // Handle form submission
-            elements.resendForm.addEventListener('submit', function(e) {
-                const now = new Date().getTime();
-                
-                // Check if still in cooldown
-                if (config.canResendAt.getTime() > now) {
-                    e.preventDefault();
-                    const remainingSeconds = Math.ceil((config.canResendAt.getTime() - now) / 1000);
-                    
-                    // Show toast instead of alert for better UX
-                    const toastElement = document.createElement('div');
-                    toastElement.className = 'toast toast-custom';
-                    toastElement.innerHTML = `
-                        <div class="toast-header">
-                            <i class="fas fa-clock text-warning me-2"></i>
-                            <strong class="me-auto">Tunggu Sebentar!</strong>
-                            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            {{-- Timers --}}
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="countdown-timer border border-warning">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-hourglass-half me-3 text-warning fa-lg"></i>
+                            <div>
+                                <p class="mb-1 fw-semibold">Link akan kedaluwarsa dalam:</p>
+                                <span id="expiryCountdown" class="timer-display text-success">4m 30s</span>
+                            </div>
                         </div>
-                        <div class="toast-body">
-                            Tunggu ${remainingSeconds} detik lagi untuk mengirim ulang email.
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div id="cooldownSection" class="countdown-timer border border-info" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-clock me-3 text-info fa-lg"></i>
+                            <div>
+                                <p class="mb-1 fw-semibold">Kirim ulang tersedia dalam:</p>
+                                <span id="cooldownTimer" class="timer-display text-info">2m 00s</span>
+                            </div>
                         </div>
-                    `;
-                    document.querySelector('.toast-container').appendChild(toastElement);
-                    const toast = new bootstrap.Toast(toastElement);
-                    toast.show();
-                    
-                    // Remove toast element after it's hidden
-                    toastElement.addEventListener('hidden.bs.toast', function() {
-                        toastElement.remove();
-                    });
-                    
-                    return;
-                }
+                    </div>
+                </div>
+            </div>
 
-                // Show loading state
-                elements.resendBtn.disabled = true;
-                elements.resendBtn.classList.add('btn-disabled');
-                elements.btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengirim...';
-                
-                // Update cooldown time for next request (2 minutes)
-                config.canResendAt = new Date(Date.now() + 2 * 60 * 1000);
-            });
+            {{-- Resend --}}
+            <form id="resendForm" method="POST" action="{{ route('verification.send') }}">
+                @csrf
+                <div class="d-flex justify-content-center mt-4">
+                    <button id="resendBtn" type="submit" class="btn btn-primary-custom">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        <span id="btnText">Kirim Ulang Email Verifikasi</span>
+                    </button>
+                </div>
+            </form>
 
-            // Enhanced keyboard navigation
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                    // Ctrl+Enter to resend
-                    if (!elements.resendBtn.disabled) {
-                        elements.resendForm.dispatchEvent(new Event('submit'));
-                    }
-                }
-            });
+            <div class="text-center mt-4">
+                <small class="text-muted-custom">
+                    <i class="fas fa-shield-alt me-1"></i>
+                    Email kamu akan digunakan untuk keamanan akun dan notifikasi penting
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
 
-            // Simulate checking verification status every 10 seconds
-            // In real app, this would be an AJAX call to check verification status
-            setInterval(function() {
-                // If verified, redirect to dashboard
-                // This would be implemented based on your backend logic
-            }, 10000);
+{{-- Toast Container --}}
+<div class="toast-container">
+    <div id="expiredToast" class="toast toast-custom" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-exclamation-triangle text-danger me-2"></i>
+            <strong class="me-auto">Link Kedaluwarsa!</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Oops! Link verifikasi sudah kedaluwarsa. Silakan minta link baru ya!
+        </div>
+    </div>
+    <div id="successToast" class="toast" role="alert" style="border-left-color: var(--success-green);">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Email Terkirim!</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Link verifikasi baru sudah dikirim ke email kamu. Cek inbox ya!
+        </div>
+    </div>
+</div>
 
-            // Add smooth scrolling for better UX
-            window.addEventListener('load', function() {
-                document.body.style.opacity = '1';
-            });
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const config = {
+        linkExpiresAt: new Date({{ now()->addMinutes(5)->timestamp * 1000 }}), 
+        canResendAt: @if(session('last_resent_at'))
+            new Date({{ (strtotime(session('last_resent_at')) + 120) * 1000 }})
+        @else
+            new Date()
+        @endif,
+        isLinkExpired: {{ (session('error') && Str::contains(session('error'), 'kadaluarsa')) ? 'true' : 'false' }}
+    };
 
-            // Enhanced accessibility - announce important changes to screen readers
-            function announceToScreenReader(message) {
-                const announcement = document.createElement('div');
-                announcement.setAttribute('aria-live', 'polite');
-                announcement.setAttribute('aria-atomic', 'true');
-                announcement.className = 'sr-only position-absolute';
-                announcement.textContent = message;
-                document.body.appendChild(announcement);
-                
-                setTimeout(() => {
-                    document.body.removeChild(announcement);
-                }, 1000);
-            }
+    const elements = {
+        expiryCountdown: document.getElementById('expiryCountdown'),
+        cooldownTimer: document.getElementById('cooldownTimer'),
+        cooldownSection: document.getElementById('cooldownSection'),
+        resendBtn: document.getElementById('resendBtn'),
+        btnText: document.getElementById('btnText'),
+        resendForm: document.getElementById('resendForm'),
+        expiredToast: document.getElementById('expiredToast'),
+        successToast: document.getElementById('successToast')
+    };
 
-            // Announce when countdown changes to critical state
-            let lastAnnouncedState = null;
-            setInterval(function() {
-                const now = new Date().getTime();
-                const distance = config.linkExpiresAt.getTime() - now;
-                
-                if (distance <= 1 * 60 * 1000 && distance > 0 && lastAnnouncedState !== 'critical') {
-                    announceToScreenReader('Peringatan: Link verifikasi akan kedaluwarsa dalam kurang dari 1 menit');
-                    lastAnnouncedState = 'critical';
-                } else if (distance <= 0 && lastAnnouncedState !== 'expired') {
-                    announceToScreenReader('Link verifikasi telah kedaluwarsa. Silakan kirim ulang email verifikasi.');
-                    lastAnnouncedState = 'expired';
-                }
-            }, 5000);
-        });
-    </script>
+    // Toast expired
+    if (config.isLinkExpired) {
+        new bootstrap.Toast(elements.expiredToast).show();
+    }
+
+    // Toast success
+    @if(session('resent') || session('status'))
+    new bootstrap.Toast(elements.successToast).show();
+    @endif
+
+    function updateExpiryCountdown() {
+        const now = Date.now();
+        const distance = config.linkExpiresAt.getTime() - now;
+        if (distance <= 0) {
+            elements.expiryCountdown.innerHTML = '<span class="text-danger fw-bold">KEDALUWARSA</span>';
+            return;
+        }
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
+        elements.expiryCountdown.textContent = `${m}m ${s}s`;
+    }
+
+    function updateResendCooldown() {
+        const now = Date.now();
+        const distance = config.canResendAt.getTime() - now;
+        if (distance <= 0) {
+            elements.cooldownSection.style.display = 'none';
+            elements.resendBtn.disabled = false;
+            elements.btnText.textContent = 'Kirim Ulang Email Verifikasi';
+            return;
+        }
+        elements.cooldownSection.style.display = 'block';
+        elements.resendBtn.disabled = true;
+        const m = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+        const s = Math.floor((distance % (1000 * 60)) / 1000);
+        elements.cooldownTimer.textContent = `${m}m ${s}s`;
+        elements.btnText.textContent = `Tunggu ${m}m ${s}s`;
+    }
+
+    updateExpiryCountdown();
+    updateResendCooldown();
+    setInterval(updateExpiryCountdown, 1000);
+    setInterval(updateResendCooldown, 1000);
+
+    // Resend form
+    elements.resendForm.addEventListener('submit', function(e) {
+        const now = Date.now();
+        if (config.canResendAt.getTime() > now) {
+            e.preventDefault();
+            return;
+        }
+        elements.resendBtn.disabled = true;
+        elements.btnText.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Mengirim...';
+        config.canResendAt = new Date(Date.now() + 2 * 60 * 1000);
+    });
+});
+</script>
+
 </body>
 </html>

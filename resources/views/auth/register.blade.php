@@ -231,9 +231,12 @@
     <div class="toast align-items-center text-bg-success border-0 show" role="alert">
       <div class="d-flex">
         <div class="toast-body">
-          {{ session('success') }} 
+          {!! session('success') !!}
           @if(str_contains(session('success'), 'Akun berhasil'))
             <br><a href="{{ route('login') }}" class="text-white fw-bold">Klik di sini untuk login</a>
+          @endif
+          @if(str_contains(session('success'), 'verifikasi'))
+            <br><a href="{{ route('verification.notice') }}" class="text-white fw-bold">Klik di sini untuk verifikasi email</a>
           @endif
         </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
@@ -244,7 +247,12 @@
   @if(session('error'))
     <div class="toast align-items-center text-bg-danger border-0 show" role="alert">
       <div class="d-flex">
-        <div class="toast-body">{{ session('error') }}</div>
+        <div class="toast-body">
+          {!! session('error') !!}
+          @if(str_contains(session('error'), 'verifikasi'))
+            <br><a href="{{ route('verification.notice') }}" class="text-white fw-bold">Klik di sini untuk verifikasi email</a>
+          @endif
+        </div>
         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
       </div>
     </div>
@@ -253,7 +261,12 @@
   @if(session('warning'))
     <div class="toast align-items-center text-bg-warning border-0 show" role="alert">
       <div class="d-flex">
-        <div class="toast-body">{{ session('warning') }}</div>
+        <div class="toast-body">
+          {!! session('warning') !!}
+          @if(str_contains(session('warning'), 'verifikasi'))
+            <br><a href="{{ route('verification.notice') }}" class="fw-bold">Klik di sini untuk verifikasi email</a>
+          @endif
+        </div>
         <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast"></button>
       </div>
     </div>

@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\{
     HomeController,
@@ -57,7 +56,11 @@ Route::middleware('guest')->group(function () {
 // Logout
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-// ✅ Form & Proses Registrasi Campaign Creator
+/*
+|--------------------------------------------------------------------------
+| Campaign Creator Registration
+|--------------------------------------------------------------------------
+*/
 Route::get('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'showRegistrationForm'])
     ->name('campaign.creator.register.form');
 Route::post('/register/campaign-creator', [CampaignCreatorRegisterController::class, 'register'])
@@ -68,27 +71,27 @@ Route::post('/register/campaign-creator', [CampaignCreatorRegisterController::cl
 | Email Verification Routes
 |--------------------------------------------------------------------------
 */
-// ✅ Hanya untuk user yang sudah login
 Route::middleware(['auth'])->group(function () {
-    Route::get('/email/verify', [VerificationController::class, 'notice'])->name('verification.notice');
+    Route::get('/email/verify', [VerificationController::class, 'notice'])
+        ->name('verification.notice');
 
     Route::post('/email/verification-notification', [VerificationController::class, 'resend'])
         ->middleware('throttle:6,1')
         ->name('verification.send');
 });
 
-// ✅ Route untuk verifikasi link (harus signed)
 Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verify'])
-    ->middleware(['signed', 'throttle:6,1'])
+    ->middleware(['auth', 'signed', 'throttle:6,1'])
     ->name('verification.verify');
 
-    Route::get('/creator/dashboard', function () {
-        return view('auth.creator-dashboard');
-    })->name('creator.dashboard')->middleware(['auth']);
-
-    Route::get('/creator/dashboard', [CreatorDashboardController::class, 'index'])
+/*
+|--------------------------------------------------------------------------
+| Creator Dashboard
+|--------------------------------------------------------------------------
+*/
+Route::get('/creator/dashboard', [CreatorDashboardController::class, 'index'])
     ->name('creator.dashboard')
-    ->middleware(['auth']);
+    ->middleware(['auth', 'verified']);
 
 /*
 |--------------------------------------------------------------------------
@@ -139,8 +142,6 @@ Route::middleware(['auth', 'role.check:user,campaign_creator', 'verified'])
 | Admin Routes
 |--------------------------------------------------------------------------
 */
-// Di file routes/web.php - Bagian Admin Routes yang diperbaiki
-
 Route::prefix('admin')
     ->middleware(['auth', 'role.check:admin'])
     ->name('admin.')
@@ -148,17 +149,16 @@ Route::prefix('admin')
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
-        // Admin Management - SEMUA ROUTE DIPERBAIKI
-        Route::get('/list-admins', [AdminController::class, 'listAdmins'])->name('list-admins');
+        // Admin Management
+        Route::get('/list-admins', [AdminController::class, 'index'])->name('list-admins');
         Route::post('/update-role', [AdminController::class, 'updateRole'])->name('update-role');
         Route::post('/update-status', [AdminController::class, 'updateStatus'])->name('update-status');
         Route::post('/verify-email', [AdminController::class, 'verifyEmail'])->name('verify-email');
-        
-        // PERBAIKAN: Tambahkan route yang hilang
         Route::post('/show-user', [AdminController::class, 'showUser'])->name('show-user');
         Route::get('/show-user/{id}', [AdminController::class, 'showUserDetail'])->name('show-user-detail');
-        
         Route::delete('/delete-admin/{id}', [AdminController::class, 'deleteAdmin'])->name('delete-admin');
+
+        // User Management
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [AdminUserController::class, 'index'])->name('index');
             Route::get('/create', [AdminUserController::class, 'create'])->name('create');
@@ -200,6 +200,7 @@ Route::prefix('admin')
         Route::get('/donations/{donation}', [AdminDonationController::class, 'show'])->name('donations.show');
         Route::patch('/donations/{donation}/status', [AdminDonationController::class, 'updateStatus'])->name('donations.update-status');
     });
+
 /*
 |--------------------------------------------------------------------------
 | Donation Public Routes
@@ -211,19 +212,15 @@ Route::prefix('donation')->name('donation.')->group(function () {
     Route::post('/', [DonationController::class, 'store'])->name('store');
     Route::get('/payment/{donation}', [DonationController::class, 'payment'])->name('payment');
     Route::get('/success/{donation}', [DonationController::class, 'success'])->name('success');
+    Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status');
 
-    Route::get('/status/{donation}', [DonationController::class, 'checkStatus'])->name('status'); 
-     Route::middleware(['auth', 'role.check:user,campaign_creator'])->group(function () {
-    Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
-    Route::get('/pending', [DonationController::class, 'pending'])->name('pending');
-    Route::get('/{id}/edit', [DonationController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [DonationController::class, 'update'])->name('update');
-});
-
+    Route::middleware(['auth', 'role.check:user,campaign_creator'])->group(function () {
+        Route::get('/history', [DonationController::class, 'myDonations'])->name('history');
+        Route::get('/pending', [DonationController::class, 'pending'])->name('pending');
+        Route::get('/{id}/edit', [DonationController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DonationController::class, 'update'])->name('update');
     });
-
-
-
+});
 
 /*
 |--------------------------------------------------------------------------

@@ -635,113 +635,82 @@
             </div>
 
             <div class="card-body">
-    <!-- Laravel Session Alerts -->
-    @if (session('success'))
-        <div class="alert alert-custom alert-success">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle fa-2x me-3"></i>
-                <div>
-                    <h6 class="mb-1">
-                        <span class="status-indicator status-active"></span>
-                        Berhasil!
-                    </h6>
-                    <p class="mb-0">{{ session('success') }}</p>
-                </div>
-            </div>
-        </div>
-
-    @elseif (session('error'))
-        @if (str_contains(session('error'), 'kadaluarsa'))
-            <!-- Expired Link Alert -->
-            <div class="alert alert-custom alert-warning">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-clock fa-2x me-3"></i>
-                    <div>
-                        <h5 class="mb-1">
-                            <span class="status-indicator status-warning"></span>
-                            Oops! Link Sudah Kedaluwarsa
-                        </h5>
-                        <p class="mb-2">{{ session('error') }}</p>
-                        <small class="text-muted">Tenang aja, tinggal minta link baru di bawah ini!</small>
+                <!-- Laravel Session Alerts -->
+                @if (session('error'))
+                    @if (str_contains(session('error'), 'kadaluarsa'))
+                        <!-- Expired Link Alert -->
+                        <div class="alert alert-custom alert-warning">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-clock fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">
+                                        <span class="status-indicator status-warning"></span>
+                                        Oops! Link Sudah Kedaluwarsa
+                                    </h5>
+                                    <p class="mb-2">{{ session('error') }}</p>
+                                    <small class="text-muted">Tenang aja, tinggal minta link baru di bawah ini!</small>
+                                </div>
+                            </div>
+                        </div>
+                    @else
+                        <!-- Other errors -->
+                        <div class="alert alert-custom alert-danger">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                                <div>
+                                    <h5 class="mb-1">
+                                        <span class="status-indicator status-danger"></span>
+                                        Ada Masalah Nih
+                                    </h5>
+                                    <p class="mb-0">{{ session('error') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                @elseif (session('resent') || session('status'))
+                    <div class="alert alert-custom alert-success">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle fa-2x me-3"></i>
+                            <div>
+                                <h6 class="mb-1">
+                                    <span class="status-indicator status-active"></span>
+                                    Sip! Link verifikasi baru udah dikirim ke email kamu.
+                                </h6>
+                                <small>{{ session('status') ?? 'Cek inbox atau folder spam ya!' }}</small>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        @else
-            <!-- Other errors -->
-            <div class="alert alert-custom alert-danger">
-                <div class="d-flex align-items-center">
-                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
-                    <div>
-                        <h5 class="mb-1">
-                            <span class="status-indicator status-danger"></span>
-                            Ada Masalah Nih
-                        </h5>
-                        <p class="mb-0">{{ session('error') }}</p>
+                @else
+                    <!-- Normal message when no session alerts -->
+                    <div class="alert alert-custom alert-info">
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
+                            <div>
+                                <h6 class="mb-2">
+                                    <span class="status-indicator status-warning"></span>
+                                    Verifikasi Email Diperlukan
+                                </h6>
+                                <p class="mb-3">Makasih udah daftar! Sebelum mulai, bisa verifikasi email address kamu dulu ga dengan klik link yang udah kita kirim ke email kamu?</p>
+
+                                <div class="info-box">
+                                    <small class="text-muted-custom">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>Tips:</strong> Link verifikasi cuma valid selama 5 menit aja ya! Kalo belum dapet emailnya atau udah expired, tinggal klik tombol "Kirim Ulang" di bawah.
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        @endif
+                @endif
 
-    @elseif (session('warning'))
-        <div class="alert alert-custom alert-warning">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-                <div>
-                    <h5 class="mb-1">
-                        <span class="status-indicator status-warning"></span>
-                        Verifikasi Diperlukan
-                    </h5>
-                    <p class="mb-0">{{ session('warning') }}</p>
-                </div>
-            </div>
-        </div>
-
-    @elseif (session('resent') || session('status'))
-        <div class="alert alert-custom alert-success">
-            <div class="d-flex align-items-center">
-                <i class="fas fa-check-circle fa-2x me-3"></i>
-                <div>
-                    <h6 class="mb-1">
-                        <span class="status-indicator status-active"></span>
-                        Sip! Link verifikasi baru udah dikirim ke email kamu.
-                    </h6>
-                    <small>{{ session('status') ?? 'Cek inbox atau folder spam ya!' }}</small>
-                </div>
-            </div>
-        </div>
-
-    @else
-        <!-- Default info message -->
-        <div class="alert alert-custom alert-info">
-            <div class="d-flex align-items-start">
-                <i class="fas fa-info-circle fa-lg me-3 mt-1"></i>
-                <div>
-                    <h6 class="mb-2">
-                        <span class="status-indicator status-warning"></span>
-                        Verifikasi Email Diperlukan
-                    </h6>
-                    <p class="mb-3">Makasih udah daftar! Sebelum mulai, bisa verifikasi email address kamu dulu ga dengan klik link yang udah kita kirim ke email kamu?</p>
-
-                    <div class="info-box">
-                        <small class="text-muted-custom">
-                            <i class="fas fa-lightbulb me-2"></i>
-                            <strong>Tips:</strong> Link verifikasi cuma valid selama 5 menit aja ya! 
-                            Kalo belum dapet emailnya atau udah expired, tinggal klik tombol "Kirim Ulang" di bawah.
-                        </small>
+                @if (isset($user))
+                    <!-- User Info -->
+                    <div class="info-box mb-4">
+                        <p class="mb-1"><strong>Email:</strong> {{ $user->email }}</p>
+                        <p class="mb-0"><small class="text-muted-custom">Daftar pada: {{ $user->created_at->format('d M Y H:i') }} WIB</small></p>
                     </div>
-                </div>
-            </div>
-        </div>
-    @endif
+                @endif
 
-    @if (isset($user))
-        <!-- User Info -->
-        <div class="info-box mb-4">
-            <p class="mb-1"><strong>Email:</strong> {{ $user->email }}</p>
-            <p class="mb-0"><small class="text-muted-custom">Daftar pada: {{ $user->created_at->format('d M Y H:i') }} WIB</small></p>
-        </div>
-    @endif
-</div>
                 <!-- Countdown Timers -->
                 <div class="row g-3 mb-4">
                     <!-- Link Expiry Countdown -->
@@ -794,20 +763,6 @@
             </div>
         </div>
     </div>
-@if (session('warning'))
-    <div class="alert alert-custom alert-warning">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
-            <div>
-                <h5 class="mb-1">
-                    <span class="status-indicator status-warning"></span>
-                    Verifikasi Diperlukan
-                </h5>
-                <p class="mb-0">{{ session('warning') }}</p>
-            </div>
-        </div>
-    </div>
-@endif
 
     <!-- Toast Container for notifications -->
     <div class="toast-container">
